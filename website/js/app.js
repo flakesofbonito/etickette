@@ -1,272 +1,319 @@
-// website/js/app.js
 import {
-  getFirestore, doc, collection, setDoc, getDoc,
-  onSnapshot, updateDoc, query, where, serverTimestamp,
-  getDocs, increment
+    getFirestore,
+    doc,
+    collection,
+    setDoc,
+    getDoc,
+    onSnapshot,
+    updateDoc,
+    query,
+    where,
+    serverTimestamp,
+    getDocs,
+    increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-  authDomain: "etickette-78f74.firebaseapp.com",
-  projectId: "etickette-78f74",
-  storageBucket: "etickette-78f74.firebasestorage.app",
-  messagingSenderId: "147547566302",
-  appId: "1:147547566302:web:2c7a52792b539331d8524f",
-  measurementId: "G-QHMMWXW7F3"
+    apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
+    authDomain: "etickette-78f74.firebaseapp.com",
+    projectId: "etickette-78f74",
+    storageBucket: "etickette-78f74.firebasestorage.app",
+    messagingSenderId: "147547566302",
+    appId: "1:147547566302:web:2c7a52792b539331d8524f",
+    measurementId: "G-QHMMWXW7F3"
 };
 
 const REASONS = {
-  cashier: [
-    { label: "Pay Tuition / Fees",       docs: ["Valid ID", "Statement of Account"] },
-    { label: "Pay Miscellaneous Fees",   docs: ["Valid ID", "Fee Slip"] },
-    { label: "Request Official Receipt", docs: ["Valid ID", "Proof of Payment"] },
-    { label: "Scholarship Clearance",    docs: ["Valid ID", "Grant Letter"] },
-    { label: "Other",                    docs: [] }
-  ],
-  registrar: [
-    { label: "Request Transcript (TOR)", docs: ["Valid ID", "Request Form", "Clearance"] },
-    { label: "Certificate of Enrollment",docs: ["Valid ID", "Request Form"] },
-    { label: "Certificate of Graduation",docs: ["Valid ID", "Request Form", "Clearance"] },
-    { label: "Form 137 / 138",           docs: ["Valid ID", "Request Form"] },
-    { label: "Diploma / Authentication", docs: ["Valid ID", "Claim Stub"] },
-    { label: "Other",                    docs: [] }
-  ]
+    cashier: [{
+        label: "Pay Tuition / Fees",
+        docs: ["Valid ID", "Statement of Account"]
+    }, {
+        label: "Pay Miscellaneous Fees",
+        docs: ["Valid ID", "Fee Slip"]
+    }, {
+        label: "Request Official Receipt",
+        docs: ["Valid ID", "Proof of Payment"]
+    }, {
+        label: "Scholarship Clearance",
+        docs: ["Valid ID", "Grant Letter"]
+    }, {
+        label: "Other",
+        docs: []
+    }],
+    registrar: [{
+        label: "Request Transcript (TOR)",
+        docs: ["Valid ID", "Request Form", "Clearance"]
+    }, {
+        label: "Certificate of Enrollment",
+        docs: ["Valid ID", "Request Form"]
+    }, {
+        label: "Certificate of Graduation",
+        docs: ["Valid ID", "Request Form", "Clearance"]
+    }, {
+        label: "Form 137 / 138",
+        docs: ["Valid ID", "Request Form"]
+    }, {
+        label: "Diploma / Authentication",
+        docs: ["Valid ID", "Claim Stub"]
+    }, {
+        label: "Other",
+        docs: []
+    }]
 };
 
 let app, db;
-let currentStudentId     = null;
-let reserveDept          = null;
-let reserveReason        = null;
-let currentStep          = 1;
+let currentStudentId = null;
+let reserveDept = null;
+let reserveReason = null;
+let currentStep = 1;
 let hasActiveReservation = false;
 
 export function initWebsite() {
-  app = initializeApp(firebaseConfig);
-  db  = getFirestore(app);
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
 
-  window.loginStudent      = loginStudent;
-  window.logout            = logout;
-  window.navigate          = navigate;
-  window.toggleMenu        = toggleMenu;
-  window.openReserveModal  = openReserveModal;
-  window.closeModal        = closeModal;
-  window.handleOverlay     = handleOverlay;
-  window.rGoStep           = rGoStep;
-  window.submitReserveDate = submitReserveDate;
-  window.cancelReservation = cancelReservation;
+    window.loginStudent = loginStudent;
+    window.logout = logout;
+    window.navigate = navigate;
+    window.toggleMenu = toggleMenu;
+    window.openReserveModal = openReserveModal;
+    window.closeModal = closeModal;
+    window.handleOverlay = handleOverlay;
+    window.rGoStep = rGoStep;
+    window.submitReserveDate = submitReserveDate;
+    window.cancelReservation = cancelReservation;
 
-  const saved = sessionStorage.getItem('studentId');
-  if (saved) { currentStudentId = saved; afterLogin(); }
+    const saved = sessionStorage.getItem('studentId');
+    if (saved) {
+        currentStudentId = saved;
+        afterLogin();
+    }
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
 function loginStudent() {
-  const val = document.getElementById('loginId').value.trim();
-  const err = document.getElementById('loginError');
-  const inp = document.getElementById('loginId');
-  if (!/^\d{11}$/.test(val)) {
-    err.textContent = 'Student ID must be exactly 11 digits.';
-    inp.classList.add('error');
-    return;
-  }
-  err.textContent = '';
-  inp.classList.remove('error');
-  currentStudentId = val;
-  sessionStorage.setItem('studentId', val);
-  document.getElementById('loginOverlay').classList.add('dismissed');
-  document.getElementById('appShell').classList.remove('locked');
-  document.getElementById('appShell').classList.add('unlocked');
-  setTimeout(() => { document.getElementById('loginOverlay').style.display = 'none'; }, 520);
-  afterLogin();
+    const val = document.getElementById('loginId').value.trim();
+    const err = document.getElementById('loginError');
+    const inp = document.getElementById('loginId');
+    if (!/^\d{11}$/.test(val)) {
+        err.textContent = 'Student ID must be exactly 11 digits.';
+        inp.classList.add('error');
+        return;
+    }
+    err.textContent = '';
+    inp.classList.remove('error');
+    currentStudentId = val;
+    sessionStorage.setItem('studentId', val);
+    document.getElementById('loginOverlay').classList.add('dismissed');
+    document.getElementById('appShell').classList.remove('locked');
+    document.getElementById('appShell').classList.add('unlocked');
+    setTimeout(() => {
+        document.getElementById('loginOverlay').style.display = 'none';
+    }, 520);
+    afterLogin();
 }
 
 function afterLogin() {
-  document.getElementById('userDisplay').style.display = 'flex';
-  document.getElementById('userLabel').textContent     = currentStudentId;
-  document.getElementById('profileInfo').innerHTML = `
+    document.getElementById('userDisplay').style.display = 'flex';
+    document.getElementById('userLabel').textContent = currentStudentId;
+    document.getElementById('profileInfo').innerHTML = `
     <div class="info"><span>Student ID</span><b>${currentStudentId}</b></div>
     <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
   `;
-  navigate('home');
-  listenToDepts();
-  listenToSettings();
-  listenToActiveReservation();
+    navigate('home');
+    listenToDepts();
+    listenToSettings();
+    listenToActiveReservation();
 }
 
 function logout() {
-  sessionStorage.removeItem('studentId');
-  currentStudentId     = null;
-  hasActiveReservation = false;
-  document.getElementById('userDisplay').style.display = 'none';
-  const ov = document.getElementById('loginOverlay');
-  ov.style.display = 'flex';
-  ov.classList.remove('dismissed');
-  document.getElementById('loginId').value          = '';
-  document.getElementById('loginError').textContent = '';
-  document.getElementById('appShell').classList.add('locked');
-  document.getElementById('appShell').classList.remove('unlocked');
+    sessionStorage.removeItem('studentId');
+    currentStudentId = null;
+    hasActiveReservation = false;
+    document.getElementById('userDisplay').style.display = 'none';
+    const ov = document.getElementById('loginOverlay');
+    ov.style.display = 'flex';
+    ov.classList.remove('dismissed');
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('appShell').classList.add('locked');
+    document.getElementById('appShell').classList.remove('unlocked');
 }
 
-// ── NAVIGATION ────────────────────────────────────────────────────────────────
 function navigate(view) {
-  if (view === 'history') loadHistory();
+    if (view === 'history') loadHistory();
 
-  // Views
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
 
-  // Desktop sidebar links
-  document.querySelectorAll('.nav-link').forEach(a =>
-    a.classList.toggle('active', a.dataset.view === view));
+    document.querySelectorAll('.nav-link').forEach(a =>
+        a.classList.toggle('active', a.dataset.view === view));
 
-  // Mobile bottom nav
-  document.querySelectorAll('.bottom-nav-item').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === view));
+    document.querySelectorAll('.bottom-nav-item').forEach(b =>
+        b.classList.toggle('active', b.dataset.view === view));
 
-  // Close sidebar on mobile if open
-  if (window.innerWidth <= 600) {
-    document.getElementById('sidebar').classList.remove('open');
-  }
+    if (window.innerWidth <= 600) {
+        document.getElementById('sidebar').classList.remove('open');
+    }
 }
 
 function toggleMenu() {
-  const sb = document.getElementById('sidebar');
-  if (window.innerWidth > 600) {
-    sb.classList.toggle('collapsed');
-    document.getElementById('mainContent').classList.toggle('expanded');
-  } else {
-    sb.classList.toggle('open');
-  }
+    const sb = document.getElementById('sidebar');
+    if (window.innerWidth > 600) {
+        sb.classList.toggle('collapsed');
+        document.getElementById('mainContent').classList.toggle('expanded');
+    } else {
+        sb.classList.toggle('open');
+    }
 }
 
-// ── FIREBASE LISTENERS ────────────────────────────────────────────────────────
 function listenToDepts() {
-  ['cashier', 'registrar'].forEach(dept => {
-    onSnapshot(doc(db, 'departments', dept), snap => {
-      if (!snap.exists()) return;
-      const d = snap.data();
-      const status = (d.status || 'open').toLowerCase();
-      const map = {
-        open:   { t: 'OPEN',     c: 'open',   dis: false },
-        break:  { t: 'ON BREAK', c: 'break',  dis: true  },
-        closed: { t: 'CLOSED',   c: 'closed', dis: true  }
-      };
-      const m = map[status] || map.open;
-      document.getElementById(dept + 'Status').textContent = m.t;
-      document.getElementById(dept + 'Status').className   = m.c;
-      document.getElementById(dept + 'Queue').textContent  = d.queue || 0;
-      const btn = document.getElementById(dept + 'Btn');
-      if (btn) btn.disabled = m.dis || hasActiveReservation;
+    ['cashier', 'registrar'].forEach(dept => {
+        onSnapshot(doc(db, 'departments', dept), snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
+            const status = (d.status || 'open').toLowerCase();
+            const map = {
+                open: {
+                    t: 'OPEN',
+                    c: 'open',
+                    dis: false
+                },
+                break: {
+                    t: 'ON BREAK',
+                    c: 'break',
+                    dis: true
+                },
+                closed: {
+                    t: 'CLOSED',
+                    c: 'closed',
+                    dis: true
+                }
+            };
+            const m = map[status] || map.open;
+            document.getElementById(dept + 'Status').textContent = m.t;
+            document.getElementById(dept + 'Status').className = m.c;
+            document.getElementById(dept + 'Queue').textContent = d.queue || 0;
+            const btn = document.getElementById(dept + 'Btn');
+            if (btn) btn.disabled = m.dis || hasActiveReservation;
+        });
     });
-  });
 }
 
 function listenToSettings() {
-  onSnapshot(doc(db, 'system', 'settings'), snap => {
-    if (!snap.exists()) return;
-    const d   = snap.data();
-    const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
-    document.getElementById('quotaText').textContent = rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
-    const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
-    const el  = document.getElementById('congestionText');
-    if      (pct < 0.4)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open';   }
-    else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break';  }
-    else                  { el.textContent = 'HIGH TRAFFIC'; el.className = 'closed'; }
-    if (d.statusMessage) document.getElementById('globalStatus').textContent = d.statusMessage;
-  });
+    onSnapshot(doc(db, 'system', 'settings'), snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+        const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
+        document.getElementById('quotaText').textContent = rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
+        const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
+        const el = document.getElementById('congestionText');
+        if (pct < 0.4) {
+            el.textContent = 'LOW TRAFFIC';
+            el.className = 'open';
+        } else if (pct < 0.75) {
+            el.textContent = 'MODERATE';
+            el.className = 'break';
+        } else {
+            el.textContent = 'HIGH TRAFFIC';
+            el.className = 'closed';
+        }
+        if (d.statusMessage) document.getElementById('globalStatus').textContent = d.statusMessage;
+    });
 }
 
 function listenToActiveReservation() {
-  onSnapshot(
-    query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
-    snap => {
-      const activeDoc = snap.docs.find(d => {
-        const s = d.data().status;
-        return s === 'pending' || s === 'active';
-      });
-      if (!activeDoc) {
-        hasActiveReservation = false;
-        setReserveButtonsLocked(false);
-        const b = document.getElementById('activeResBanner');
-        if (b) b.remove();
-      } else {
-        hasActiveReservation = true;
-        setReserveButtonsLocked(true);
-        renderActiveResBanner(activeDoc.data(), activeDoc.id);
-      }
-    },
-    err => {
-      console.warn('[res snapshot]', err.code);
-      hasActiveReservation = false;
-      setReserveButtonsLocked(false);
-    }
-  );
+    onSnapshot(
+        query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
+        snap => {
+            const activeDoc = snap.docs.find(d => {
+                const s = d.data().status;
+                return s === 'pending' || s === 'active';
+            });
+            if (!activeDoc) {
+                hasActiveReservation = false;
+                setReserveButtonsLocked(false);
+                const b = document.getElementById('activeResBanner');
+                if (b) b.remove();
+            } else {
+                hasActiveReservation = true;
+                setReserveButtonsLocked(true);
+                renderActiveResBanner(activeDoc.data(), activeDoc.id);
+            }
+        },
+        err => {
+            console.warn('[res snapshot]', err.code);
+            hasActiveReservation = false;
+            setReserveButtonsLocked(false);
+        }
+    );
 
-  onSnapshot(
-    query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
-    snap => {
-      const active = snap.docs.find(d => {
-        const s = d.data().status;
-        return s === 'waiting' || s === 'serving';
-      });
-      if (active && !document.getElementById('activeResBanner')) {
-        hasActiveReservation = true;
-        setReserveButtonsLocked(true);
-        renderActiveWalkinBanner(active.data());
-      }
-    },
-    err => console.warn('[ticket snapshot]', err.code)
-  );
+    onSnapshot(
+        query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
+        snap => {
+            const active = snap.docs.find(d => {
+                const s = d.data().status;
+                return s === 'waiting' || s === 'serving';
+            });
+            if (active && !document.getElementById('activeResBanner')) {
+                hasActiveReservation = true;
+                setReserveButtonsLocked(true);
+                renderActiveWalkinBanner(active.data());
+            }
+        },
+        err => console.warn('[ticket snapshot]', err.code)
+    );
 }
 
 function setReserveButtonsLocked(locked) {
-  ['cashier', 'registrar'].forEach(dept => {
-    const btn = document.getElementById(dept + 'Btn');
-    if (btn) {
-      btn.disabled = locked;
-      btn.title    = locked ? 'Cancel your current reservation first.' : '';
-    }
-  });
+    ['cashier', 'registrar'].forEach(dept => {
+        const btn = document.getElementById(dept + 'Btn');
+        if (btn) {
+            btn.disabled = locked;
+            btn.title = locked ? 'Cancel your current reservation first.' : '';
+        }
+    });
 }
 
 // ── QR HELPER ─────────────────────────────────────────────────────────────────
 function renderQR(el, text, size) {
-  el.innerHTML = '';
+    el.innerHTML = '';
 
-  new QRCode(el, {
-    text:         text,
-    width:        size,
-    height:       size,
-    colorDark:    '#1f3c88',
-    colorLight:   '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
-  });
+    new QRCode(el, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: '#1f3c88',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+    });
 
-  // qrcodejs renders both canvas + img; hide canvas, show img centered
-  // Use a short timeout to catch the async img insertion
-  setTimeout(() => {
-    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
-    el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
-  }, 50);
+    // qrcodejs renders both canvas + img; hide canvas, show img centered
+    // Use a short timeout to catch the async img insertion
+    setTimeout(() => {
+        el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
+        el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
+    }, 50);
 }
 
 // ── BANNERS ───────────────────────────────────────────────────────────────────
 function renderActiveResBanner(res, rid) {
-  const old = document.getElementById('activeResBanner');
-  if (old) old.remove();
+    const old = document.getElementById('activeResBanner');
+    if (old) old.remove();
 
-  const canCancel   = res.status === 'pending' || res.status === 'active';
-  const statusLabel = res.status === 'pending'
-    ? '<span class="break">Pending — not yet activated at Kiosk</span>'
-    : '<span class="open">Active — ticket assigned</span>';
-  const ticketLine  = res.ticketNumber
-    ? `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
+    const canCancel = res.status === 'pending' || res.status === 'active';
+    const statusLabel = res.status === 'pending' ?
+        '<span class="break">Pending — not yet activated at Kiosk</span>' :
+        '<span class="open">Active — ticket assigned</span>';
+    const ticketLine = res.ticketNumber ?
+        `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
 
-  const banner = document.createElement('div');
-  banner.id        = 'activeResBanner';
-  banner.className = 'active-res-banner';
-  banner.innerHTML = `
+    const banner = document.createElement('div');
+    banner.id = 'activeResBanner';
+    banner.className = 'active-res-banner';
+    banner.innerHTML = `
     <div class="active-res-header">
       <span>📋 Active Reservation</span>
       ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}

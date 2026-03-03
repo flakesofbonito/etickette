@@ -1,69 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>eTickette – Lobby Monitor</title>
-  <link rel="stylesheet" href="monitor.css"/>
-  <link rel="icon" href="../assets/logo.png" type="image/png">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>eTickette – Lobby Monitor</title>
+    <link rel="stylesheet" href="monitor.css" />
+    <link rel="icon" href="../assets/logo.png" type="image/png">
 </head>
+
 <body>
 
-  <div class="monitor-header">
-    <img src="../assets/sti-logo.png" class="monitor-logo"/>
-    <div class="monitor-title">
-      <h1>eTickette</h1>
-      <p>STI College Fairview — Queue Monitor</p>
-    </div>
-    <div class="monitor-time" id="monitorTime">00:00:00</div>
-  </div>
-
-  <div class="monitor-grid">
-
-    <!-- CASHIER PANEL -->
-    <div class="dept-panel" id="cashierPanel">
-      <div class="dept-label cashier-label">💰 CASHIER</div>
-      <div class="dept-status" id="cashierMonStatus">OPEN</div>
-      <div class="now-serving-label">Now Serving</div>
-      <div class="now-serving-number" id="cashierNow">—</div>
-      <div class="next-label">Next in Line</div>
-      <div class="next-list" id="cashierNext">
-        <span class="next-item empty">No tickets yet</span>
-      </div>
-      <div class="queue-total">
-        Total in queue: <strong id="cashierTotal">0</strong>
-      </div>
+    <div class="monitor-header">
+        <img src="../assets/sti-logo.png" class="monitor-logo" />
+        <div class="monitor-title">
+            <h1>eTickette</h1>
+            <p>STI College Fairview — Queue Monitor</p>
+        </div>
+        <div class="monitor-time" id="monitorTime">00:00:00</div>
     </div>
 
-    <!-- DIVIDER -->
-    <div class="monitor-divider"></div>
+    <div class="monitor-grid">
 
-    <!-- REGISTRAR PANEL -->
-    <div class="dept-panel" id="registrarPanel">
-      <div class="dept-label registrar-label">📋 REGISTRAR</div>
-      <div class="dept-status" id="registrarMonStatus">OPEN</div>
-      <div class="now-serving-label">Now Serving</div>
-      <div class="now-serving-number" id="registrarNow">—</div>
-      <div class="next-label">Next in Line</div>
-      <div class="next-list" id="registrarNext">
-        <span class="next-item empty">No tickets yet</span>
-      </div>
-      <div class="queue-total">
-        Total in queue: <strong id="registrarTotal">0</strong>
-      </div>
+        <!-- CASHIER PANEL -->
+        <div class="dept-panel" id="cashierPanel">
+            <div class="dept-label cashier-label">💰 CASHIER</div>
+            <div class="dept-status" id="cashierMonStatus">OPEN</div>
+            <div class="now-serving-label">Now Serving</div>
+            <div class="now-serving-number" id="cashierNow">—</div>
+            <div class="next-label">Next in Line</div>
+            <div class="next-list" id="cashierNext">
+                <span class="next-item empty">No tickets yet</span>
+            </div>
+            <div class="queue-total">
+                Total in queue: <strong id="cashierTotal">0</strong>
+            </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="monitor-divider"></div>
+
+        <!-- REGISTRAR PANEL -->
+        <div class="dept-panel" id="registrarPanel">
+            <div class="dept-label registrar-label">📋 REGISTRAR</div>
+            <div class="dept-status" id="registrarMonStatus">OPEN</div>
+            <div class="now-serving-label">Now Serving</div>
+            <div class="now-serving-number" id="registrarNow">—</div>
+            <div class="next-label">Next in Line</div>
+            <div class="next-list" id="registrarNext">
+                <span class="next-item empty">No tickets yet</span>
+            </div>
+            <div class="queue-total">
+                Total in queue: <strong id="registrarTotal">0</strong>
+            </div>
+        </div>
+
     </div>
 
-  </div>
+    <div class="monitor-footer">
+        <span id="footerStatus">🟢 System Live</span>
+        <span>Please wait for your number to be called at the window</span>
+        <span id="footerQuota">Slots: — / —</span>
+    </div>
 
-  <div class="monitor-footer">
-    <span id="footerStatus">🟢 System Live</span>
-    <span>Please wait for your number to be called at the window</span>
-    <span id="footerQuota">Slots: — / —</span>
-  </div>
-
-<script type="module">
-  import { initMonitor } from './js/monitor.js';
-  initMonitor();
-</script>
+    <script type="module">
+        import { initMonitor } from './js/monitor.js'; initMonitor();
+    </script>
 </body>
+
 </html>
