@@ -809,3 +809,21 @@ body.dark {
 .banner-qr img {
   display: none !important;
 }
+
+/* QR Code — modal (reserveQR) */
+#reserveQR {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 12px 0;
+}
+
+#reserveQR canvas {
+  display: none !important;
+}
+
+#reserveQR img {
+  display: block !important;
+  margin: 0 auto !important;
+}
