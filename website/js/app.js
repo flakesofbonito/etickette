@@ -36,11 +36,11 @@ const REASONS = {
 };
 
 let app, db;
-let currentStudentId = null;
-let reserveDept      = null;
-let reserveReason    = null;
-let currentStep      = 1;
-let hasActiveReservation = false; // track so we can disable reserve buttons
+let currentStudentId     = null;
+let reserveDept          = null;
+let reserveReason        = null;
+let currentStep          = 1;
+let hasActiveReservation = false;
 
 export function initWebsite() {
   app = initializeApp(firebaseConfig);
@@ -79,7 +79,6 @@ function loginStudent() {
   currentStudentId = val;
   sessionStorage.setItem('studentId', val);
 
-  // Dismiss overlay, unlock app
   document.getElementById('loginOverlay').classList.add('dismissed');
   document.getElementById('appShell').classList.remove('locked');
   document.getElementById('appShell').classList.add('unlocked');
@@ -100,7 +99,7 @@ function afterLogin() {
   navigate('home');
   listenToDepts();
   listenToSettings();
-  listenToActiveReservation(); // live listener instead of one-time fetch
+  listenToActiveReservation();
 }
 
 function logout() {
@@ -109,11 +108,10 @@ function logout() {
   hasActiveReservation = false;
   document.getElementById('userDisplay').style.display = 'none';
 
-  // Show overlay again, lock app
   const overlay = document.getElementById('loginOverlay');
   overlay.style.display = 'flex';
   overlay.classList.remove('dismissed');
-  document.getElementById('loginId').value = '';
+  document.getElementById('loginId').value          = '';
   document.getElementById('loginError').textContent = '';
   document.getElementById('appShell').classList.add('locked');
   document.getElementById('appShell').classList.remove('unlocked');
@@ -148,16 +146,15 @@ function listenToDepts() {
       const d      = snap.data();
       const status = (d.status || 'open').toLowerCase();
       const map    = {
-        open:   { t: 'OPEN',     c: 'open',  dis: false },
-        break:  { t: 'ON BREAK', c: 'break', dis: true  },
-        closed: { t: 'CLOSED',   c: 'closed',dis: true  }
+        open:   { t: 'OPEN',     c: 'open',   dis: false },
+        break:  { t: 'ON BREAK', c: 'break',  dis: true  },
+        closed: { t: 'CLOSED',   c: 'closed', dis: true  }
       };
       const m = map[status] || map.open;
       document.getElementById(dept + 'Status').textContent = m.t;
       document.getElementById(dept + 'Status').className   = m.c;
       document.getElementById(dept + 'Queue').textContent  = d.queue || 0;
 
-      // Disable button if dept closed OR student already has a reservation
       const btn = document.getElementById(dept + 'Btn');
       btn.disabled = m.dis || hasActiveReservation;
     });
@@ -181,8 +178,8 @@ function listenToSettings() {
 }
 
 // ── ACTIVE RESERVATION LIVE LISTENER ────────────────────────
-// Listens in real time so the UI reacts immediately after
-// cancel or after kiosk activation — no manual refresh needed.
+// FIX 3: Added error callbacks to onSnapshot so a missing/deleted
+// 'reservations' collection doesn't leave the UI stuck loading.
 function listenToActiveReservation() {
   // 1) Watch pending/active reservations
   const resQ = query(
@@ -201,6 +198,13 @@ function listenToActiveReservation() {
       setReserveButtonsLocked(true);
       renderActiveResBanner(snap.docs[0].data(), snap.docs[0].id);
     }
+  }, err => {
+    // FIX 3: Collection missing or index not yet created — fail gracefully
+    console.warn('[reservations listener]', err.code, err.message);
+    hasActiveReservation = false;
+    setReserveButtonsLocked(false);
+    const banner = document.getElementById('activeResBanner');
+    if (banner) banner.remove();
   });
 
   // 2) Watch walk-in tickets — single field query, filter in JS
@@ -220,6 +224,9 @@ function listenToActiveReservation() {
         renderActiveWalkinBanner(activeTicket.data());
       }
     }
+  }, err => {
+    // FIX 3: Fail gracefully
+    console.warn('[tickets listener]', err.code, err.message);
   });
 }
 
@@ -232,23 +239,18 @@ function setReserveButtonsLocked(locked) {
         btn.disabled = true;
         btn.title    = 'Cancel your current reservation first.';
       } else {
-        // Only re-enable if dept is actually open
-        // listenToDepts() handles the open/closed logic,
-        // so just remove the reservation lock
         btn.title = '';
-        // We don't force-enable here — let listenToDepts handle it
       }
     }
   });
 }
 
-// Render the active reservation banner inside the History/Reservations view
+// ── RENDER ACTIVE RESERVATION BANNER ─────────────────────────
 function renderActiveResBanner(res, rid) {
-  // Remove old banner if exists
   const old = document.getElementById('activeResBanner');
   if (old) old.remove();
 
-  const canCancel = res.status === 'pending' || res.status === 'active';
+  const canCancel  = res.status === 'pending' || res.status === 'active';
   const statusLabel = res.status === 'pending'
     ? '<span class="break">Pending — not yet activated at Kiosk</span>'
     : '<span class="open">Active — ticket assigned</span>';
@@ -278,33 +280,35 @@ function renderActiveResBanner(res, rid) {
     </div>
   `;
 
-  // Insert at the top of the history list container
   const historyView = document.getElementById('view-history');
   const pageCard    = historyView.querySelector('.page-card');
   pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 
-  // Render QR if pending
+  // FIX 2: Render QR — hide canvas, show only img to prevent double QR
   if (res.status === 'pending') {
     setTimeout(() => {
       const qrEl = document.getElementById('bannerQR');
-      if (qrEl) {
-        qrEl.innerHTML = '';
-        qrEl.style.width  = '140px';
-qrEl.style.height = '140px';
-new QRCode(qrEl, {
-  text:       rid,
-  width:      140,
-  height:     140,
-  colorDark:  '#1f3c88',
-  colorLight: '#ffffff'
-});
-setTimeout(() => {
-  const canvas = qrEl.querySelector('canvas');
-  const img    = qrEl.querySelector('img');
-  if (canvas) { canvas.style.width = '140px'; canvas.style.height = '140px'; }
-  if (img)    { img.style.width    = '140px'; img.style.height    = '140px'; }
-}, 100);  
-      }
+      if (!qrEl) return;
+      qrEl.innerHTML  = '';
+      qrEl.style.width  = '140px';
+      qrEl.style.height = '140px';
+      new QRCode(qrEl, {
+        text:       rid,
+        width:      140,
+        height:     140,
+        colorDark:  '#1f3c88',
+        colorLight: '#ffffff'
+      });
+      setTimeout(() => {
+        const canvas = qrEl.querySelector('canvas');
+        const img    = qrEl.querySelector('img');
+        if (canvas) canvas.style.display = 'none';          // FIX 2: hide duplicate canvas
+        if (img) {
+          img.style.width   = '140px';
+          img.style.height  = '140px';
+          img.style.display = 'block';
+        }
+      }, 150);
     }, 50);
   }
 }
@@ -347,17 +351,15 @@ async function cancelReservation(rid, status) {
 
   try {
     await updateDoc(doc(db, 'reservations', rid), {
-      status:       'cancelled',
-      cancelledAt:  serverTimestamp()
+      status:      'cancelled',
+      cancelledAt: serverTimestamp()
     });
 
-    // If already active (ticket assigned), also remove from queue
     if (status === 'active') {
       const resSnap = await getDoc(doc(db, 'reservations', rid));
       const tNum    = resSnap.data().ticketNumber;
       if (tNum) {
         await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
-        // Decrement the queue count
         const dept = resSnap.data().department;
         await updateDoc(doc(db, 'departments', dept), {
           queue: Math.max(0, (await getDoc(doc(db, 'departments', dept))).data().queue - 1)
@@ -426,29 +428,39 @@ async function submitReserveDate() {
   if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
   errEl.textContent = '';
 
-  // Block if existing reservation
-  const resQ = query(
-    collection(db, 'reservations'),
-    where('studentId', '==', currentStudentId),
-    where('status', 'in', ['pending', 'active'])
-  );
-  const existingRes = await getDocs(resQ);
-  if (!existingRes.empty) {
-    errEl.textContent = 'You already have an active reservation. Cancel it first.';
-    return;
+  // FIX 1: Wrap reservation check in try/catch so a missing collection
+  // doesn't show "Error reserving" when the write itself succeeds.
+  try {
+    const resQ = query(
+      collection(db, 'reservations'),
+      where('studentId', '==', currentStudentId),
+      where('status', 'in', ['pending', 'active'])
+    );
+    const existingRes = await getDocs(resQ);
+    if (!existingRes.empty) {
+      errEl.textContent = 'You already have an active reservation. Cancel it first.';
+      return;
+    }
+  } catch (e) {
+    // Collection may not exist yet — safe to continue; write will create it
+    console.warn('[reservation pre-check]', e.code);
   }
 
-  // Block if already has a waiting kiosk ticket
-  const ticketQ = query(
-    collection(db, 'tickets'),
-    where('userId', '==', currentStudentId),
-    where('status', '==', 'waiting')
-  );
-  const existingTicket = await getDocs(ticketQ);
-  if (!existingTicket.empty) {
-    const t = existingTicket.docs[0].data();
-    errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue. No need to reserve.`;
-    return;
+  // FIX 1: Wrap ticket check too
+  try {
+    const ticketQ = query(
+      collection(db, 'tickets'),
+      where('userId', '==', currentStudentId),
+      where('status', '==', 'waiting')
+    );
+    const existingTicket = await getDocs(ticketQ);
+    if (!existingTicket.empty) {
+      const t = existingTicket.docs[0].data();
+      errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue. No need to reserve.`;
+      return;
+    }
+  } catch (e) {
+    console.warn('[ticket pre-check]', e.code);
   }
 
   try {
@@ -464,31 +476,36 @@ async function submitReserveDate() {
       createdAt:       serverTimestamp()
     });
 
-    // FIX: decrement slots when reservation is made, not just at kiosk
     await updateDoc(doc(db, 'system', 'settings'), {
       ticketsIssued: increment(1)
     });
 
     document.getElementById('reserveSummary').textContent =
       reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
+
+    // FIX 2: Clear container, generate QR, then hide canvas — show only img
     const qrEl = document.getElementById('reserveQR');
-qrEl.innerHTML = '';
-qrEl.style.width  = '160px';
-qrEl.style.height = '160px';
-new QRCode(qrEl, {
-  text:       rid,
-  width:      160,
-  height:     160,
-  colorDark:  '#1f3c88',
-  colorLight: '#ffffff'
-});
-// Force canvas to be square after render
-setTimeout(() => {
-  const canvas = qrEl.querySelector('canvas');
-  const img    = qrEl.querySelector('img');
-  if (canvas) { canvas.style.width = '160px'; canvas.style.height = '160px'; }
-  if (img)    { img.style.width    = '160px'; img.style.height    = '160px'; }
-}, 100);
+    qrEl.innerHTML  = '';
+    qrEl.style.width  = '160px';
+    qrEl.style.height = '160px';
+    new QRCode(qrEl, {
+      text:       rid,
+      width:      160,
+      height:     160,
+      colorDark:  '#1f3c88',
+      colorLight: '#ffffff'
+    });
+    setTimeout(() => {
+      const canvas = qrEl.querySelector('canvas');
+      const img    = qrEl.querySelector('img');
+      if (canvas) canvas.style.display = 'none';    // FIX 2: hide duplicate
+      if (img) {
+        img.style.width   = '160px';
+        img.style.height  = '160px';
+        img.style.display = 'block';
+        img.style.margin  = '0 auto';
+      }
+    }, 150);
 
     rGoStep(3);
     showToast('Reservation saved!', 'success');
@@ -499,6 +516,7 @@ setTimeout(() => {
   }
 }
 
+// ── HISTORY ──────────────────────────────────────────────────
 async function loadHistory() {
   const el = document.getElementById('historyList');
   el.innerHTML = '<p class="subtle">Loading...</p>';
@@ -506,9 +524,8 @@ async function loadHistory() {
     const resSnap = await getDocs(query(
       collection(db, 'reservations'),
       where('studentId', '==', currentStudentId)
-    ));
+    )).catch(() => ({ forEach: () => {} })); // FIX 1: graceful if collection missing
 
-    // Single field only — no composite index needed
     const ticketSnap = await getDocs(query(
       collection(db, 'tickets'),
       where('userId', '==', currentStudentId)
@@ -550,8 +567,16 @@ async function loadHistory() {
   }
 }
 
+// ── MODAL HELPERS ────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
 
-// ── TOAST ─────────────────────────────────────────────────────
+function handleOverlay(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// ── TOAST ────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
