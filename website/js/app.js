@@ -107,7 +107,6 @@ function logout() {
   currentStudentId     = null;
   hasActiveReservation = false;
   document.getElementById('userDisplay').style.display = 'none';
-
   const overlay = document.getElementById('loginOverlay');
   overlay.style.display = 'flex';
   overlay.classList.remove('dismissed');
@@ -154,9 +153,8 @@ function listenToDepts() {
       document.getElementById(dept + 'Status').textContent = m.t;
       document.getElementById(dept + 'Status').className   = m.c;
       document.getElementById(dept + 'Queue').textContent  = d.queue || 0;
-
       const btn = document.getElementById(dept + 'Btn');
-      btn.disabled = m.dis || hasActiveReservation;
+      if (btn) btn.disabled = m.dis || hasActiveReservation;
     });
   });
 }
@@ -166,66 +164,63 @@ function listenToSettings() {
     if (!snap.exists()) return;
     const d   = snap.data();
     const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
-    document.getElementById('quotaText').textContent = rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
+    document.getElementById('quotaText').textContent =
+      rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
     const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
     const el  = document.getElementById('congestionText');
-    if      (pct < 0.4)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open';   }
-    else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break';  }
-    else                  { el.textContent = 'HIGH TRAFFIC'; el.className = 'closed'; }
+    if      (pct < 0.4)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open';  }
+    else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break'; }
+    else                  { el.textContent = 'HIGH TRAFFIC'; el.className = 'closed';}
     if (d.statusMessage)
       document.getElementById('globalStatus').textContent = d.statusMessage;
   });
 }
 
 // ── ACTIVE RESERVATION LIVE LISTENER ────────────────────────
+// Uses SINGLE-FIELD queries only — zero composite indexes needed.
 function listenToActiveReservation() {
-  // Query by ONE field only — no composite index needed
-  const resQ = query(
-    collection(db, 'reservations'),
-    where('studentId', '==', currentStudentId)
-  );
-  onSnapshot(resQ, snap => {
-    // Filter active/pending in JS — avoids needing a composite index
-    const activeDoc = snap.docs.find(d => {
-      const s = d.data().status;
-      return s === 'pending' || s === 'active';
-    });
-    if (!activeDoc) {
+  // Watch reservations — filter status in JS
+  onSnapshot(
+    query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
+    snap => {
+      const activeDoc = snap.docs.find(d => {
+        const s = d.data().status;
+        return s === 'pending' || s === 'active';
+      });
+      if (!activeDoc) {
+        hasActiveReservation = false;
+        setReserveButtonsLocked(false);
+        const b = document.getElementById('activeResBanner');
+        if (b) b.remove();
+      } else {
+        hasActiveReservation = true;
+        setReserveButtonsLocked(true);
+        renderActiveResBanner(activeDoc.data(), activeDoc.id);
+      }
+    },
+    err => {
+      console.warn('[res snapshot]', err.code);
       hasActiveReservation = false;
       setReserveButtonsLocked(false);
-      const banner = document.getElementById('activeResBanner');
-      if (banner) banner.remove();
-    } else {
-      hasActiveReservation = true;
-      setReserveButtonsLocked(true);
-      renderActiveResBanner(activeDoc.data(), activeDoc.id);
     }
-  }, err => {
-    console.warn('[reservations listener]', err.code, err.message);
-    hasActiveReservation = false;
-    setReserveButtonsLocked(false);
-  });
-
-  // Query tickets by ONE field only — filter status in JS
-  const walkinQ = query(
-    collection(db, 'tickets'),
-    where('userId', '==', currentStudentId)
   );
-  onSnapshot(walkinQ, snap => {
-    const activeTicket = snap.docs.find(d => {
-      const s = d.data().status;
-      return s === 'waiting' || s === 'serving';
-    });
-    if (activeTicket) {
-      hasActiveReservation = true;
-      setReserveButtonsLocked(true);
-      if (!document.getElementById('activeResBanner')) {
-        renderActiveWalkinBanner(activeTicket.data());
+
+  // Watch tickets — filter status in JS
+  onSnapshot(
+    query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
+    snap => {
+      const active = snap.docs.find(d => {
+        const s = d.data().status;
+        return s === 'waiting' || s === 'serving';
+      });
+      if (active && !document.getElementById('activeResBanner')) {
+        hasActiveReservation = true;
+        setReserveButtonsLocked(true);
+        renderActiveWalkinBanner(active.data());
       }
-    }
-  }, err => {
-    console.warn('[tickets listener]', err.code, err.message);
-  });
+    },
+    err => console.warn('[ticket snapshot]', err.code)
+  );
 }
 
 function setReserveButtonsLocked(locked) {
@@ -238,39 +233,25 @@ function setReserveButtonsLocked(locked) {
   });
 }
 
-// ── HELPER: render QR into an element (single image, no duplicate) ───────────
+// ── QR RENDER HELPER ─────────────────────────────────────────
+// Generates a QR code in `el` at `size`px.
+// qrcodejs renders both <canvas> AND <img>; we keep only canvas.
 function renderQR(el, text, size) {
   el.innerHTML = '';
-  el.style.width  = size + 'px';
-  el.style.height = size + 'px';
-  el.style.display = 'flex';
-  el.style.justifyContent = 'center';
-  el.style.alignItems = 'center';
-
-  // Use only the canvas variant — avoids the img+canvas double-render
-  const qr = new QRCode(el, {
+  new QRCode(el, {
     text,
-    width:      size,
-    height:     size,
-    colorDark:  '#1f3c88',
-    colorLight: '#ffffff',
+    width:        size,
+    height:       size,
+    colorDark:    '#1f3c88',
+    colorLight:   '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
   });
-
-  // qrcodejs renders both canvas and img; hide everything except the canvas
-  // Use MutationObserver so we catch the elements the moment they're added
-  const observer = new MutationObserver(() => {
-    const canvas = el.querySelector('canvas');
-    const img    = el.querySelector('img');
-    if (canvas) {
-      canvas.style.width  = size + 'px';
-      canvas.style.height = size + 'px';
-      canvas.style.display = 'block';
-    }
-    if (img) img.style.display = 'none'; // hide the duplicate img
-    if (canvas || img) observer.disconnect(); // done
+  // Hide the duplicate <img> the moment it appears
+  const obs = new MutationObserver(() => {
+    const img = el.querySelector('img');
+    if (img) { img.style.display = 'none'; obs.disconnect(); }
   });
-  observer.observe(el, { childList: true, subtree: true });
+  obs.observe(el, { childList: true, subtree: true });
 }
 
 // ── RENDER ACTIVE RESERVATION BANNER ─────────────────────────
@@ -291,7 +272,10 @@ function renderActiveResBanner(res, rid) {
   banner.innerHTML = `
     <div class="active-res-header">
       <span>📋 Active Reservation</span>
-      ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
+      ${canCancel
+        ? `<button class="btn-cancel-res"
+             onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>`
+        : ''}
     </div>
     <div class="active-res-body">
       <div class="active-res-info">
@@ -300,16 +284,19 @@ function renderActiveResBanner(res, rid) {
         <p><strong>Date:</strong> ${res.reservationDate}</p>
         ${ticketLine}
         <p><strong>Status:</strong> ${statusLabel}</p>
-        ${res.status === 'pending' ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>' : ''}
+        ${res.status === 'pending'
+          ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>'
+          : ''}
       </div>
-      ${res.status === 'pending' ? '<div id="bannerQR" class="qr-center banner-qr"></div>' : ''}
+      ${res.status === 'pending'
+        ? '<div id="bannerQR" class="qr-center banner-qr"></div>'
+        : ''}
     </div>`;
 
   const pageCard = document.getElementById('view-history').querySelector('.page-card');
   pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 
   if (res.status === 'pending') {
-    // Wait for the element to be in the DOM before rendering QR
     requestAnimationFrame(() => {
       const qrEl = document.getElementById('bannerQR');
       if (qrEl) renderQR(qrEl, rid, 160);
@@ -334,7 +321,9 @@ function renderActiveWalkinBanner(ticket) {
       <div class="active-res-info">
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
         <p><strong>Ticket #:</strong>
-          <span style="font-size:1.6em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span>
+          <span style="font-size:1.6em;font-weight:900;color:#1f3c88">
+            ${ticket.ticketNumber}
+          </span>
         </p>
         <p><strong>Status:</strong> ${statusLabel}</p>
       </div>
@@ -358,22 +347,23 @@ async function cancelReservation(rid, status) {
       status:      'cancelled',
       cancelledAt: serverTimestamp()
     });
-
     if (status === 'active') {
-      const resSnap = await getDoc(doc(db, 'reservations', rid));
-      const tNum    = resSnap.data().ticketNumber;
+      const snap = await getDoc(doc(db, 'reservations', rid));
+      const tNum = snap.data().ticketNumber;
       if (tNum) {
         await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
-        const dept = resSnap.data().department;
+        const dept  = snap.data().department;
         const dSnap = await getDoc(doc(db, 'departments', dept));
-        await updateDoc(doc(db, 'departments', dept), {
-          queue: Math.max(0, (dSnap.data().queue || 1) - 1)
-        });
+        if (dSnap.exists()) {
+          await updateDoc(doc(db, 'departments', dept), {
+            queue: Math.max(0, (dSnap.data().queue || 1) - 1)
+          });
+        }
       }
     }
     showToast('Reservation cancelled.', 'warning');
   } catch (e) {
-    console.error(e);
+    console.error('[cancelReservation]', e);
     showToast('Could not cancel. Try again.', 'error');
   }
 }
@@ -385,7 +375,6 @@ function openReserveModal(dept) {
     showToast('You already have an active reservation. Cancel it first.', 'warning');
     return;
   }
-
   reserveDept = dept;
   document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
   document.getElementById('reserveTitle').textContent   =
@@ -431,43 +420,42 @@ async function submitReserveDate() {
   if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
   errEl.textContent = '';
 
-  // Check for existing reservation — single field query, filter in JS
-  // This avoids needing any composite index
+  // ── Pre-check 1: already have a pending/active reservation?
+  // Single-field query — no composite index needed
   try {
-    const resSnap = await getDocs(query(
-      collection(db, 'reservations'),
-      where('studentId', '==', currentStudentId)
-    ));
-    const hasActive = resSnap.docs.some(d => {
+    const snap = await getDocs(
+      query(collection(db, 'reservations'), where('studentId', '==', currentStudentId))
+    );
+    const already = snap.docs.some(d => {
       const s = d.data().status;
       return s === 'pending' || s === 'active';
     });
-    if (hasActive) {
+    if (already) {
       errEl.textContent = 'You already have an active reservation. Cancel it first.';
       return;
     }
   } catch (e) {
-    console.warn('[reservation pre-check skipped]', e.code);
-    // Safe to continue — collection may not exist yet
+    console.warn('[pre-check res]', e.code); // safe to continue
   }
 
-  // Check for existing waiting ticket — single field query, filter in JS
+  // ── Pre-check 2: already have a waiting ticket?
+  // Single-field query — no composite index needed
   try {
-    const ticketSnap = await getDocs(query(
-      collection(db, 'tickets'),
-      where('userId', '==', currentStudentId)
-    ));
-    const waitingTicket = ticketSnap.docs.find(d => d.data().status === 'waiting');
-    if (waitingTicket) {
-      const t = waitingTicket.data();
-      errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
+    const snap = await getDocs(
+      query(collection(db, 'tickets'), where('userId', '==', currentStudentId))
+    );
+    const waiting = snap.docs.find(d => d.data().status === 'waiting');
+    if (waiting) {
+      const t = waiting.data();
+      errEl.textContent =
+        `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
       return;
     }
   } catch (e) {
-    console.warn('[ticket pre-check skipped]', e.code);
+    console.warn('[pre-check ticket]', e.code); // safe to continue
   }
 
-  // All clear — write the reservation
+  // ── Write the reservation ─────────────────────────────────
   let rid;
   try {
     rid = 'RES-' + currentStudentId + '-' + Date.now();
@@ -482,25 +470,22 @@ async function submitReserveDate() {
       createdAt:       serverTimestamp()
     });
   } catch (e) {
-    errEl.textContent = 'Error saving reservation. Try again.';
     console.error('[setDoc reservation]', e);
-    return;
+    errEl.textContent = 'Error saving reservation. Try again.';
+    return; // stop here — nothing was saved
   }
 
-  // Update slot counter separately — if this fails, reservation is still valid
+  // ── Update slot counter (non-fatal if it fails) ───────────
   try {
-    await updateDoc(doc(db, 'system', 'settings'), {
-      ticketsIssued: increment(1)
-    });
+    await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
   } catch (e) {
-    // Non-fatal: reservation was saved, just the counter didn't update
-    console.warn('[settings increment skipped]', e.code);
+    console.warn('[settings increment]', e.code);
   }
 
+  // ── Show confirmation + QR ────────────────────────────────
   document.getElementById('reserveSummary').textContent =
     reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
 
-  // Render QR using the shared helper (no duplicate, MutationObserver-safe)
   const qrEl = document.getElementById('reserveQR');
   renderQR(qrEl, rid, 160);
 
@@ -516,35 +501,25 @@ async function loadHistory() {
   let ticketDocs = [];
   let resDocs    = [];
 
-  // Fetch tickets — single field, no index needed
   try {
-    const snap = await getDocs(query(
-      collection(db, 'tickets'),
-      where('userId', '==', currentStudentId)
-    ));
-    ticketDocs = snap.docs;
-  } catch (e) {
-    console.warn('[loadHistory tickets]', e.code);
-  }
+    const s = await getDocs(
+      query(collection(db, 'tickets'), where('userId', '==', currentStudentId))
+    );
+    ticketDocs = s.docs;
+  } catch (e) { console.warn('[history tickets]', e.code); }
 
-  // Fetch reservations — single field, no index needed
   try {
-    const snap = await getDocs(query(
-      collection(db, 'reservations'),
-      where('studentId', '==', currentStudentId)
-    ));
-    resDocs = snap.docs;
-  } catch (e) {
-    console.warn('[loadHistory reservations]', e.code);
-    // Not fatal — just show tickets
-  }
+    const s = await getDocs(
+      query(collection(db, 'reservations'), where('studentId', '==', currentStudentId))
+    );
+    resDocs = s.docs;
+  } catch (e) { console.warn('[history reservations]', e.code); }
 
   el.innerHTML = '';
 
-  // Show completed/cancelled walk-in tickets
   ticketDocs.forEach(d => {
     const t = d.data();
-    if (t.isReservation === true) return;
+    if (t.isReservation) return;
     if (t.status === 'waiting' || t.status === 'serving') return;
     const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
     const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
@@ -556,7 +531,6 @@ async function loadHistory() {
       </div>`;
   });
 
-  // Show completed/cancelled reservations
   resDocs.forEach(d => {
     const r = d.data();
     if (r.status === 'pending' || r.status === 'active') return;
@@ -577,7 +551,6 @@ async function loadHistory() {
 function closeModal(id) {
   document.getElementById(id).classList.remove('active');
 }
-
 function handleOverlay(e, id) {
   if (e.target === document.getElementById(id)) closeModal(id);
 }
@@ -590,4 +563,4 @@ function showToast(msg, type = 'info') {
   t.className   = 'toast ' + type + ' show';
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-}
+} 
