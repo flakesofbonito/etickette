@@ -37,20 +37,15 @@ export function initKiosk() {
   setInterval(updateClock, 1000);
   listenToDepts();
   listenToSettings();
-
-  // Runs on every startup — fixes queue counts after power cut
   recoverSystemState();
 }
 
 // ── POWER RECOVERY ───────────────────────────────────────────
-// Recounts real waiting tickets and resets queue + counter so
-// the system is always consistent after a restart/power outage.
 async function recoverSystemState() {
   try {
     for (const dept of ['cashier', 'registrar']) {
       const prefix = dept === 'cashier' ? 'C' : 'R';
 
-      // Count actual waiting tickets
       const waitSnap = await getDocs(query(
         collection(db, 'tickets'),
         where('department', '==', dept),
@@ -58,7 +53,6 @@ async function recoverSystemState() {
       ));
       const realQueue = waitSnap.size;
 
-      // Find highest ticket number ever issued for this dept
       const allSnap = await getDocs(query(
         collection(db, 'tickets'),
         where('department', '==', dept)
@@ -75,11 +69,7 @@ async function recoverSystemState() {
       const current = dSnap.exists() ? (dSnap.data().counter || 0) : 0;
       const safeCounter = Math.max(current, maxCounter);
 
-      await updateDoc(dRef, {
-        queue:   realQueue,
-        counter: safeCounter
-      });
-
+      await updateDoc(dRef, { queue: realQueue, counter: safeCounter });
       console.log('[Recovery] ' + dept + ': queue=' + realQueue + ', counter=' + safeCounter);
     }
   } catch (e) {
@@ -150,13 +140,16 @@ function pickDept(dept) {
 }
 
 // ── ID SUBMISSION ─────────────────────────────────────
+// FIX: Only accepts exactly 11 digits (e.g. 02000385394)
 function submitId() {
   const val = document.getElementById('idInput').value.trim();
   const err = document.getElementById('idError');
-  if (val.length < 3) {
-    err.textContent = 'Please enter a valid ID or name.';
+
+  if (!/^\d{11}$/.test(val)) {
+    err.textContent = 'Please enter a valid 11-digit Student ID (e.g. 02000385394).';
     return;
   }
+
   err.textContent = '';
   issueTicket(val);
 }
@@ -167,7 +160,7 @@ async function issueTicket(userId) {
   if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
 
   try {
-    // FIX 1: Block if student has a pending reservation
+    // Block if student has a pending reservation
     const resCheck = await getDocs(query(
       collection(db, 'reservations'),
       where('studentId', '==', userId),
@@ -181,7 +174,7 @@ async function issueTicket(userId) {
       return;
     }
 
-    // FIX 2: Block if student already has an active waiting ticket
+    // Block if student already has an active waiting ticket
     const activeCheck = await getDocs(query(
       collection(db, 'tickets'),
       where('userId', '==', userId),
@@ -252,7 +245,6 @@ function showTicketScreen(tNum, userId, ahead) {
 }
 
 // ── PRINT HELPER ──────────────────────────────────────
-// ── PRINT HELPER ──────────────────────────────────────
 async function printTicket(tNum, dept) {
   const qr_link = window.location.origin + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
   try {
@@ -310,13 +302,24 @@ async function onScanSuccess(decoded) {
 
     const res = resSnap.data();
     if (res.status !== 'pending') {
-      setScanStatus(res.status === 'active' ? 'Already checked in.' : 'Reservation no longer valid.');
+      setScanStatus(res.status === 'active'
+        ? 'Already checked in.'
+        : 'Reservation no longer valid.');
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    // FIX: Build today's date string using local time (not UTC) so timezone
+    // differences don't cause "reserved for today" to fail the check.
+    const now   = new Date();
+    const yyyy  = now.getFullYear();
+    const mm    = String(now.getMonth() + 1).padStart(2, '0');
+    const dd    = String(now.getDate()).padStart(2, '0');
+    const today = yyyy + '-' + mm + '-' + dd;   // e.g. "2026-03-04"
+
     if (res.reservationDate && res.reservationDate !== today) {
-      setScanStatus('This reservation is for ' + res.reservationDate + '.');
+      setScanStatus(
+        'This reservation is for ' + res.reservationDate + ', not today (' + today + ').'
+      );
       return;
     }
 
