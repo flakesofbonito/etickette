@@ -468,8 +468,9 @@ async function submitReserveDate() {
   }
 
   // All clear — write the reservation
+  let rid;
   try {
-    const rid = 'RES-' + currentStudentId + '-' + Date.now();
+    rid = 'RES-' + currentStudentId + '-' + Date.now();
     await setDoc(doc(db, 'reservations', rid), {
       studentId:       currentStudentId,
       department:      reserveDept,
@@ -480,25 +481,31 @@ async function submitReserveDate() {
       ticketNumber:    null,
       createdAt:       serverTimestamp()
     });
+  } catch (e) {
+    errEl.textContent = 'Error saving reservation. Try again.';
+    console.error('[setDoc reservation]', e);
+    return;
+  }
 
+  // Update slot counter separately — if this fails, reservation is still valid
+  try {
     await updateDoc(doc(db, 'system', 'settings'), {
       ticketsIssued: increment(1)
     });
-
-    document.getElementById('reserveSummary').textContent =
-      reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
-
-    // Render QR using the shared helper (no duplicate, MutationObserver-safe)
-    const qrEl = document.getElementById('reserveQR');
-    renderQR(qrEl, rid, 160);
-
-    rGoStep(3);
-    showToast('Reservation saved!', 'success');
-
   } catch (e) {
-    errEl.textContent = 'Error saving reservation. Try again.';
-    console.error('[submitReserveDate]', e);
+    // Non-fatal: reservation was saved, just the counter didn't update
+    console.warn('[settings increment skipped]', e.code);
   }
+
+  document.getElementById('reserveSummary').textContent =
+    reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
+
+  // Render QR using the shared helper (no duplicate, MutationObserver-safe)
+  const qrEl = document.getElementById('reserveQR');
+  renderQR(qrEl, rid, 160);
+
+  rGoStep(3);
+  showToast('Reservation saved!', 'success');
 }
 
 // ── HISTORY ──────────────────────────────────────────────────
