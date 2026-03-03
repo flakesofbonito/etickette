@@ -802,14 +802,6 @@ body.dark {
   margin: 12px 0;
 }
 
-.qr-center canvas {
-  display: block !important;
-  width: 160px !important;
-  height: 160px !important;
-}
-.qr-center img {
-  display: none !important;
-}
 .banner-qr canvas {
   width: 160px !important;
   height: 160px !important;

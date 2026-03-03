@@ -225,9 +225,7 @@ function setReserveButtonsLocked(locked) {
 // and also watch via MutationObserver for the async img insertion.
 function renderQR(el, text, size) {
   el.innerHTML = '';
-  
-  // Force center BEFORE rendering
-  el.style.cssText = 'display:flex!important; justify-content:center; align-items:center; width:100%;';
+  el.style.cssText = 'width:100%; text-align:center;';
 
   new QRCode(el, {
     text:         text,
@@ -238,16 +236,14 @@ function renderQR(el, text, size) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
-  el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
-  el.querySelectorAll('div').forEach(d => d.style.margin = '0 auto');
-
-  const obs = new MutationObserver(() => {
-    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
-    el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
-    if (el.querySelector('canvas')) obs.disconnect();
+  // IMG is what qrcodejs actually shows — center it
+  el.querySelectorAll('img').forEach(img => {
+    img.style.cssText = 'display:block!important; margin:0 auto;';
   });
-  obs.observe(el, { childList: true, subtree: true });
+  // Hide the canvas since img is being used
+  el.querySelectorAll('canvas').forEach(c => {
+    c.style.cssText = 'display:none!important;';
+  });
 }
 
 // ── BANNERS ───────────────────────────────────────────────────────────────────
