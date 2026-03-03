@@ -30,8 +30,7 @@ def get_printer():
 def print_ticket():
     if request.method == 'OPTIONS':
         return '', 204
-    
-def print_ticket():
+
     data = request.json
     dev  = get_printer()
 
@@ -42,34 +41,25 @@ def print_ticket():
         now    = datetime.now()
         dt_str = now.strftime("Date: %Y-%m-%d  Time: %I:%M%p")
 
-        # ── RESET & BEEP ──────────────────────────────────────────
-        dev.write(1, b'\x1b\x40')           # Reset printer
-        dev.write(1, b'\x1b\x42\x02\x01')   # Beep
-
-        # ── CENTER ALIGNMENT ──────────────────────────────────────
+        dev.write(1, b'\x1b\x40')
+        dev.write(1, b'\x1b\x42\x02\x01')
         dev.write(1, b'\x1b\x61\x01')
-
-        # ── LOGO (NV Flash slot 1) ────────────────────────────────
         dev.write(1, b'\x1c\x70\x01\x00')
 
-        # ── DEPARTMENT (bold) ─────────────────────────────────────
         dev.write(1,
             b'\x1b\x45\x01'
             b'DEPARTMENT: ' + data['dept'].upper().encode() +
             b'\x1b\x45\x00\n'
         )
 
-        # ── TICKET NUMBER (triple height+width) ───────────────────
         dev.write(1,
             b'\x1d\x21\x33'
             b'#' + data['number'].encode() + b'\n'
             b'\x1d\x21\x00'
         )
 
-        # ── DATE / TIME ───────────────────────────────────────────
         dev.write(1, dt_str.encode() + b'\n')
 
-        # ── QR CODE ───────────────────────────────────────────────
         qr_link = data['qr_link']
         dev.write(1, b'\x1b\x5a\x00\x01\x04')
         dev.write(1,
@@ -77,14 +67,10 @@ def print_ticket():
             qr_link.encode() + b'\x0a'
         )
 
-        # ── FOOTER ────────────────────────────────────────────────
         dev.write(1, b'Scan to track digitally\n')
         dev.write(1, b'Please wait for your number\n')
         dev.write(1, b'on the lobby monitor.\n')
-
-        # ── PAPER FEED ────────────────────────────────────────────
         dev.write(1, b'\x1b\x64\x02')
-        # dev.write(1, b'\x1d\x56\x41\x03')  # Uncomment if auto-cutter installed
 
         return jsonify({"status": "Success"})
 
@@ -96,8 +82,10 @@ def print_ticket():
         if dev is not None:
             usb.util.dispose_resources(dev)
 
-@app.route('/health')
+@app.route('/health', methods=['GET', 'OPTIONS'])
 def health():
+    if request.method == 'OPTIONS':
+        return '', 204
     dev = get_printer()
     printer_ok = dev is not None
     if dev: usb.util.dispose_resources(dev)

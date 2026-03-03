@@ -189,24 +189,24 @@ function listenToActiveReservation() {
     where('studentId', '==', currentStudentId),
     where('status', 'in', ['pending', 'active'])
   );
-  onSnapshot(q, snap => {
-    if (snap.empty) {
-      hasActiveReservation = false;
-      setReserveButtonsLocked(false);
-      const banner = document.getElementById('activeResBanner');
-      if (banner) banner.remove();
-    } else {
+  onSnapshot(walkinQ, snap => {
+    const active = snap.docs.find(d => {
+      const s = d.data().status;
+      return s === 'waiting' || s === 'serving';
+    });
+    if (active) {
       hasActiveReservation = true;
       setReserveButtonsLocked(true);
-      renderActiveResBanner(snap.docs[0].data(), snap.docs[0].id);
+      if (!document.getElementById('activeResBanner')) {
+        renderActiveWalkinBanner(active.data());
+      }
     }
   });
 
   // ── NEW: watch walk-in tickets ──
   const walkinQ = query(
     collection(db, 'tickets'),
-    where('userId', '==', currentStudentId),
-    where('status', 'in', ['waiting', 'serving'])
+    where('userId', '==', currentStudentId)
   );
   onSnapshot(walkinQ, snap => {
     if (!snap.empty) {
@@ -482,16 +482,18 @@ async function loadHistory() {
       collection(db, 'reservations'),
       where('studentId', '==', currentStudentId)
     ));
+
+    // Single field only — no composite index needed
     const ticketSnap = await getDocs(query(
       collection(db, 'tickets'),
-      where('userId', '==', currentStudentId),
-      where('isReservation', '==', false)
+      where('userId', '==', currentStudentId)
     ));
 
     el.innerHTML = '';
 
     ticketSnap.forEach(d => {
       const t = d.data();
+      if (t.isReservation === true) return;
       if (t.status === 'waiting' || t.status === 'serving') return;
       const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
       const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
@@ -523,48 +525,6 @@ async function loadHistory() {
   }
 }
 
-// ── ACTIVE WALK-IN TICKET BANNER ─────────────────────────────
-function renderActiveWalkinBanner(ticket) {
-  const old = document.getElementById('activeResBanner');
-  if (old) old.remove();
-
-  const statusLabel = ticket.status === 'serving'
-    ? '<span class="open">Now Serving — please proceed to the counter</span>'
-    : '<span class="break">Waiting — your number will be called on the monitor</span>';
-
-  const banner = document.createElement('div');
-  banner.id        = 'activeResBanner';
-  banner.className = 'active-res-banner';
-  banner.innerHTML = `
-    <div class="active-res-header">
-      <span>🎫 Active Ticket</span>
-    </div>
-    <div class="active-res-body">
-      <div class="active-res-info">
-        <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
-        <p><strong>Ticket #:</strong>
-          <span style="font-size:1.4em;font-weight:900;color:var(--yellow,#e3cf57)">
-            ${ticket.ticketNumber}
-          </span>
-        </p>
-        <p><strong>Type:</strong> Walk-in</p>
-        <p><strong>Status:</strong> ${statusLabel}</p>
-      </div>
-    </div>
-  `;
-
-  const historyView = document.getElementById('view-history');
-  const pageCard    = historyView.querySelector('.page-card');
-  pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
-}
-
-// ── MODAL HELPERS ─────────────────────────────────────────────
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-function handleOverlay(e, id) {
-  if (e.target.id === id) closeModal(id);
-}
 
 // ── TOAST ─────────────────────────────────────────────────────
 let toastTimer;
