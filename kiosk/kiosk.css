@@ -18,7 +18,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* ── HEADER ─────────────────────────────────────────── */
 .kiosk-header {
   display: flex;
   align-items: center;
@@ -38,7 +37,6 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── BANNER ──────────────────────────────────────────── */
 .kiosk-banner {
   background: rgba(255,255,255,.06);
   text-align: center;
@@ -49,7 +47,6 @@ html, body {
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-/* ── SCREENS ─────────────────────────────────────────── */
 .screen {
   display: none;
   padding: 24px 20px 32px;
@@ -72,7 +69,6 @@ html, body {
   text-align: center;
 }
 
-/* ── BIG BUTTONS ─────────────────────────────────────── */
 .big-btn-grid {
   display: flex;
   flex-direction: column;
@@ -116,7 +112,6 @@ html, body {
 }
 .big-btn-sub   { font-size: 13px; opacity: .75; }
 
-/* ── STATUS CHIPS ────────────────────────────────────── */
 .status-row {
   display: flex;
   gap: 12px;
@@ -134,13 +129,11 @@ html, body {
 .chip-break  { color: #fb923c; font-weight: 700; }
 .chip-closed { color: #f87171; font-weight: 700; }
 
-/* disabled dept button */
 .big-btn.disabled {
   opacity: .45;
   pointer-events: none;
 }
 
-/* ── BACK BUTTON ─────────────────────────────────────── */
 .back-btn {
   align-self: flex-start;
   background: none;
@@ -154,7 +147,6 @@ html, body {
 }
 .back-btn:hover { color: var(--white); }
 
-/* ── ID FORM ─────────────────────────────────────────── */
 .id-form {
   width: 100%;
   max-width: 380px;
@@ -214,7 +206,6 @@ html, body {
   margin-top: 10px;
 }
 
-/* ── TICKET CARD ─────────────────────────────────────── */
 .ticket-card {
   width: 100%;
   max-width: 380px;
@@ -285,7 +276,6 @@ html, body {
 }
 .ticket-qr-hint { font-size: 12px; opacity: .45; }
 
-/* ── QR SCANNER ──────────────────────────────────────── */
 .kiosk-qr-box {
   width: 100%;
   max-width: 320px;

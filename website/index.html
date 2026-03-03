@@ -1,277 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>eTickette – Reserve a Ticket</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <link rel="icon" href="../assets/logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>eTickette – Reserve a Ticket</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="../assets/logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
+
 <body>
 
-<!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════════
      FULL-PAGE LOGIN OVERLAY
 ══════════════════════════════════════════════════════ -->
-<div id="loginOverlay" class="login-overlay">
+    <div id="loginOverlay" class="login-overlay">
 
-  <div class="login-left">
-    <div class="login-left-content">
-      <img src="../assets/sti-logo.png" class="login-sti-logo"/>
-      <h1 class="login-brand">eTickette</h1>
-      <p class="login-tagline">Queue Smarter.<br/>Anywhere.</p>
-      <div class="login-features">
-        <div class="login-feature-item">
-          <span class="lf-icon">📅</span>
-          <span>Reserve a slot before you arrive</span>
+        <div class="login-left">
+            <div class="login-left-content">
+                <img src="../assets/sti-logo.png" class="login-sti-logo" />
+                <h1 class="login-brand">eTickette</h1>
+                <p class="login-tagline">Queue Smarter.<br/>Anywhere.</p>
+                <div class="login-features">
+                    <div class="login-feature-item">
+                        <span class="lf-icon">📅</span>
+                        <span>Reserve a slot before you arrive</span>
+                    </div>
+                    <div class="login-feature-item">
+                        <span class="lf-icon">📱</span>
+                        <span>Get your QR — scan at the Kiosk</span>
+                    </div>
+                    <div class="login-feature-item">
+                        <span class="lf-icon">📊</span>
+                        <span>Track your queue live</span>
+                    </div>
+                </div>
+            </div>
+            <p class="login-footer-note">STI College Fairview · SHS IT Track · 2025</p>
         </div>
-        <div class="login-feature-item">
-          <span class="lf-icon">📱</span>
-          <span>Get your QR — scan at the Kiosk</span>
-        </div>
-        <div class="login-feature-item">
-          <span class="lf-icon">📊</span>
-          <span>Track your queue live</span>
-        </div>
-      </div>
-    </div>
-    <p class="login-footer-note">STI College Fairview · SHS IT Track · 2025</p>
-  </div>
 
-  <div class="login-right">
-    <div class="login-card">
-      <div class="login-card-header">
-        <div class="login-avatar">🎓</div>
-        <h2>Welcome Back</h2>
-        <p>Enter your Student ID to continue</p>
-      </div>
-      <div class="login-form">
-        <label class="login-label">Student ID Number</label>
-        <div class="login-input-wrap">
-          <span class="login-input-icon">🪪</span>
-          <input
-            type="text"
-            id="loginId"
-            class="login-input"
-            maxlength="11"
-            placeholder="e.g. 02000385394"
-            inputmode="numeric"
-            autocomplete="off"
-            oninput="this.value=this.value.replace(/\D/g,'')"
-            onkeydown="if(event.key==='Enter') loginStudent()"
-          />
-        </div>
-        <p id="loginError" class="login-error"></p>
-        <button class="login-btn" onclick="loginStudent()">
+        <div class="login-right">
+            <div class="login-card">
+                <div class="login-card-header">
+                    <div class="login-avatar">🎓</div>
+                    <h2>Welcome Back</h2>
+                    <p>Enter your Student ID to continue</p>
+                </div>
+                <div class="login-form">
+                    <label class="login-label">Student ID Number</label>
+                    <div class="login-input-wrap">
+                        <span class="login-input-icon">🪪</span>
+                        <input type="text" id="loginId" class="login-input" maxlength="11" placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter') loginStudent()" />
+                    </div>
+                    <p id="loginError" class="login-error"></p>
+                    <button class="login-btn" onclick="loginStudent()">
           <span>Continue</span>
           <span class="login-btn-arrow">→</span>
         </button>
-      </div>
-      <p class="login-hint">11-digit Student ID required</p>
+                </div>
+                <p class="login-hint">11-digit Student ID required</p>
+            </div>
+        </div>
+
     </div>
-  </div>
 
-</div>
-
-<!-- ══════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════════
      MAIN APP
 ══════════════════════════════════════════════════════ -->
-<div id="appShell" class="app-shell locked">
+    <div id="appShell" class="app-shell locked">
 
-  <!-- Desktop sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="icon-bar">
-      <button class="menu-btn" onclick="toggleMenu()">☰</button>
-      <img src="../assets/home.png"     class="icon" onclick="navigate('home')"    title="Home"/>
-      <img src="../assets/about.png"    class="icon" onclick="navigate('about')"   title="About"/>
-      <img src="../assets/feedback.png" class="icon" onclick="navigate('history')" title="My Ticket"/>
-      <img src="../assets/profile.png"  class="icon" onclick="navigate('profile')" title="Profile"/>
-    </div>
-    <div class="slide-menu" id="slideMenu">
-      <img src="../assets/sti-logo.png" class="sti-logo"/>
-      <a class="nav-link active" data-view="home"    onclick="navigate('home')">
-        <img src="../assets/home.png"/>Home
-      </a>
-      <a class="nav-link" data-view="about"   onclick="navigate('about')">
-        <img src="../assets/about.png"/>About
-      </a>
-      <a class="nav-link" data-view="history" onclick="navigate('history')">
-        <img src="../assets/feedback.png"/>My Ticket
-      </a>
-      <a class="nav-link" data-view="profile" onclick="navigate('profile')">
-        <img src="../assets/profile.png"/>Profile
-      </a>
-    </div>
-  </div>
+        <!-- Desktop sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="icon-bar">
+                <button class="menu-btn" onclick="toggleMenu()">☰</button>
+                <img src="../assets/home.png" class="icon" onclick="navigate('home')" title="Home" />
+                <img src="../assets/about.png" class="icon" onclick="navigate('about')" title="About" />
+                <img src="../assets/feedback.png" class="icon" onclick="navigate('history')" title="My Ticket" />
+                <img src="../assets/profile.png" class="icon" onclick="navigate('profile')" title="Profile" />
+            </div>
+            <div class="slide-menu" id="slideMenu">
+                <img src="../assets/sti-logo.png" class="sti-logo" />
+                <a class="nav-link active" data-view="home" onclick="navigate('home')">
+                    <img src="../assets/home.png" />Home
+                </a>
+                <a class="nav-link" data-view="about" onclick="navigate('about')">
+                    <img src="../assets/about.png" />About
+                </a>
+                <a class="nav-link" data-view="history" onclick="navigate('history')">
+                    <img src="../assets/feedback.png" />My Ticket
+                </a>
+                <a class="nav-link" data-view="profile" onclick="navigate('profile')">
+                    <img src="../assets/profile.png" />Profile
+                </a>
+            </div>
+        </div>
 
-  <!-- Mobile bottom nav -->
-  <nav class="bottom-nav" id="bottomNav">
-    <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
+        <!-- Mobile bottom nav -->
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
       <img src="../assets/home.png" alt="Home"/>
       Home
     </button>
-    <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
+            <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
       <img src="../assets/about.png" alt="About"/>
       About
     </button>
-    <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
+            <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
       <img src="../assets/feedback.png" alt="My Ticket"/>
       My Ticket
     </button>
-    <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
+            <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
       <img src="../assets/profile.png" alt="Profile"/>
       Profile
     </button>
-  </nav>
+        </nav>
 
-  <div class="main" id="mainContent">
+        <div class="main" id="mainContent">
 
-    <div class="topbar">
-      <div class="brand">
-        <img src="../assets/logo.png" class="brand-logo"/>
-        <h2>eTickette</h2>
-      </div>
-      <div class="user" id="userDisplay" style="display:none">
-        <img src="../assets/avatar.png"/>
-        <span id="userLabel">—</span>
-        <button class="btn-logout" onclick="logout()">Log out</button>
-      </div>
-    </div>
-
-    <!-- HOME VIEW -->
-    <div id="view-home" class="view active">
-      <div class="status-banner" id="globalStatus">🟢 System is LIVE</div>
-      <div class="content">
-        <div class="left">
-          <img src="../assets/poster.jpg" class="poster"/>
-          <div class="info">
-            <span>Lobby Congestion</span>
-            <b id="congestionText" class="open">LOW TRAFFIC</b>
-          </div>
-          <div class="info">
-            <span>Slots Remaining Today</span>
-            <b id="quotaText">— / —</b>
-          </div>
-        </div>
-
-        <div class="right">
-          <div class="card">
-            <div class="card-header">
-              <img src="../assets/cashier.png"/>
-              <div>
-                <h3>Cashier Department</h3>
-                <p>Status: <span id="cashierStatus" class="open">OPEN</span></p>
-                <p class="queue-count">Queue: <span id="cashierQueue">0</span> ahead</p>
-              </div>
+            <div class="topbar">
+                <div class="brand">
+                    <img src="../assets/logo.png" class="brand-logo" />
+                    <h2>eTickette</h2>
+                </div>
+                <div class="user" id="userDisplay" style="display:none">
+                    <img src="../assets/avatar.png" />
+                    <span id="userLabel">—</span>
+                    <button class="btn-logout" onclick="logout()">Log out</button>
+                </div>
             </div>
-            <button class="btn-primary" id="cashierBtn" onclick="openReserveModal('cashier')">
+
+            <!-- HOME VIEW -->
+            <div id="view-home" class="view active">
+                <div class="status-banner" id="globalStatus">🟢 System is LIVE</div>
+                <div class="content">
+                    <div class="left">
+                        <img src="../assets/poster.jpg" class="poster" />
+                        <div class="info">
+                            <span>Lobby Congestion</span>
+                            <b id="congestionText" class="open">LOW TRAFFIC</b>
+                        </div>
+                        <div class="info">
+                            <span>Slots Remaining Today</span>
+                            <b id="quotaText">— / —</b>
+                        </div>
+                    </div>
+
+                    <div class="right">
+                        <div class="card">
+                            <div class="card-header">
+                                <img src="../assets/cashier.png" />
+                                <div>
+                                    <h3>Cashier Department</h3>
+                                    <p>Status: <span id="cashierStatus" class="open">OPEN</span></p>
+                                    <p class="queue-count">Queue: <span id="cashierQueue">0</span> ahead</p>
+                                </div>
+                            </div>
+                            <button class="btn-primary" id="cashierBtn" onclick="openReserveModal('cashier')">
               📅 RESERVE CASHIER TICKET
             </button>
-          </div>
+                        </div>
 
-          <div class="card">
-            <div class="card-header">
-              <img src="../assets/registrar.png"/>
-              <div>
-                <h3>Registrar Department</h3>
-                <p>Status: <span id="registrarStatus" class="open">OPEN</span></p>
-                <p class="queue-count">Queue: <span id="registrarQueue">0</span> ahead</p>
-              </div>
-            </div>
-            <button class="btn-primary" id="registrarBtn" onclick="openReserveModal('registrar')">
+                        <div class="card">
+                            <div class="card-header">
+                                <img src="../assets/registrar.png" />
+                                <div>
+                                    <h3>Registrar Department</h3>
+                                    <p>Status: <span id="registrarStatus" class="open">OPEN</span></p>
+                                    <p class="queue-count">Queue: <span id="registrarQueue">0</span> ahead</p>
+                                </div>
+                            </div>
+                            <button class="btn-primary" id="registrarBtn" onclick="openReserveModal('registrar')">
               📅 RESERVE REGISTRAR TICKET
             </button>
-          </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY VIEW -->
+            <div id="view-history" class="view">
+                <div class="page-card">
+                    <h2>My Ticket</h2>
+                    <div id="historyList">
+                        <p class="subtle">Loading…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABOUT VIEW -->
+            <div id="view-about" class="view">
+                <div class="page-card">
+                    <h2>About eTickette</h2>
+                    <p>eTickette is a <strong>Hybrid Smart Queue Management System</strong> for STI College Fairview.</p>
+                    <ul class="about-list">
+                        <li>📅 Reserve a slot online before coming to school</li>
+                        <li>📱 Get a QR code — scan at the Kiosk when you arrive</li>
+                        <li>🎫 Queue number is only issued when you scan at the Kiosk</li>
+                        <li>📊 Track your queue live from your phone</li>
+                    </ul>
+                    <p class="subtle">STI SHS – IT Mobile &amp; Web Track · 2025</p>
+                </div>
+            </div>
+
+            <!-- PROFILE VIEW -->
+            <div id="view-profile" class="view">
+                <div class="page-card">
+                    <h2>Profile</h2>
+                    <div id="profileInfo"></div>
+                </div>
+            </div>
+
         </div>
-      </div>
+        <!-- /main -->
+    </div>
+    <!-- /appShell -->
+
+    <!-- RESERVE MODAL -->
+    <div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
+            <div class="modal-dept-tag" id="reserveDeptTag">CASHIER</div>
+            <h2 id="reserveTitle">Reserve a Ticket</h2>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="rdot1"></div>
+                <div class="step-line"></div>
+                <div class="step-dot" id="rdot2"></div>
+                <div class="step-line"></div>
+                <div class="step-dot" id="rdot3"></div>
+            </div>
+
+            <div id="rstep1" class="modal-step active">
+                <p class="step-label">What do you need?</p>
+                <div id="reserveReasonList" class="reason-list"></div>
+            </div>
+
+            <div id="rstep2" class="modal-step">
+                <p class="step-label">Pick a date:</p>
+                <input type="date" id="reserveDate" class="modal-input" />
+                <p id="dateError" class="error-msg"></p>
+                <button class="btn-primary" onclick="submitReserveDate()">Reserve →</button>
+                <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
+            </div>
+
+            <div id="rstep3" class="modal-step">
+                <div class="success-anim">✅</div>
+                <h3 style="text-align:center">Reservation Confirmed!</h3>
+                <p id="reserveSummary" class="subtle" style="text-align:center;margin-bottom:12px"></p>
+                <div id="reserveQR" class="qr-center"></div>
+                <p class="subtle" style="text-align:center;margin-top:8px">
+                    Screenshot or save this QR code.<br/> Scan it at the <strong>Lobby Kiosk</strong> when you arrive.
+                </p>
+                <div class="qr-warning">
+                    ⚠️ Your queue number is <strong>NOT yet assigned</strong>.<br/> You must scan this QR at the Kiosk to get your number.
+                </div>
+                <button class="btn-primary" style="margin-top:16px" onclick="closeModal('reserveModal')">Done</button>
+            </div>
+        </div>
     </div>
 
-    <!-- HISTORY VIEW -->
-    <div id="view-history" class="view">
-      <div class="page-card">
-        <h2>My Ticket</h2>
-        <div id="historyList"><p class="subtle">Loading…</p></div>
-      </div>
-    </div>
+    <div id="toast" class="toast"></div>
 
-    <!-- ABOUT VIEW -->
-    <div id="view-about" class="view">
-      <div class="page-card">
-        <h2>About eTickette</h2>
-        <p>eTickette is a <strong>Hybrid Smart Queue Management System</strong> for STI College Fairview.</p>
-        <ul class="about-list">
-          <li>📅 Reserve a slot online before coming to school</li>
-          <li>📱 Get a QR code — scan at the Kiosk when you arrive</li>
-          <li>🎫 Queue number is only issued when you scan at the Kiosk</li>
-          <li>📊 Track your queue live from your phone</li>
-        </ul>
-        <p class="subtle">STI SHS – IT Mobile &amp; Web Track · 2025</p>
-      </div>
-    </div>
-
-    <!-- PROFILE VIEW -->
-    <div id="view-profile" class="view">
-      <div class="page-card">
-        <h2>Profile</h2>
-        <div id="profileInfo"></div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /appShell -->
-
-<!-- RESERVE MODAL -->
-<div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
-    <div class="modal-dept-tag" id="reserveDeptTag">CASHIER</div>
-    <h2 id="reserveTitle">Reserve a Ticket</h2>
-
-    <div class="step-indicator">
-      <div class="step-dot active" id="rdot1"></div>
-      <div class="step-line"></div>
-      <div class="step-dot" id="rdot2"></div>
-      <div class="step-line"></div>
-      <div class="step-dot" id="rdot3"></div>
-    </div>
-
-    <div id="rstep1" class="modal-step active">
-      <p class="step-label">What do you need?</p>
-      <div id="reserveReasonList" class="reason-list"></div>
-    </div>
-
-    <div id="rstep2" class="modal-step">
-      <p class="step-label">Pick a date:</p>
-      <input type="date" id="reserveDate" class="modal-input"/>
-      <p id="dateError" class="error-msg"></p>
-      <button class="btn-primary" onclick="submitReserveDate()">Reserve →</button>
-      <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
-    </div>
-
-    <div id="rstep3" class="modal-step">
-      <div class="success-anim">✅</div>
-      <h3 style="text-align:center">Reservation Confirmed!</h3>
-      <p id="reserveSummary" class="subtle" style="text-align:center;margin-bottom:12px"></p>
-      <div id="reserveQR" class="qr-center"></div>
-      <p class="subtle" style="text-align:center;margin-top:8px">
-        Screenshot or save this QR code.<br/>
-        Scan it at the <strong>Lobby Kiosk</strong> when you arrive.
-      </p>
-      <div class="qr-warning">
-        ⚠️ Your queue number is <strong>NOT yet assigned</strong>.<br/>
-        You must scan this QR at the Kiosk to get your number.
-      </div>
-      <button class="btn-primary" style="margin-top:16px" onclick="closeModal('reserveModal')">Done</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script type="module">
-  import { initWebsite } from './js/app.js?v=3';
-  initWebsite();
-</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="module">
+        import { initWebsite } from './js/app.js?v=3'; initWebsite();
+    </script>
 </body>
+
 </html>
