@@ -11,12 +11,10 @@
 <body>
 
 <!-- ══════════════════════════════════════════════════════
-     FULL-PAGE LOGIN OVERLAY — sits above everything
-     Removed only after successful login
+     FULL-PAGE LOGIN OVERLAY
 ══════════════════════════════════════════════════════ -->
 <div id="loginOverlay" class="login-overlay">
 
-  <!-- Left decorative panel -->
   <div class="login-left">
     <div class="login-left-content">
       <img src="../assets/sti-logo.png" class="login-sti-logo"/>
@@ -40,16 +38,13 @@
     <p class="login-footer-note">STI College Fairview · SHS IT Track · 2025</p>
   </div>
 
-  <!-- Right login form -->
   <div class="login-right">
     <div class="login-card">
-
       <div class="login-card-header">
         <div class="login-avatar">🎓</div>
         <h2>Welcome Back</h2>
         <p>Enter your Student ID to continue</p>
       </div>
-
       <div class="login-form">
         <label class="login-label">Student ID Number</label>
         <div class="login-input-wrap">
@@ -72,7 +67,6 @@
           <span class="login-btn-arrow">→</span>
         </button>
       </div>
-
       <p class="login-hint">11-digit Student ID required</p>
     </div>
   </div>
@@ -80,16 +74,17 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════
-     MAIN APP — blurred/hidden until login
+     MAIN APP
 ══════════════════════════════════════════════════════ -->
 <div id="appShell" class="app-shell locked">
 
+  <!-- Desktop sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="icon-bar">
       <button class="menu-btn" onclick="toggleMenu()">☰</button>
       <img src="../assets/home.png"     class="icon" onclick="navigate('home')"    title="Home"/>
       <img src="../assets/about.png"    class="icon" onclick="navigate('about')"   title="About"/>
-      <img src="../assets/feedback.png" class="icon" onclick="navigate('history')" title="Reservations"/>
+      <img src="../assets/feedback.png" class="icon" onclick="navigate('history')" title="My Ticket"/>
       <img src="../assets/profile.png"  class="icon" onclick="navigate('profile')" title="Profile"/>
     </div>
     <div class="slide-menu" id="slideMenu">
@@ -108,6 +103,26 @@
       </a>
     </div>
   </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
+      <img src="../assets/home.png" alt="Home"/>
+      Home
+    </button>
+    <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
+      <img src="../assets/about.png" alt="About"/>
+      About
+    </button>
+    <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
+      <img src="../assets/feedback.png" alt="My Ticket"/>
+      My Ticket
+    </button>
+    <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
+      <img src="../assets/profile.png" alt="Profile"/>
+      Profile
+    </button>
+  </nav>
 
   <div class="main" id="mainContent">
 
@@ -255,7 +270,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
-  import { initWebsite } from './js/app.js?v=2';
+  import { initWebsite } from './js/app.js?v=3';
   initWebsite();
 </script>
 </body>

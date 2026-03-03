@@ -2,7 +2,7 @@
 import {
   getFirestore, doc, collection, setDoc, getDoc,
   onSnapshot, updateDoc, query, where, serverTimestamp,
-  getDocs, increment 
+  getDocs, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
@@ -111,11 +111,23 @@ function logout() {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function navigate(view) {
   if (view === 'history') loadHistory();
+
+  // Views
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
+
+  // Desktop sidebar links
   document.querySelectorAll('.nav-link').forEach(a =>
     a.classList.toggle('active', a.dataset.view === view));
-  if (window.innerWidth <= 600) document.getElementById('sidebar').classList.remove('open');
+
+  // Mobile bottom nav
+  document.querySelectorAll('.bottom-nav-item').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === view));
+
+  // Close sidebar on mobile if open
+  if (window.innerWidth <= 600) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
 }
 
 function toggleMenu() {
@@ -165,7 +177,6 @@ function listenToSettings() {
   });
 }
 
-// Single-field queries only — no composite indexes needed
 function listenToActiveReservation() {
   onSnapshot(
     query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
@@ -220,12 +231,8 @@ function setReserveButtonsLocked(locked) {
 }
 
 // ── QR HELPER ─────────────────────────────────────────────────────────────────
-// FIX 2: qrcodejs always injects BOTH a <canvas> and an <img>.
-// We clear the container first, then immediately hide any img after creation,
-// and also watch via MutationObserver for the async img insertion.
 function renderQR(el, text, size) {
   el.innerHTML = '';
-  el.style.cssText = 'width:100%; text-align:center;';
 
   new QRCode(el, {
     text:         text,
@@ -236,17 +243,12 @@ function renderQR(el, text, size) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  // Hide canvas, show img (centered)
-el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
-el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
-  // IMG is what qrcodejs actually shows — center it
-  el.querySelectorAll('img').forEach(img => {
-    img.style.cssText = 'display:block!important; margin:0 auto;';
-  });
-  // Hide the canvas since img is being used
-  el.querySelectorAll('canvas').forEach(c => {
-    c.style.cssText = 'display:none!important;';
-  });
+  // qrcodejs renders both canvas + img; hide canvas, show img centered
+  // Use a short timeout to catch the async img insertion
+  setTimeout(() => {
+    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
+    el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
+  }, 50);
 }
 
 // ── BANNERS ───────────────────────────────────────────────────────────────────
@@ -392,14 +394,12 @@ async function submitReserveDate() {
   if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
   errEl.textContent = '';
 
-  // Pre-check: existing reservation? (single-field query, no index needed)
   try {
     const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
     const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
     if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
   } catch (e) { console.warn('[pre-check res]', e.code); }
 
-  // Pre-check: existing waiting ticket? (single-field query, no index needed)
   try {
     const snap = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
     const waiting = snap.docs.find(d => d.data().status === 'waiting');
@@ -410,7 +410,6 @@ async function submitReserveDate() {
     }
   } catch (e) { console.warn('[pre-check ticket]', e.code); }
 
-  // Write reservation
   const rid = 'RES-' + currentStudentId + '-' + Date.now();
   try {
     await setDoc(doc(db, 'reservations', rid), {
@@ -429,14 +428,12 @@ async function submitReserveDate() {
     return;
   }
 
-  // Update daily counter — non-fatal (increment is now properly imported above)
   try {
     await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
   } catch (e) {
     console.warn('[increment counter]', e.code || e.message);
   }
 
-  // Show QR confirmation — clear the container first to prevent any double-render
   const qrEl = document.getElementById('reserveQR');
   qrEl.innerHTML = '';
   document.getElementById('reserveSummary').textContent =
@@ -447,9 +444,6 @@ async function submitReserveDate() {
 }
 
 // ── HISTORY ───────────────────────────────────────────────────────────────────
-// FIX 3: The Firestore index error comes from reservations query needing a
-// composite index on studentId + createdAt. We catch it gracefully and still
-// show tickets. To fully fix: click the index link logged in the console.
 async function loadHistory() {
   const el = document.getElementById('historyList');
   el.innerHTML = '<p class="subtle">Loading...</p>';
@@ -459,19 +453,12 @@ async function loadHistory() {
   try {
     const s = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
     ticketDocs = s.docs;
-  } catch (e) {
-    console.warn('[history tickets]', e.code);
-  }
+  } catch (e) { console.warn('[history tickets]', e.code); }
 
   try {
     const s = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
     resDocs = s.docs;
-  } catch (e) {
-    // FIX 3: If Firestore needs a composite index, it logs the creation link.
-    // The app still works — tickets still load. Create the index by clicking
-    // the URL printed in the browser console (starts with https://console.firebase.google.com/...).
-    console.warn('[history reservations — index needed, see console link above]', e.message);
-  }
+  } catch (e) { console.warn('[history reservations — index needed]', e.message); }
 
   el.innerHTML = '';
 
