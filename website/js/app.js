@@ -235,17 +235,13 @@ function renderQR(el, text, size) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  // Hide any img that was synchronously added
-  el.querySelectorAll('img').forEach(img => {
-    img.style.cssText = 'display:none!important';
-  });
+  // Force canvas visible, hide img
+  el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
+  el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
 
-  // Also catch the img if it's added asynchronously (qrcodejs behaviour varies)
   const obs = new MutationObserver(() => {
-    el.querySelectorAll('img').forEach(img => {
-      img.style.cssText = 'display:none!important';
-    });
-    // Once the canvas is present we're done watching
+    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
+    el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
     if (el.querySelector('canvas')) obs.disconnect();
   });
   obs.observe(el, { childList: true, subtree: true });
