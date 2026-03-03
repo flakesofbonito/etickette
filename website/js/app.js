@@ -225,6 +225,9 @@ function setReserveButtonsLocked(locked) {
 // and also watch via MutationObserver for the async img insertion.
 function renderQR(el, text, size) {
   el.innerHTML = '';
+  
+  // Force center BEFORE rendering
+  el.style.cssText = 'display:flex!important; justify-content:center; align-items:center; width:100%;';
 
   new QRCode(el, {
     text:         text,
@@ -235,7 +238,6 @@ function renderQR(el, text, size) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  // Force canvas visible, hide img
   el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
   el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
 
