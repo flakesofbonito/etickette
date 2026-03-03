@@ -783,14 +783,27 @@ body.dark {
   .login-card { padding: 28px 24px; }
 }
 
+/* NEW */
 .qr-center {
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 12px auto;
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  width: fit-content;
 }
 .qr-center canvas,
 .qr-center img {
   display: block !important;
+  width: 160px !important;
+  height: 160px !important;
   margin: 0 auto !important;
+}
+.banner-qr canvas,
+.banner-qr img {
+  display: block !important;
+  width: 140px !important;
+  height: 140px !important;
 }

@@ -262,15 +262,11 @@ async function printTicket(tNum, dept) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ number: tNum, dept: dept, qr_link: qr_link })
     });
-    if (!res.ok) {
-      console.warn('[Printer] HTTP error:', res.status);
-      return;
-    }
     const json = await res.json();
     if (json.status !== 'Success') console.warn('[Printer]', json.message);
-    else console.log('[Printer] Printed:', tNum);
+    else console.log('[Printer] OK:', tNum);
   } catch (e) {
-    console.warn('[Printer] Server unreachable — is printer_server.py running?', e.message);
+    console.warn('[Printer] Unreachable — is printer_server.py running?', e.message);
   }
 }
 
