@@ -82,9 +82,10 @@
 
     <div class="id-form">
       <input type="text" id="idInput" class="kiosk-input"
-             placeholder="e.g. 02000385394"
-             inputmode="numeric" maxlength="20"
-             onkeydown="if(event.key==='Enter') submitId()"/>
+       placeholder="e.g. 02000385394"
+       inputmode="numeric" maxlength="11"
+       oninput="this.value=this.value.replace(/\D/g,'')"
+       onkeydown="if(event.key==='Enter') submitId()"/>
       <p id="idError" class="kiosk-error"></p>
       <button class="kiosk-submit-btn" onclick="submitId()">Get Ticket →</button>
     </div>
