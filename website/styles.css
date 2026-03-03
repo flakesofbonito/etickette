@@ -783,34 +783,18 @@ body.dark {
   .login-card { padding: 28px 24px; }
 }
 
-/* QR CODE — show only canvas, hide the duplicate img qrcodejs always renders */
-.qr-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 12px auto;
-  background: white;
-  border-radius: 10px;
-  padding: 12px;
-  width: fit-content;
-  overflow: hidden;
-  line-height: 0;
-}
-
-/* Keep canvas visible and sized correctly */
 .qr-center canvas {
   display: block !important;
   width: 160px !important;
   height: 160px !important;
 }
-
-/* HIDE the duplicate img — JS also hides it but CSS is the safety net */
 .qr-center img {
   display: none !important;
 }
-
-/* Banner QR is slightly smaller */
 .banner-qr canvas {
   width: 160px !important;
   height: 160px !important;
+}
+.banner-qr img {
+  display: none !important;
 }
