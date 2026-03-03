@@ -6,7 +6,15 @@
       "**/.*",
       "**/node_modules/**",
       "serviceAccountsKey.json",
-      "python/**"
+      "python/**",
+      "**/*.exe",
+      "**/*.dll",
+      "**/*.py",
+      "**/*.bat",
+      "**/*.json",
+      "*.json",
+      ".github/**",
+      "**/.venv/**"
     ]
   }
 }
