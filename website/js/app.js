@@ -1,11 +1,7 @@
 // website/js/app.js
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, doc, collection, setDoc, getDoc,
-  onSnapshot, updateDoc, increment, query, where,
-  serverTimestamp, getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, collection, setDoc, getDoc, onSnapshot, updateDoc, query, where, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
@@ -58,13 +54,10 @@ export function initWebsite() {
   window.cancelReservation = cancelReservation;
 
   const saved = sessionStorage.getItem('studentId');
-  if (saved) {
-    currentStudentId = saved;
-    afterLogin();
-  }
+  if (saved) { currentStudentId = saved; afterLogin(); }
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
 function loginStudent() {
   const val = document.getElementById('loginId').value.trim();
   const err = document.getElementById('loginError');
@@ -78,14 +71,10 @@ function loginStudent() {
   inp.classList.remove('error');
   currentStudentId = val;
   sessionStorage.setItem('studentId', val);
-
   document.getElementById('loginOverlay').classList.add('dismissed');
   document.getElementById('appShell').classList.remove('locked');
   document.getElementById('appShell').classList.add('unlocked');
-  setTimeout(() => {
-    document.getElementById('loginOverlay').style.display = 'none';
-  }, 520);
-
+  setTimeout(() => { document.getElementById('loginOverlay').style.display = 'none'; }, 520);
   afterLogin();
 }
 
@@ -107,24 +96,23 @@ function logout() {
   currentStudentId     = null;
   hasActiveReservation = false;
   document.getElementById('userDisplay').style.display = 'none';
-  const overlay = document.getElementById('loginOverlay');
-  overlay.style.display = 'flex';
-  overlay.classList.remove('dismissed');
+  const ov = document.getElementById('loginOverlay');
+  ov.style.display = 'flex';
+  ov.classList.remove('dismissed');
   document.getElementById('loginId').value          = '';
   document.getElementById('loginError').textContent = '';
   document.getElementById('appShell').classList.add('locked');
   document.getElementById('appShell').classList.remove('unlocked');
 }
 
-// ── NAVIGATION ───────────────────────────────────────────────
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
 function navigate(view) {
   if (view === 'history') loadHistory();
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   document.querySelectorAll('.nav-link').forEach(a =>
     a.classList.toggle('active', a.dataset.view === view));
-  if (window.innerWidth <= 600)
-    document.getElementById('sidebar').classList.remove('open');
+  if (window.innerWidth <= 600) document.getElementById('sidebar').classList.remove('open');
 }
 
 function toggleMenu() {
@@ -137,14 +125,14 @@ function toggleMenu() {
   }
 }
 
-// ── FIREBASE LISTENERS ───────────────────────────────────────
+// ── FIREBASE LISTENERS ────────────────────────────────────────────────────────
 function listenToDepts() {
   ['cashier', 'registrar'].forEach(dept => {
     onSnapshot(doc(db, 'departments', dept), snap => {
       if (!snap.exists()) return;
-      const d      = snap.data();
+      const d = snap.data();
       const status = (d.status || 'open').toLowerCase();
-      const map    = {
+      const map = {
         open:   { t: 'OPEN',     c: 'open',   dis: false },
         break:  { t: 'ON BREAK', c: 'break',  dis: true  },
         closed: { t: 'CLOSED',   c: 'closed', dis: true  }
@@ -164,22 +152,18 @@ function listenToSettings() {
     if (!snap.exists()) return;
     const d   = snap.data();
     const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
-    document.getElementById('quotaText').textContent =
-      rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
+    document.getElementById('quotaText').textContent = rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
     const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
     const el  = document.getElementById('congestionText');
-    if      (pct < 0.4)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open';  }
-    else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break'; }
-    else                  { el.textContent = 'HIGH TRAFFIC'; el.className = 'closed';}
-    if (d.statusMessage)
-      document.getElementById('globalStatus').textContent = d.statusMessage;
+    if      (pct < 0.4)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open';   }
+    else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break';  }
+    else                  { el.textContent = 'HIGH TRAFFIC'; el.className = 'closed'; }
+    if (d.statusMessage) document.getElementById('globalStatus').textContent = d.statusMessage;
   });
 }
 
-// ── ACTIVE RESERVATION LIVE LISTENER ────────────────────────
-// Uses SINGLE-FIELD queries only — zero composite indexes needed.
+// Single-field queries only — no composite indexes needed
 function listenToActiveReservation() {
-  // Watch reservations — filter status in JS
   onSnapshot(
     query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
     snap => {
@@ -205,7 +189,6 @@ function listenToActiveReservation() {
     }
   );
 
-  // Watch tickets — filter status in JS
   onSnapshot(
     query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
     snap => {
@@ -233,28 +216,31 @@ function setReserveButtonsLocked(locked) {
   });
 }
 
-// ── QR RENDER HELPER ─────────────────────────────────────────
-// Generates a QR code in `el` at `size`px.
-// qrcodejs renders both <canvas> AND <img>; we keep only canvas.
+// ── QR HELPER ────────────────────────────────────────────────────────────────
+// qrcodejs always renders BOTH a canvas and an img.
+// We use CSS display:none on img (in styles.css) AND this JS observer as backup.
 function renderQR(el, text, size) {
   el.innerHTML = '';
   new QRCode(el, {
-    text,
+    text:         text,
     width:        size,
     height:       size,
     colorDark:    '#1f3c88',
     colorLight:   '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
   });
-  // Hide the duplicate <img> the moment it appears
+  // As soon as the img appears, hide it
   const obs = new MutationObserver(() => {
     const img = el.querySelector('img');
-    if (img) { img.style.display = 'none'; obs.disconnect(); }
+    if (img) {
+      img.style.cssText = 'display:none!important';
+      obs.disconnect();
+    }
   });
   obs.observe(el, { childList: true, subtree: true });
 }
 
-// ── RENDER ACTIVE RESERVATION BANNER ─────────────────────────
+// ── BANNERS ───────────────────────────────────────────────────────────────────
 function renderActiveResBanner(res, rid) {
   const old = document.getElementById('activeResBanner');
   if (old) old.remove();
@@ -272,10 +258,7 @@ function renderActiveResBanner(res, rid) {
   banner.innerHTML = `
     <div class="active-res-header">
       <span>📋 Active Reservation</span>
-      ${canCancel
-        ? `<button class="btn-cancel-res"
-             onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>`
-        : ''}
+      ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
     </div>
     <div class="active-res-body">
       <div class="active-res-info">
@@ -284,13 +267,9 @@ function renderActiveResBanner(res, rid) {
         <p><strong>Date:</strong> ${res.reservationDate}</p>
         ${ticketLine}
         <p><strong>Status:</strong> ${statusLabel}</p>
-        ${res.status === 'pending'
-          ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>'
-          : ''}
+        ${res.status === 'pending' ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>' : ''}
       </div>
-      ${res.status === 'pending'
-        ? '<div id="bannerQR" class="qr-center banner-qr"></div>'
-        : ''}
+      ${res.status === 'pending' ? '<div id="bannerQR" class="qr-center banner-qr"></div>' : ''}
     </div>`;
 
   const pageCard = document.getElementById('view-history').querySelector('.page-card');
@@ -320,11 +299,7 @@ function renderActiveWalkinBanner(ticket) {
     <div class="active-res-body">
       <div class="active-res-info">
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
-        <p><strong>Ticket #:</strong>
-          <span style="font-size:1.6em;font-weight:900;color:#1f3c88">
-            ${ticket.ticketNumber}
-          </span>
-        </p>
+        <p><strong>Ticket #:</strong> <span style="font-size:1.6em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span></p>
         <p><strong>Status:</strong> ${statusLabel}</p>
       </div>
     </div>`;
@@ -333,20 +308,14 @@ function renderActiveWalkinBanner(ticket) {
   pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 }
 
-// ── CANCEL RESERVATION ───────────────────────────────────────
+// ── CANCEL ────────────────────────────────────────────────────────────────────
 async function cancelReservation(rid, status) {
-  const confirmed = confirm(
-    status === 'active'
-      ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
-      : 'Are you sure you want to cancel this reservation?'
-  );
-  if (!confirmed) return;
+  if (!confirm(status === 'active'
+    ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
+    : 'Are you sure you want to cancel this reservation?')) return;
 
   try {
-    await updateDoc(doc(db, 'reservations', rid), {
-      status:      'cancelled',
-      cancelledAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, 'reservations', rid), { status: 'cancelled', cancelledAt: serverTimestamp() });
     if (status === 'active') {
       const snap = await getDoc(doc(db, 'reservations', rid));
       const tNum = snap.data().ticketNumber;
@@ -355,9 +324,7 @@ async function cancelReservation(rid, status) {
         const dept  = snap.data().department;
         const dSnap = await getDoc(doc(db, 'departments', dept));
         if (dSnap.exists()) {
-          await updateDoc(doc(db, 'departments', dept), {
-            queue: Math.max(0, (dSnap.data().queue || 1) - 1)
-          });
+          await updateDoc(doc(db, 'departments', dept), { queue: Math.max(0, (dSnap.data().queue || 1) - 1) });
         }
       }
     }
@@ -368,17 +335,14 @@ async function cancelReservation(rid, status) {
   }
 }
 
-// ── RESERVE MODAL ────────────────────────────────────────────
+// ── RESERVE MODAL ─────────────────────────────────────────────────────────────
 function openReserveModal(dept) {
   if (!currentStudentId) { showToast('Please log in first.', 'error'); return; }
-  if (hasActiveReservation) {
-    showToast('You already have an active reservation. Cancel it first.', 'warning');
-    return;
-  }
+  if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
+
   reserveDept = dept;
   document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
-  document.getElementById('reserveTitle').textContent   =
-    'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
+  document.getElementById('reserveTitle').textContent   = 'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
 
   const list = document.getElementById('reserveReasonList');
   list.innerHTML = '';
@@ -399,7 +363,6 @@ function openReserveModal(dept) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   document.getElementById('reserveDate').min   = tomorrow.toISOString().split('T')[0];
   document.getElementById('reserveDate').value = '';
-
   rGoStep(1);
   document.getElementById('reserveModal').classList.add('active');
 }
@@ -420,45 +383,27 @@ async function submitReserveDate() {
   if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
   errEl.textContent = '';
 
-  // ── Pre-check 1: already have a pending/active reservation?
-  // Single-field query — no composite index needed
+  // Pre-check: existing reservation? (single-field query, no index)
   try {
-    const snap = await getDocs(
-      query(collection(db, 'reservations'), where('studentId', '==', currentStudentId))
-    );
-    const already = snap.docs.some(d => {
-      const s = d.data().status;
-      return s === 'pending' || s === 'active';
-    });
-    if (already) {
-      errEl.textContent = 'You already have an active reservation. Cancel it first.';
-      return;
-    }
-  } catch (e) {
-    console.warn('[pre-check res]', e.code); // safe to continue
-  }
+    const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
+    const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
+    if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
+  } catch (e) { console.warn('[pre-check res]', e.code); }
 
-  // ── Pre-check 2: already have a waiting ticket?
-  // Single-field query — no composite index needed
+  // Pre-check: existing waiting ticket? (single-field query, no index)
   try {
-    const snap = await getDocs(
-      query(collection(db, 'tickets'), where('userId', '==', currentStudentId))
-    );
+    const snap = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
     const waiting = snap.docs.find(d => d.data().status === 'waiting');
     if (waiting) {
       const t = waiting.data();
-      errEl.textContent =
-        `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
+      errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
       return;
     }
-  } catch (e) {
-    console.warn('[pre-check ticket]', e.code); // safe to continue
-  }
+  } catch (e) { console.warn('[pre-check ticket]', e.code); }
 
-  // ── Write the reservation ─────────────────────────────────
-  let rid;
+  // Write reservation
+  const rid = 'RES-' + currentStudentId + '-' + Date.now();
   try {
-    rid = 'RES-' + currentStudentId + '-' + Date.now();
     await setDoc(doc(db, 'reservations', rid), {
       studentId:       currentStudentId,
       department:      reserveDept,
@@ -470,50 +415,40 @@ async function submitReserveDate() {
       createdAt:       serverTimestamp()
     });
   } catch (e) {
-    console.error('[setDoc reservation]', e);
-    errEl.textContent = 'Error saving reservation. Try again.';
-    return; // stop here — nothing was saved
+    console.error('[setDoc]', e);
+    errEl.textContent = 'Error saving reservation: ' + e.message;
+    return;
   }
 
-  // ── Update slot counter (non-fatal if it fails) ───────────
+  // Update counter — non-fatal
   try {
     await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
-  } catch (e) {
-    console.warn('[settings increment]', e.code);
-  }
+  } catch (e) { console.warn('[increment]', e.code); }
 
-  // ── Show confirmation + QR ────────────────────────────────
+  // Show QR confirmation
   document.getElementById('reserveSummary').textContent =
     reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
-
-  const qrEl = document.getElementById('reserveQR');
-  renderQR(qrEl, rid, 160);
-
+  renderQR(document.getElementById('reserveQR'), rid, 160);
   rGoStep(3);
   showToast('Reservation saved!', 'success');
 }
 
-// ── HISTORY ──────────────────────────────────────────────────
+// ── HISTORY ───────────────────────────────────────────────────────────────────
 async function loadHistory() {
   const el = document.getElementById('historyList');
   el.innerHTML = '<p class="subtle">Loading...</p>';
 
-  let ticketDocs = [];
-  let resDocs    = [];
+  let ticketDocs = [], resDocs = [];
 
   try {
-    const s = await getDocs(
-      query(collection(db, 'tickets'), where('userId', '==', currentStudentId))
-    );
+    const s = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
     ticketDocs = s.docs;
   } catch (e) { console.warn('[history tickets]', e.code); }
 
   try {
-    const s = await getDocs(
-      query(collection(db, 'reservations'), where('studentId', '==', currentStudentId))
-    );
+    const s = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
     resDocs = s.docs;
-  } catch (e) { console.warn('[history reservations]', e.code); }
+  } catch (e) { console.warn('[history res]', e.code); }
 
   el.innerHTML = '';
 
@@ -523,39 +458,32 @@ async function loadHistory() {
     if (t.status === 'waiting' || t.status === 'serving') return;
     const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
     const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
-    el.innerHTML += `
-      <div class="history-item">
-        <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
-        <span class="subtle">Walk-in · ${date}</span></div>
-        <span class="${cls}">${t.status.toUpperCase()}</span>
-      </div>`;
+    el.innerHTML += `<div class="history-item">
+      <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
+      <span class="subtle">Walk-in · ${date}</span></div>
+      <span class="${cls}">${t.status.toUpperCase()}</span>
+    </div>`;
   });
 
   resDocs.forEach(d => {
     const r = d.data();
     if (r.status === 'pending' || r.status === 'active') return;
     const cls = r.status === 'cancelled' ? 'closed' : 'open';
-    el.innerHTML += `
-      <div class="history-item">
-        <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
-        <span class="subtle">Reservation · ${r.reservationDate}</span></div>
-        <span class="${cls}">${r.status.toUpperCase()}</span>
-      </div>`;
+    el.innerHTML += `<div class="history-item">
+      <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
+      <span class="subtle">Reservation · ${r.reservationDate}</span></div>
+      <span class="${cls}">${r.status.toUpperCase()}</span>
+    </div>`;
   });
 
-  if (!el.innerHTML.trim())
-    el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
+  if (!el.innerHTML.trim()) el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
 }
 
-// ── MODAL HELPERS ────────────────────────────────────────────
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-function handleOverlay(e, id) {
-  if (e.target === document.getElementById(id)) closeModal(id);
-}
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function handleOverlay(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
 
-// ── TOAST ────────────────────────────────────────────────────
+// ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
@@ -563,4 +491,4 @@ function showToast(msg, type = 'info') {
   t.className   = 'toast ' + type + ' show';
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-} 
+}
