@@ -236,6 +236,9 @@ function renderQR(el, text, size) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
+  // Hide canvas, show img (centered)
+el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
+el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
   // IMG is what qrcodejs actually shows — center it
   el.querySelectorAll('img').forEach(img => {
     img.style.cssText = 'display:block!important; margin:0 auto;';
