@@ -26,7 +26,11 @@ def get_printer():
         dev.set_configuration()
     return dev
 
-@app.route('/print', methods=['POST'])
+@app.route('/print', methods=['POST', 'OPTIONS'])
+def print_ticket():
+    if request.method == 'OPTIONS':
+        return '', 204
+    
 def print_ticket():
     data = request.json
     dev  = get_printer()

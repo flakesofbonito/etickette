@@ -189,41 +189,20 @@ function listenToActiveReservation() {
     where('studentId', '==', currentStudentId),
     where('status', 'in', ['pending', 'active'])
   );
-
   onSnapshot(q, snap => {
     if (snap.empty) {
       hasActiveReservation = false;
       setReserveButtonsLocked(false);
-      // Clear the active reservation banner in history tab
       const banner = document.getElementById('activeResBanner');
       if (banner) banner.remove();
     } else {
       hasActiveReservation = true;
       setReserveButtonsLocked(true);
-      const res = snap.docs[0].data();
-      const rid = snap.docs[0].id;
-      renderActiveResBanner(res, rid);
+      renderActiveResBanner(snap.docs[0].data(), snap.docs[0].id);
     }
   });
 
-
-  const ticketQ = query(
-    collection(db, 'tickets'),
-    where('userId', '==', currentStudentId),
-    where('status', 'in', ['waiting', 'serving'])
-  );
-  onSnapshot(ticketQ, snap => {
-    if (!snap.empty) {
-      hasActiveReservation = true;
-      setReserveButtonsLocked(true);
-      // Only show walk-in banner if no reservation banner is already up
-      if (!document.getElementById('activeResBanner')) {
-        renderActiveWalkinBanner(snap.docs[0].data());
-      }
-    }
-  });
-
-  // Live listener for active walk-in tickets
+  // ── NEW: watch walk-in tickets ──
   const walkinQ = query(
     collection(db, 'tickets'),
     where('userId', '==', currentStudentId),
@@ -234,8 +213,7 @@ function listenToActiveReservation() {
       hasActiveReservation = true;
       setReserveButtonsLocked(true);
       if (!document.getElementById('activeResBanner')) {
-        const t = snap.docs[0].data();
-        renderActiveWalkinBanner(t);
+        renderActiveWalkinBanner(snap.docs[0].data());
       }
     }
   });
@@ -322,8 +300,8 @@ function renderActiveWalkinBanner(ticket) {
   if (old) old.remove();
 
   const statusLabel = ticket.status === 'serving'
-    ? '<span class="open">Now Serving — proceed to the counter</span>'
-    : '<span class="break">Waiting — your number will be called on the monitor</span>';
+    ? '<span class="open">Now Serving — proceed to counter</span>'
+    : '<span class="break">Waiting — watch the lobby monitor</span>';
 
   const banner = document.createElement('div');
   banner.id        = 'activeResBanner';
@@ -334,10 +312,9 @@ function renderActiveWalkinBanner(ticket) {
       <div class="active-res-info">
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
         <p><strong>Ticket #:</strong>
-          <span style="font-size:1.5em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span>
+          <span style="font-size:1.6em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span>
         </p>
         <p><strong>Status:</strong> ${statusLabel}</p>
-        <p class="subtle" style="margin-top:6px">Watch the lobby monitor for your number.</p>
       </div>
     </div>`;
 
@@ -497,20 +474,14 @@ async function submitReserveDate() {
   }
 }
 
-// ── HISTORY ──────────────────────────────────────────────────
-// ── HISTORY — shows BOTH reservations AND walk-in tickets ─────
 async function loadHistory() {
   const el = document.getElementById('historyList');
   el.innerHTML = '<p class="subtle">Loading...</p>';
-
   try {
-    // Reservations (past only)
     const resSnap = await getDocs(query(
       collection(db, 'reservations'),
       where('studentId', '==', currentStudentId)
     ));
-
-    // Walk-in tickets
     const ticketSnap = await getDocs(query(
       collection(db, 'tickets'),
       where('userId', '==', currentStudentId),
@@ -519,43 +490,36 @@ async function loadHistory() {
 
     el.innerHTML = '';
 
-    // Walk-in tickets first
     ticketSnap.forEach(d => {
       const t = d.data();
-      if (t.status === 'waiting' || t.status === 'serving') return; // shown in live banner
-      const statusCls = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
-      const issuedDate = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
+      if (t.status === 'waiting' || t.status === 'serving') return;
+      const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
+      const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
       el.innerHTML += `
         <div class="history-item">
-          <div>
-            <strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
-            <span class="subtle">Walk-in · ${issuedDate}</span>
-          </div>
-          <span class="${statusCls}">${t.status.toUpperCase()}</span>
+          <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
+          <span class="subtle">Walk-in · ${date}</span></div>
+          <span class="${cls}">${t.status.toUpperCase()}</span>
         </div>`;
     });
 
-    // Past reservations
     resSnap.forEach(d => {
       const r = d.data();
       if (r.status === 'pending' || r.status === 'active') return;
       const cls = r.status === 'cancelled' ? 'closed' : 'open';
       el.innerHTML += `
         <div class="history-item">
-          <div>
-            <strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
-            <span class="subtle">Reservation · ${r.reservationDate}</span>
-          </div>
+          <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
+          <span class="subtle">Reservation · ${r.reservationDate}</span></div>
           <span class="${cls}">${r.status.toUpperCase()}</span>
         </div>`;
     });
 
     if (!el.innerHTML.trim())
-      el.innerHTML = '<p class="subtle">No tickets yet.</p>';
-
+      el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
   } catch (e) {
-    console.error(e);
-    el.innerHTML = '<p class="subtle">Failed to load. Please try again.</p>';
+    console.error('[loadHistory]', e);
+    el.innerHTML = '<p class="subtle">Failed to load. Try again.</p>';
   }
 }
 
