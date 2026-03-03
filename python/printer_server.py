@@ -7,7 +7,7 @@ import usb.backend.libusb1
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 ID_VENDOR  = 0x0416
 ID_PRODUCT = 0x5011
