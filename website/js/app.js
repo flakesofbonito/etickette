@@ -289,11 +289,21 @@ function renderActiveResBanner(res, rid) {
       const qrEl = document.getElementById('bannerQR');
       if (qrEl) {
         qrEl.innerHTML = '';
-        new QRCode(qrEl, {
-          text: rid,
-          width: 140, height: 140,
-          colorDark: '#1f3c88', colorLight: '#ffffff'
-        });
+        qrEl.style.width  = '140px';
+qrEl.style.height = '140px';
+new QRCode(qrEl, {
+  text:       rid,
+  width:      140,
+  height:     140,
+  colorDark:  '#1f3c88',
+  colorLight: '#ffffff'
+});
+setTimeout(() => {
+  const canvas = qrEl.querySelector('canvas');
+  const img    = qrEl.querySelector('img');
+  if (canvas) { canvas.style.width = '140px'; canvas.style.height = '140px'; }
+  if (img)    { img.style.width    = '140px'; img.style.height    = '140px'; }
+}, 100);  
       }
     }, 50);
   }
@@ -462,12 +472,23 @@ async function submitReserveDate() {
     document.getElementById('reserveSummary').textContent =
       reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
     const qrEl = document.getElementById('reserveQR');
-    qrEl.innerHTML = '';
-    new QRCode(qrEl, {
-      text: rid,
-      width: 160, height: 160,
-      colorDark: '#1f3c88', colorLight: '#ffffff'
-    });
+qrEl.innerHTML = '';
+qrEl.style.width  = '160px';
+qrEl.style.height = '160px';
+new QRCode(qrEl, {
+  text:       rid,
+  width:      160,
+  height:     160,
+  colorDark:  '#1f3c88',
+  colorLight: '#ffffff'
+});
+// Force canvas to be square after render
+setTimeout(() => {
+  const canvas = qrEl.querySelector('canvas');
+  const img    = qrEl.querySelector('img');
+  if (canvas) { canvas.style.width = '160px'; canvas.style.height = '160px'; }
+  if (img)    { img.style.width    = '160px'; img.style.height    = '160px'; }
+}, 100);
 
     rGoStep(3);
     showToast('Reservation saved!', 'success');

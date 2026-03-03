@@ -793,11 +793,22 @@ body.dark {
   border-radius: 10px;
   padding: 12px;
   width: fit-content;
+  overflow: hidden;
+  line-height: 0;
 }
 .qr-center canvas,
 .qr-center img {
   display: block !important;
   width: 160px !important;
   height: 160px !important;
-  margin: 0 auto !important;
+  max-width: 160px !important;
+  max-height: 160px !important;
+  margin: 0 !important;
+}
+.banner-qr canvas,
+.banner-qr img {
+  width: 140px !important;
+  height: 140px !important;
+  max-width: 140px !important;
+  max-height: 140px !important;
 }
