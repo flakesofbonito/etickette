@@ -240,6 +240,7 @@ function renderQR(el, text, size) {
 
   el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
   el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:none!important');
+  el.querySelectorAll('div').forEach(d => d.style.margin = '0 auto');
 
   const obs = new MutationObserver(() => {
     el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:block!important');
