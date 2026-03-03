@@ -184,36 +184,40 @@ function listenToSettings() {
 // Listens in real time so the UI reacts immediately after
 // cancel or after kiosk activation — no manual refresh needed.
 function listenToActiveReservation() {
-  const q = query(
+  // 1) Watch pending/active reservations
+  const resQ = query(
     collection(db, 'reservations'),
     where('studentId', '==', currentStudentId),
     where('status', 'in', ['pending', 'active'])
   );
-  onSnapshot(walkinQ, snap => {
-    const active = snap.docs.find(d => {
-      const s = d.data().status;
-      return s === 'waiting' || s === 'serving';
-    });
-    if (active) {
+  onSnapshot(resQ, snap => {
+    if (snap.empty) {
+      hasActiveReservation = false;
+      setReserveButtonsLocked(false);
+      const banner = document.getElementById('activeResBanner');
+      if (banner) banner.remove();
+    } else {
       hasActiveReservation = true;
       setReserveButtonsLocked(true);
-      if (!document.getElementById('activeResBanner')) {
-        renderActiveWalkinBanner(active.data());
-      }
+      renderActiveResBanner(snap.docs[0].data(), snap.docs[0].id);
     }
   });
 
-  // ── NEW: watch walk-in tickets ──
+  // 2) Watch walk-in tickets — single field query, filter in JS
   const walkinQ = query(
     collection(db, 'tickets'),
     where('userId', '==', currentStudentId)
   );
   onSnapshot(walkinQ, snap => {
-    if (!snap.empty) {
+    const activeTicket = snap.docs.find(d => {
+      const s = d.data().status;
+      return s === 'waiting' || s === 'serving';
+    });
+    if (activeTicket) {
       hasActiveReservation = true;
       setReserveButtonsLocked(true);
       if (!document.getElementById('activeResBanner')) {
-        renderActiveWalkinBanner(snap.docs[0].data());
+        renderActiveWalkinBanner(activeTicket.data());
       }
     }
   });
