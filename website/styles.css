@@ -802,33 +802,19 @@ body.dark {
   margin: 12px 0;
 }
 
-.banner-qr canvas {
-  width: 160px !important;
-  height: 160px !important;
-}
-.banner-qr img {
-  display: none !important;
-}
-
-/* QR Code — modal (reserveQR) */
-#reserveQR {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin: 12px 0;
-}
-
-#reserveQR > div {
+.qr-center > div {
   display: flex !important;
   justify-content: center !important;
 }
 
-#reserveQR canvas {
+.qr-center canvas {
   display: none !important;
 }
 
-#reserveQR img {
+.qr-center img {
   display: block !important;
   margin: 0 auto !important;
 }
+
+.banner-qr canvas { width: 160px !important; height: 160px !important; }
+.banner-qr img { display: none !important; }  /* ← this fights your fix */
