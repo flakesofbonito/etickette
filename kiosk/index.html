@@ -172,29 +172,29 @@
     </div>
 
     <!-- ── SCREEN: SCAN SUCCESS ─────────────────────── -->
-    <div id="screen-scan-success" class="screen">
-        <div class="ticket-card">
-            <div class="ticket-school">STI College Fairview</div>
-            <div class="success-badge">✅ Reservation Activated!</div>
-            <div class="ticket-dept-tag" id="scanDept">REGISTRAR</div>
-            <div class="ticket-big-num" id="scanNumber">R-01</div>
-            <div class="ticket-details">
-                <div class="ticket-detail-row">
-                    <span>Student ID</span><strong id="scanId">—</strong>
-                </div>
-                <div class="ticket-detail-row">
-                    <span>Reason</span><strong id="scanReason">—</strong>
-                </div>
-                <div class="ticket-detail-row">
-                    <span>Ahead</span><strong id="scanAhead">—</strong>
-                </div>
+    <!-- ── SCREEN: SCAN SUCCESS ─────────────────────── -->
+<div id="screen-scan-success" class="screen">
+    <div class="ticket-card">
+        <div class="ticket-school">STI College Fairview</div>
+        <div class="success-badge">✅ Reservation Activated!</div>
+        <div class="ticket-dept-tag" id="scanDept">REGISTRAR</div>
+        <div class="ticket-big-num" id="scanNumber">R-01</div>
+        <div class="ticket-details">
+            <div class="ticket-detail-row">
+                <span>Student ID</span><strong id="scanId">—</strong>
             </div>
-            <p class="subtle" style="margin-top:12px;color:rgba(255,255,255,.6);font-size:13px">
-                Staff is preparing your documents.
-            </p>
+            <div class="ticket-detail-row">
+                <span>Reason</span><strong id="scanReason">—</strong>
+            </div>
+            <div class="ticket-detail-row">
+                <span>Ahead</span><strong id="scanAhead">—</strong>
+            </div>
         </div>
-        <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
+        <div id="scanTicketQR" class="ticket-qr"></div>
+        <p class="ticket-qr-hint">Scan to track your queue online</p>
     </div>
+    <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
+</div>
 
 </body>
 
