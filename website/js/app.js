@@ -279,23 +279,25 @@ function setReserveButtonsLocked(locked) {
 
 // ── QR HELPER ─────────────────────────────────────────────────────────────────
 function renderQR(el, text, size) {
-    el.innerHTML = '';
-
-    new QRCode(el, {
-        text: text,
-        width: size,
-        height: size,
-        colorDark: '#1f3c88',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+  el.innerHTML = '';
+  new QRCode(el, {
+    text: text,
+    width: size,
+    height: size,
+    colorDark: '#1f3c88',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  setTimeout(() => {
+    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
+    el.querySelectorAll('img').forEach(img => {
+      img.style.cssText = 'display:block!important; margin:0 auto!important; max-width:100%!important;';
     });
-
-    // qrcodejs renders both canvas + img; hide canvas, show img centered
-    // Use a short timeout to catch the async img insertion
-    setTimeout(() => {
-        el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
-        el.querySelectorAll('img').forEach(img => img.style.cssText = 'display:block!important; margin:0 auto;');
-    }, 50);
+    // Force the inner wrapper div to center too
+    el.querySelectorAll('div').forEach(d => {
+      d.style.cssText = 'display:flex!important; justify-content:center!important; align-items:center!important;';
+    });
+  }, 80);
 }
 
 // ── BANNERS ───────────────────────────────────────────────────────────────────
@@ -412,14 +414,34 @@ function openReserveModal(dept) {
       reserveReason = r;
       document.querySelectorAll('.reason-item').forEach(x => x.classList.remove('selected'));
       d.classList.add('selected');
+
+      const docsDept = document.getElementById('docsForDept');
+      if (docsDept) docsDept.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
+
+      const docsList = document.getElementById('requiredDocsList');
+      docsList.innerHTML = '';
+      if (r.docs && r.docs.length > 0) {
+        r.docs.forEach(docName => {
+          const item = document.createElement('div');
+          item.className = 'docs-item';
+          item.innerHTML = `<span class="docs-item-icon">📄</span><span>${docName}</span>`;
+          docsList.appendChild(item);
+        });
+      } else {
+        docsList.innerHTML = '<p class="subtle">No specific documents required. Bring your Valid ID.</p>';
+      }
+
       rGoStep(2);
     };
-    list.appendChild(d);
+    list.appendChild(d);  // ← THIS was missing
   });
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  document.getElementById('reserveDate').min   = tomorrow.toISOString().split('T')[0];
+  const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth() + 1).padStart(2, '0');
+const dd = String(today.getDate()).padStart(2, '0');
+document.getElementById('reserveDate').min = `${yyyy}-${mm}-${dd}`;
+document.getElementById('reserveDate').value = '';
   document.getElementById('reserveDate').value = '';
   rGoStep(1);
   document.getElementById('reserveModal').classList.add('active');
@@ -429,7 +451,7 @@ function rGoStep(n) {
   document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
   document.getElementById('rstep' + n).classList.add('active');
   currentStep = n;
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 4; i++) {
     const dot = document.getElementById('rdot' + i);
     if (dot) dot.classList.toggle('active', i <= n);
   }
@@ -486,7 +508,7 @@ async function submitReserveDate() {
   document.getElementById('reserveSummary').textContent =
     reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
   renderQR(qrEl, rid, 160);
-  rGoStep(3);
+  rGoStep(4);   // ← was rGoStep(3)
   showToast('Reservation saved!', 'success');
 }
 
@@ -505,9 +527,16 @@ async function loadHistory() {
   try {
     const s = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
     resDocs = s.docs;
-  } catch (e) { console.warn('[history reservations — index needed]', e.message); }
+  } catch (e) { console.warn('[history reservations]', e.message); }
 
   el.innerHTML = '';
+
+  // Check if user has any active/pending reservation or ticket (shown in banner)
+  const hasActiveBanner = 
+    resDocs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; }) ||
+    ticketDocs.some(d => { const s = d.data().status; return s === 'waiting' || s === 'serving'; });
+
+  let hasHistory = false;
 
   ticketDocs.forEach(d => {
     const t = d.data();
@@ -520,6 +549,7 @@ async function loadHistory() {
       <span class="subtle">Walk-in · ${date}</span></div>
       <span class="${cls}">${t.status.toUpperCase()}</span>
     </div>`;
+    hasHistory = true;
   });
 
   resDocs.forEach(d => {
@@ -531,9 +561,17 @@ async function loadHistory() {
       <span class="subtle">Reservation · ${r.reservationDate}</span></div>
       <span class="${cls}">${r.status.toUpperCase()}</span>
     </div>`;
+    hasHistory = true;
   });
 
-  if (!el.innerHTML.trim()) el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
+  if (!hasHistory) {
+    if (hasActiveBanner) {
+      // They have an active ticket/reservation shown in the banner — don't show "no tickets"
+      el.innerHTML = '<p class="subtle">Your active reservation is shown above.</p>';
+    } else {
+      el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
+    }
+  }
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
