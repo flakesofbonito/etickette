@@ -779,3 +779,32 @@ body.dark {
   font-size: 20px;
   flex-shrink: 0;
 }
+
+.user-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.user-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  background: var(--bg);
+  user-select: none;
+}
+.user-type-btn span:first-child { font-size: 22px; }
+.user-type-btn:hover { border-color: var(--blue-light); background: #eff6ff; color: var(--blue-mid); }
+.user-type-btn.active { border-color: var(--blue-mid); background: #dbeafe; color: var(--blue-deep); }
+
+.login-field { margin-bottom: 10px; }
+.name-input { letter-spacing: 0 !important; font-weight: 500 !important; font-size: 15px !important; }

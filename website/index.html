@@ -42,25 +42,71 @@
 
         <div class="login-right">
             <div class="login-card">
-                <div class="login-card-header">
-                    <div class="login-avatar">🎓</div>
-                    <h2>Welcome Back</h2>
-                    <p>Enter your Student ID to continue</p>
-                </div>
-                <div class="login-form">
-                    <label class="login-label">Student ID Number</label>
-                    <div class="login-input-wrap">
-                        <span class="login-input-icon">🪪</span>
-                        <input type="text" id="loginId" class="login-input" maxlength="11" placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter') loginStudent()" />
-                    </div>
-                    <p id="loginError" class="login-error"></p>
-                    <button class="login-btn" onclick="loginStudent()">
-          <span>Continue</span>
-          <span class="login-btn-arrow">→</span>
-        </button>
-                </div>
-                <p class="login-hint">11-digit Student ID required</p>
-            </div>
+  <div class="login-card-header">
+    <div class="login-avatar">🎓</div>
+    <h2>Welcome</h2>
+    <p>Select your type and enter your details</p>
+  </div>
+
+  <!-- USER TYPE SELECTOR -->
+  <div class="user-type-grid">
+    <div class="user-type-btn active" data-type="student" onclick="selectUserType('student')">
+      <span>🎓</span><span>Student</span>
+    </div>
+    <div class="user-type-btn" data-type="teacher" onclick="selectUserType('teacher')">
+      <span>👨‍🏫</span><span>Teacher</span>
+    </div>
+    <div class="user-type-btn" data-type="parent" onclick="selectUserType('parent')">
+      <span>👨‍👩‍👧</span><span>Parent</span>
+    </div>
+    <div class="user-type-btn" data-type="guest" onclick="selectUserType('guest')">
+      <span>👤</span><span>Guest</span>
+    </div>
+  </div>
+
+  <div class="login-form">
+    <!-- Student / Teacher: ID input -->
+    <div id="inputId" class="login-field">
+      <label class="login-label" id="idLabel">Student ID Number</label>
+      <div class="login-input-wrap">
+        <span class="login-input-icon">🪪</span>
+        <input type="text" id="loginId" class="login-input" maxlength="11"
+          placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+          oninput="this.value=this.value.replace(/\D/g,'')"
+          onkeydown="if(event.key==='Enter') loginStudent()" />
+      </div>
+    </div>
+
+    <!-- Parent: Child's Student ID -->
+    <div id="inputParentChildId" class="login-field" style="display:none">
+      <label class="login-label">Child's Student ID</label>
+      <div class="login-input-wrap">
+        <span class="login-input-icon">🪪</span>
+        <input type="text" id="loginChildId" class="login-input" maxlength="11"
+          placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+          oninput="this.value=this.value.replace(/\D/g,'')" />
+      </div>
+    </div>
+
+    <!-- Parent / Guest: Full Name -->
+    <div id="inputName" class="login-field" style="display:none">
+      <label class="login-label" id="nameLabel">Your Full Name</label>
+      <div class="login-input-wrap">
+        <span class="login-input-icon">✏️</span>
+        <input type="text" id="loginName" class="login-input name-input"
+          placeholder="e.g. Juan Dela Cruz" autocomplete="off"
+          onkeydown="if(event.key==='Enter') loginStudent()" />
+      </div>
+    </div>
+
+    <p id="loginError" class="login-error"></p>
+    <button class="login-btn" onclick="loginStudent()">
+      <span>Continue</span>
+      <span class="login-btn-arrow">→</span>
+    </button>
+  </div>
+  <p class="login-hint" id="loginHint">11-digit Student ID required</p>
+</div>
         </div>
 
     </div>
@@ -279,7 +325,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script type="module">
-        import { initWebsite } from './js/app.js?v=4'; initWebsite();
+        import { initWebsite } from './js/app.js?v=3'; initWebsite();
     </script>
 </body>
 

@@ -32,6 +32,8 @@ let app, db;
 let selectedDept = null;
 let html5QrCode = null;
 let scannerActive = false;
+let selectedUserType = 'student';
+let selectedDisplayName = null;
 
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
@@ -41,6 +43,7 @@ export function initKiosk() {
     window.pickDept = pickDept;
     window.submitId = submitId;
     window.stopScanner = stopScanner;
+    window.pickUserType = pickUserType; 
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -156,24 +159,53 @@ function listenToSettings() {
 }
 
 function pickDept(dept) {
-    selectedDept = dept;
-    document.getElementById('deptChosen').textContent = dept.toUpperCase();
-    document.getElementById('idInput').value = '';
-    document.getElementById('idError').textContent = '';
-    goScreen('id');
+  selectedDept = dept;
+  document.getElementById('deptChosen').textContent = dept.toUpperCase();
+  goScreen('usertype');
 }
 
 function submitId() {
+  const err = document.getElementById('idError');
+  err.textContent = '';
+
+  let userId = null;
+  let displayName = null;
+
+  if (selectedUserType === 'student' || selectedUserType === 'teacher') {
     const val = document.getElementById('idInput').value.trim();
-    const err = document.getElementById('idError');
-
     if (!/^\d{11}$/.test(val)) {
-        err.textContent = 'Please enter a valid 11-digit Student ID (e.g. 02000385394).';
-        return;
+      err.textContent = 'Please enter a valid 11-digit ID.';
+      return;
     }
+    userId      = val;
+    displayName = val;
 
-    err.textContent = '';
-    issueTicket(val);
+  } else if (selectedUserType === 'parent') {
+    const childId = document.getElementById('idInput').value.trim();
+    const name    = document.getElementById('nameInput').value.trim();
+    if (!/^\d{11}$/.test(childId)) {
+      err.textContent = "Enter a valid 11-digit Student ID for your child.";
+      return;
+    }
+    if (name.length < 2) {
+      err.textContent = 'Please enter your full name.';
+      return;
+    }
+    userId      = childId;
+    displayName = name + ' (Parent)';
+
+  } else if (selectedUserType === 'guest') {
+    const name = document.getElementById('nameInput').value.trim();
+    if (name.length < 2) {
+      err.textContent = 'Please enter your full name.';
+      return;
+    }
+    userId      = 'GUEST-' + Date.now();
+    displayName = name;
+  }
+
+  selectedDisplayName = displayName;
+  issueTicket(userId);
 }
 
 async function issueTicket(userId) {
@@ -229,6 +261,8 @@ async function issueTicket(userId) {
         const ahead = Math.max(0, (snapAfter.data().queue || 1) - 1);
 
         await setDoc(doc(collection(db, 'tickets'), tNum), {
+            userType:    selectedUserType,
+            displayName: selectedDisplayName,
             ticketNumber: tNum,
             department: selectedDept,
             userId: userId,
@@ -448,4 +482,38 @@ function playBeep() {
         o.start();
         o.stop(ctx.currentTime + .4);
     } catch (_) {}
+}
+
+function pickUserType(type) {
+  selectedUserType = type;
+  const title       = document.getElementById('idScreenTitle');
+  const idField     = document.getElementById('kioskIdField');
+  const nameField   = document.getElementById('kioskNameField');
+  const idInput     = document.getElementById('idInput');
+
+  idField.style.display   = 'none';
+  nameField.style.display = 'none';
+
+  if (type === 'student') {
+    title.textContent      = 'Enter Your Student ID';
+    idField.style.display  = 'block';
+    idInput.placeholder    = 'e.g. 02000385394';
+  } else if (type === 'teacher') {
+    title.textContent      = 'Enter Your Employee ID';
+    idField.style.display  = 'block';
+    idInput.placeholder    = 'e.g. 02000385394';
+  } else if (type === 'parent') {
+    title.textContent      = 'Enter Child\'s Student ID + Your Name';
+    idField.style.display  = 'block';
+    nameField.style.display = 'block';
+    idInput.placeholder    = 'Child\'s Student ID';
+  } else if (type === 'guest') {
+    title.textContent       = 'Enter Your Full Name';
+    nameField.style.display = 'block';
+  }
+
+  document.getElementById('idInput').value   = '';
+  document.getElementById('nameInput').value = '';
+  document.getElementById('idError').textContent = '';
+  goScreen('id');
 }

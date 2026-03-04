@@ -77,18 +77,62 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
-    <div id="screen-id" class="screen">
-        <button class="back-btn" onclick="goScreen('dept')">← Back</button>
-        <p class="screen-title">Enter Your ID</p>
-        <p class="screen-subtitle" id="deptChosen">CASHIER</p>
+    <!-- ── SCREEN: PICK USER TYPE ──────────────────── -->
+<!-- ── SCREEN: PICK USER TYPE ──────────────────── -->
+<div id="screen-usertype" class="screen">
+    <button class="back-btn" onclick="goScreen('dept')">← Back</button>
+    <p class="screen-title">Who Are You?</p>
+    <p class="screen-subtitle">Select your visitor type to continue</p>
 
-        <div class="id-form">
-            <input type="text" id="idInput" class="kiosk-input" placeholder="e.g. 02000385394" inputmode="numeric" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter') submitId()" />
-            <p id="idError" class="kiosk-error"></p>
-            <button class="kiosk-submit-btn" onclick="submitId()">Get Ticket →</button>
+    <div class="usertype-grid">
+        <div class="big-btn btn-blue" onclick="pickUserType('student')">
+            <div class="big-btn-icon">🎓</div>
+            <div class="big-btn-label">STUDENT</div>
+            <div class="big-btn-sub">Enter your Student ID</div>
+        </div>
+        <div class="big-btn btn-blue" onclick="pickUserType('teacher')">
+            <div class="big-btn-icon">👨‍🏫</div>
+            <div class="big-btn-label">TEACHER / STAFF</div>
+            <div class="big-btn-sub">Enter your Employee ID</div>
+        </div>
+        <div class="big-btn btn-blue" onclick="pickUserType('parent')">
+            <div class="big-btn-icon">👨‍👩‍👧</div>
+            <div class="big-btn-label">PARENT</div>
+            <div class="big-btn-sub">Enter your child's Student ID</div>
+        </div>
+        <div class="big-btn btn-yellow" onclick="pickUserType('guest')">
+            <div class="big-btn-icon">👤</div>
+            <div class="big-btn-label">GUEST</div>
+            <div class="big-btn-sub">Enter your full name</div>
         </div>
     </div>
+</div>
+
+    <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
+    <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
+<div id="screen-id" class="screen">
+    <button class="back-btn" onclick="goScreen('usertype')">← Back</button>
+    <p class="screen-title" id="idScreenTitle">Enter Your ID</p>
+    <p class="screen-subtitle" id="deptChosen">CASHIER</p>
+
+    <div class="id-form">
+        <!-- ID input (student/teacher/parent) -->
+        <div id="kioskIdField">
+            <input type="text" id="idInput" class="kiosk-input"
+                placeholder="e.g. 02000385394" inputmode="numeric"
+                maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"
+                onkeydown="if(event.key==='Enter') submitId()" />
+        </div>
+        <!-- Name input (guest + parent) -->
+        <div id="kioskNameField" style="display:none">
+            <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
+                placeholder="Your full name"
+                onkeydown="if(event.key==='Enter') submitId()" />
+        </div>
+        <p id="idError" class="kiosk-error"></p>
+        <button class="kiosk-submit-btn" onclick="submitId()">Get Ticket →</button>
+    </div>
+</div>
 
     <!-- ── SCREEN: TICKET ISSUED ────────────────────── -->
     <div id="screen-ticket" class="screen">
