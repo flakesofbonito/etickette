@@ -217,54 +217,69 @@
     <!-- /appShell -->
 
     <!-- RESERVE MODAL -->
-    <div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
-        <div class="modal">
-            <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
-            <div class="modal-dept-tag" id="reserveDeptTag">CASHIER</div>
-            <h2 id="reserveTitle">Reserve a Ticket</h2>
+    <!-- RESERVE MODAL -->
+<div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
+        <div class="modal-dept-tag" id="reserveDeptTag">CASHIER</div>
+        <h2 id="reserveTitle">Reserve a Ticket</h2>
 
-            <div class="step-indicator">
-                <div class="step-dot active" id="rdot1"></div>
-                <div class="step-line"></div>
-                <div class="step-dot" id="rdot2"></div>
-                <div class="step-line"></div>
-                <div class="step-dot" id="rdot3"></div>
-            </div>
+        <div class="step-indicator">
+            <div class="step-dot active" id="rdot1"></div>
+            <div class="step-line"></div>
+            <div class="step-dot" id="rdot2"></div>
+            <div class="step-line"></div>
+            <div class="step-dot" id="rdot3"></div>
+            <div class="step-line"></div>
+            <div class="step-dot" id="rdot4"></div>
+        </div>
 
-            <div id="rstep1" class="modal-step active">
-                <p class="step-label">What do you need?</p>
-                <div id="reserveReasonList" class="reason-list"></div>
-            </div>
+        <!-- STEP 1: Pick Reason -->
+        <div id="rstep1" class="modal-step active">
+            <p class="step-label">What do you need?</p>
+            <div id="reserveReasonList" class="reason-list"></div>
+        </div>
 
-            <div id="rstep2" class="modal-step">
-                <p class="step-label">Pick a date:</p>
-                <input type="date" id="reserveDate" class="modal-input" />
-                <p id="dateError" class="error-msg"></p>
-                <button class="btn-primary" onclick="submitReserveDate()">Reserve →</button>
-                <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
-            </div>
+        <!-- STEP 2: Documents Required -->
+        <div id="rstep2" class="modal-step">
+            <p class="step-label">Bring these documents to the <strong id="docsForDept">Cashier</strong>:</p>
+            <div id="requiredDocsList" class="docs-list"></div>
+            <p class="subtle" style="margin-bottom:16px">Make sure you have all documents ready before your visit.</p>
+            <button class="btn-primary" onclick="rGoStep(3)">Next → Pick a Date</button>
+            <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
+        </div>
 
-            <div id="rstep3" class="modal-step">
-                <div class="success-anim">✅</div>
-                <h3 style="text-align:center">Reservation Confirmed!</h3>
-                <p id="reserveSummary" class="subtle" style="text-align:center;margin-bottom:12px"></p>
-                <div id="reserveQR" class="qr-center"></div>
-                <p class="subtle" style="text-align:center;margin-top:8px">
-                    Screenshot or save this QR code.<br/> Scan it at the <strong>Lobby Kiosk</strong> when you arrive.
-                </p>
-                <div class="qr-warning">
-                    ⚠️ Your queue number is <strong>NOT yet assigned</strong>.<br/> You must scan this QR at the Kiosk to get your number.
-                </div>
-                <button class="btn-primary" style="margin-top:16px" onclick="closeModal('reserveModal')">Done</button>
+        <!-- STEP 3: Pick Date -->
+        <div id="rstep3" class="modal-step">
+            <p class="step-label">Pick a date:</p>
+            <input type="date" id="reserveDate" class="modal-input" />
+            <p id="dateError" class="error-msg"></p>
+            <button class="btn-primary" onclick="submitReserveDate()">Reserve →</button>
+            <button class="btn-ghost" onclick="rGoStep(2)">← Back</button>
+        </div>
+
+        <!-- STEP 4: Confirmed -->
+        <div id="rstep4" class="modal-step">
+            <div class="success-anim">✅</div>
+            <h3 style="text-align:center">Reservation Confirmed!</h3>
+            <p id="reserveSummary" class="subtle" style="text-align:center;margin-bottom:12px"></p>
+            <div id="reserveQR" class="qr-center"></div>
+            <p class="subtle" style="text-align:center;margin-top:8px">
+                Screenshot or save this QR code.<br/> Scan it at the <strong>Lobby Kiosk</strong> when you arrive.
+            </p>
+            <div class="qr-warning">
+                ⚠️ Your queue number is <strong>NOT yet assigned</strong>.<br/> You must scan this QR at the Kiosk to get your number.
             </div>
+            <button class="btn-primary" style="margin-top:16px" onclick="closeModal('reserveModal')">Done</button>
         </div>
     </div>
+</div>
 
     <div id="toast" class="toast"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script type="module">
-        import { initWebsite } from './js/app.js?v=3'; initWebsite();
+        import { initWebsite } from './js/app.js?v=4'; initWebsite();
     </script>
 </body>
 
