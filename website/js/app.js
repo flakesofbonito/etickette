@@ -70,6 +70,8 @@ let reserveDept = null;
 let reserveReason = null;
 let currentStep = 1;
 let hasActiveReservation = false;
+let currentUserType = 'student';
+let currentDisplayName = null;
 
 export function initWebsite() {
     app = initializeApp(firebaseConfig);
@@ -85,6 +87,7 @@ export function initWebsite() {
     window.rGoStep = rGoStep;
     window.submitReserveDate = submitReserveDate;
     window.cancelReservation = cancelReservation;
+    window.selectUserType = selectUserType;
 
     const saved = sessionStorage.getItem('studentId');
     if (saved) {
@@ -93,43 +96,124 @@ export function initWebsite() {
     }
 }
 
+function selectUserType(type) {
+  currentUserType = type;
+  document.querySelectorAll('.user-type-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.type === type));
+
+  const inputId       = document.getElementById('inputId');
+  const inputChildId  = document.getElementById('inputParentChildId');
+  const inputName     = document.getElementById('inputName');
+  const idLabel       = document.getElementById('idLabel');
+  const nameLabel     = document.getElementById('nameLabel');
+  const loginHint     = document.getElementById('loginHint');
+  const loginId       = document.getElementById('loginId');
+
+  // Reset visibility
+  inputId.style.display      = 'none';
+  inputChildId.style.display = 'none';
+  inputName.style.display    = 'none';
+
+  if (type === 'student') {
+    inputId.style.display = 'block';
+    idLabel.textContent   = 'Student ID Number';
+    loginId.placeholder   = 'e.g. 02000385394';
+    loginHint.textContent = '11-digit Student ID required';
+  } else if (type === 'teacher') {
+    inputId.style.display = 'block';
+    idLabel.textContent   = 'Employee ID Number';
+    loginId.placeholder   = 'e.g. 02000385394';
+    loginHint.textContent = '11-digit Employee ID required';
+  } else if (type === 'parent') {
+    inputChildId.style.display = 'block';
+    inputName.style.display    = 'block';
+    nameLabel.textContent      = 'Your Full Name';
+    loginHint.textContent      = 'Enter your child\'s Student ID and your name';
+  } else if (type === 'guest') {
+    inputName.style.display = 'block';
+    nameLabel.textContent   = 'Your Full Name';
+    loginHint.textContent   = 'Enter your full name to continue';
+  }
+}
+
 function loginStudent() {
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+
+  let userId = null;
+  let displayName = null;
+
+  if (currentUserType === 'student' || currentUserType === 'teacher') {
     const val = document.getElementById('loginId').value.trim();
-    const err = document.getElementById('loginError');
     const inp = document.getElementById('loginId');
     if (!/^\d{11}$/.test(val)) {
-        err.textContent = 'Student ID must be exactly 11 digits.';
-        inp.classList.add('error');
-        return;
+      err.textContent = 'ID must be exactly 11 digits.';
+      inp.classList.add('error');
+      return;
     }
-    err.textContent = '';
     inp.classList.remove('error');
-    currentStudentId = val;
-    sessionStorage.setItem('studentId', val);
-    document.getElementById('loginOverlay').classList.add('dismissed');
-    document.getElementById('appShell').classList.remove('locked');
-    document.getElementById('appShell').classList.add('unlocked');
-    setTimeout(() => {
-        document.getElementById('loginOverlay').style.display = 'none';
-    }, 520);
-    afterLogin();
+    userId      = val;
+    displayName = val;
+
+  } else if (currentUserType === 'parent') {
+    const childId   = document.getElementById('loginChildId').value.trim();
+    const name      = document.getElementById('loginName').value.trim();
+    if (!/^\d{11}$/.test(childId)) {
+      err.textContent = "Child's Student ID must be exactly 11 digits.";
+      return;
+    }
+    if (name.length < 2) {
+      err.textContent = 'Please enter your full name.';
+      return;
+    }
+    userId      = childId;
+    displayName = name + ' (Parent)';
+
+  } else if (currentUserType === 'guest') {
+    const name = document.getElementById('loginName').value.trim();
+    if (name.length < 2) {
+      err.textContent = 'Please enter your full name.';
+      return;
+    }
+    userId      = 'GUEST-' + Date.now();
+    displayName = name;
+  }
+
+  currentStudentId   = userId;
+  currentDisplayName = displayName;
+  sessionStorage.setItem('studentId',    userId);
+  sessionStorage.setItem('displayName',  displayName);
+  sessionStorage.setItem('userType',     currentUserType);
+
+  document.getElementById('loginOverlay').classList.add('dismissed');
+  document.getElementById('appShell').classList.remove('locked');
+  document.getElementById('appShell').classList.add('unlocked');
+  setTimeout(() => { document.getElementById('loginOverlay').style.display = 'none'; }, 520);
+  afterLogin();
 }
 
 function afterLogin() {
-    document.getElementById('userDisplay').style.display = 'flex';
-    document.getElementById('userLabel').textContent = currentStudentId;
-    document.getElementById('profileInfo').innerHTML = `
-    <div class="info"><span>Student ID</span><b>${currentStudentId}</b></div>
+  currentDisplayName = sessionStorage.getItem('displayName') || currentStudentId;
+  currentUserType    = sessionStorage.getItem('userType') || 'student';
+
+  document.getElementById('userDisplay').style.display = 'flex';
+  document.getElementById('userLabel').textContent = currentDisplayName;
+  document.getElementById('profileInfo').innerHTML = `
+    <div class="info"><span>Type</span><b>${currentUserType.charAt(0).toUpperCase()+currentUserType.slice(1)}</b></div>
+    <div class="info"><span>ID / Name</span><b>${currentDisplayName}</b></div>
     <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
   `;
-    navigate('home');
-    listenToDepts();
-    listenToSettings();
-    listenToActiveReservation();
+  navigate('home');
+  listenToDepts();
+  listenToSettings();
+  listenToActiveReservation();
 }
 
 function logout() {
-    sessionStorage.removeItem('studentId');
+    sessionStorage.removeItem('displayName');
+    sessionStorage.removeItem('userType');
+    currentDisplayName = null;
+    currentUserType = 'student';
     currentStudentId = null;
     hasActiveReservation = false;
     document.getElementById('userDisplay').style.display = 'none';
@@ -482,6 +566,8 @@ async function submitReserveDate() {
   const rid = 'RES-' + currentStudentId + '-' + Date.now();
   try {
     await setDoc(doc(db, 'reservations', rid), {
+      userType:    currentUserType,
+      displayName: currentDisplayName,
       studentId:       currentStudentId,
       department:      reserveDept,
       reason:          reserveReason.label,

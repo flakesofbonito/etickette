@@ -73,10 +73,11 @@ html, body {
 /* ── SCREENS ─────────────────────────────────────────── */
 .screen {
   display: none;
-  padding: 28px 20px 36px;
-  min-height: calc(100vh - 110px);
+  padding: 16px 20px 20px;
+  height: calc(100vh - 110px);
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 .screen.active { display: flex; }
 
@@ -373,6 +374,42 @@ html, body {
   margin-bottom: 12px;
   font-weight: 500;
 }
+
+.kiosk-name-input {
+  letter-spacing: 0 !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+}
+
+.usertype-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.usertype-grid .big-btn {
+  padding: 20px 12px;
+}
+
+.usertype-grid .big-btn-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.usertype-grid .big-btn-label {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.usertype-grid .big-btn-sub {
+  font-size: 11px;
+}
+
+#screen-usertype .screen-title    { font-size: 20px; margin-bottom: 4px; }
+#screen-usertype .screen-subtitle { font-size: 13px; margin-bottom: 16px; }
+#screen-usertype .back-btn        { margin-bottom: 12px; }
 
 /* ── SUBTLE TEXT ─────────────────────────────────────── */
 .subtle { color: var(--text-sub); font-size: 13px; }
