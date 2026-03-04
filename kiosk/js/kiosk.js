@@ -455,6 +455,18 @@ async function onScanSuccess(decoded) {
         document.getElementById('scanId').textContent = res.studentId;
         document.getElementById('scanReason').textContent = res.reason;
         document.getElementById('scanAhead').textContent = ahead + ' people';
+
+        // Generate tracking QR
+const scanQREl = document.getElementById('scanTicketQR');
+scanQREl.innerHTML = '';
+new QRCode(scanQREl, {
+    text: window.location.origin + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept,
+    width: 110,
+    height: 110,
+    colorDark: '#1f3c88',
+    colorLight: '#ffffff'
+});
+
         goScreen('scan-success');
         playBeep();
 
