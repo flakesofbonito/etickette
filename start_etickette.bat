@@ -50,8 +50,8 @@ timeout /t 1 /nobreak >nul
 start "" "https://etickette-78f74.web.app/monitor/index.html"
 timeout /t 1 /nobreak >nul
 
-:: OPEN KIOSK (Firebase Hosted - fullscreen)
-start "" "https://etickette-78f74.web.app/kiosk/index.html"
+:: OPEN KIOSK (Local file - printer access)
+start "" "C:\Users\Kurt\Desktop\eTickette\kiosk\index.html"
 timeout /t 2 /nobreak >nul
 
 :: SEND F11 TO MAKE KIOSK FULLSCREEN
@@ -67,10 +67,10 @@ echo    Health Check   : http://localhost:8000/health
 echo.
 echo    Website  : https://etickette-78f74.web.app/website/index.html
 echo    Monitor  : https://etickette-78f74.web.app/monitor/index.html
-echo    Kiosk    : https://etickette-78f74.web.app/kiosk/index.html
+echo    Kiosk    : C:\Users\Kurt\Desktop\eTickette\kiosk\index.html
 echo.
-echo    Camera works on all devices (HTTPS)
-echo    Share Kiosk URL to any phone to test
+echo    Students reserve online via Website URL
+echo    Kiosk runs locally for printer access
 echo.
 echo    To stop, run stop_etickette.bat
 echo  =========================================
