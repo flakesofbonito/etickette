@@ -29,7 +29,6 @@ body {
   flex-direction: column;
 }
 
-/* ── HEADER ─────────────────────────────────────────── */
 .monitor-header {
   display: flex;
   align-items: center;
@@ -62,7 +61,6 @@ body {
   border: 1px solid rgba(255,255,255,0.12);
 }
 
-/* ── GRID ────────────────────────────────────────────── */
 .monitor-grid {
   flex: 1;
   display: flex;
@@ -71,7 +69,6 @@ body {
   gap: 24px;
 }
 
-/* ── DEPT PANEL ──────────────────────────────────────── */
 .dept-panel {
   flex: 1;
   display: flex;
@@ -88,7 +85,6 @@ body {
 
 .monitor-divider { display: none; }
 
-/* ── DEPT LABEL ──────────────────────────────────────── */
 .dept-label {
   font-size: 18px;
   font-weight: 800;
@@ -107,7 +103,6 @@ body {
   border: 2px solid var(--yellow-mid);
 }
 
-/* ── DEPT STATUS ─────────────────────────────────────── */
 .dept-status {
   font-size: 12px;
   font-weight: 700;
@@ -130,7 +125,6 @@ body {
   border-color: rgba(249,115,22,.2);
 }
 
-/* ── NOW SERVING ─────────────────────────────────────── */
 .now-serving-label {
   font-size: 13px;
   font-weight: 600;
@@ -161,7 +155,6 @@ body {
   50%      { opacity: .7; }
 }
 
-/* ── NEXT IN LINE ────────────────────────────────────── */
 .next-label {
   font-size: 12px;
   font-weight: 600;
@@ -213,7 +206,6 @@ body {
 }
 .queue-total strong { color: var(--blue-deep); }
 
-/* ── FOOTER ──────────────────────────────────────────── */
 .monitor-footer {
   display: flex;
   justify-content: space-between;
@@ -230,7 +222,6 @@ body {
   font-weight: 600;
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────── */
 @media (max-width: 700px) {
   .monitor-header { padding: 14px 20px; }
   .monitor-title h1 { font-size: 20px; }

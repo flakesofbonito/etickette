@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
     <style>
-        /* ── PIN GATE ─────────────────────────────────────── */
         .monitor-gate {
             position: fixed; inset: 0;
             background: #0f1f5c;
@@ -51,21 +50,17 @@
         }
         .gate-input.shake { animation: shake .35s ease; }
 
-        /* ✅ FIX — Monitor content uses display:contents so its children
-           (header, grid, footer) participate directly in body's flex layout.
-           This eliminates the gap at the bottom caused by display:block
-           breaking the flex:1 on .monitor-grid */
+
         #monitorContent {
-            display: none; /* hidden by default */
+            display: none;
         }
         #monitorContent.unlocked {
-            display: contents; /* transparent to layout — children become body flex items */
+            display: contents; 
         }
     </style>
 </head>
 <body>
 
-    <!-- PIN GATE (shown until authenticated) -->
     <div class="monitor-gate" id="monitorGate">
         <div class="gate-box">
             <img src="../assets/sti-logo.png" class="gate-logo" alt="STI" />
@@ -85,9 +80,6 @@
         </div>
     </div>
 
-    <!-- MONITOR CONTENT -->
-    <!-- ✅ FIX — switched from style="display:none/block" to CSS class toggle
-         so display:contents works correctly when unlocked -->
     <div id="monitorContent">
         <div class="monitor-header">
             <img src="../assets/sti-logo.png" class="monitor-logo" />
@@ -99,7 +91,6 @@
         </div>
 
         <div class="monitor-grid">
-            <!-- CASHIER PANEL -->
             <div class="dept-panel" id="cashierPanel">
                 <div class="dept-label cashier-label">💰 CASHIER</div>
                 <div class="dept-status" id="cashierMonStatus">OPEN</div>
@@ -114,7 +105,6 @@
 
             <div class="monitor-divider"></div>
 
-            <!-- REGISTRAR PANEL -->
             <div class="dept-panel" id="registrarPanel">
                 <div class="dept-label registrar-label">📋 REGISTRAR</div>
                 <div class="dept-status" id="registrarMonStatus">OPEN</div>
@@ -171,20 +161,17 @@
                 return;
             }
 
-            // ✅ FIX — Use class toggle to display:contents (not display:block)
             document.getElementById('monitorGate').style.display = 'none';
             document.getElementById('monitorContent').classList.add('unlocked');
             sessionStorage.setItem('monitorUnlocked', '1');
             initMonitor();
         }
 
-        // Button and Enter key
         document.getElementById('gateBtn').addEventListener('click', unlockMonitor);
         document.getElementById('gatePinInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') unlockMonitor();
         });
 
-        // Skip gate if already unlocked this session
         if (sessionStorage.getItem('monitorUnlocked') === '1') {
             document.getElementById('monitorGate').style.display = 'none';
             document.getElementById('monitorContent').classList.add('unlocked');

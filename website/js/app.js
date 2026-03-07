@@ -171,8 +171,7 @@ function afterLogin() {
         <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
     `;
 
-    // ✅ FIX #25 — Lock reserve buttons immediately on login to prevent race window.
-    // The snapshot listener will unlock them if no active reservation is found.
+
     setReserveButtonsLocked(true);
 
     navigate('home');
@@ -259,7 +258,6 @@ function listenToSettings() {
 }
 
 function listenToActiveReservation() {
-    // Reservation listener
     onSnapshot(
         query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
         snap => {
@@ -268,10 +266,8 @@ function listenToActiveReservation() {
                 return s === 'pending' || s === 'active';
             });
             if (!activeDoc) {
-                // Only unlock if there's also no active walk-in ticket
-                // (the ticket listener handles that case)
+              
                 const walkinBanner = document.getElementById('activeResBanner');
-                // ✅ FIX #24 — Use data-banner-type attribute instead of fragile emoji text match
                 if (!walkinBanner || walkinBanner.dataset.bannerType === 'reservation') {
                     hasActiveReservation = false;
                     setReserveButtonsLocked(false);
@@ -290,7 +286,6 @@ function listenToActiveReservation() {
         }
     );
 
-    // Walk-in ticket listener
     onSnapshot(
         query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
         snap => {
@@ -304,7 +299,6 @@ function listenToActiveReservation() {
                 setReserveButtonsLocked(true);
                 renderActiveWalkinBanner(active.data());
             } else {
-                // ✅ FIX #24 — Use data-banner-type attribute instead of fragile emoji text match
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'walkin') {
                     banner.remove();
@@ -328,7 +322,6 @@ function setReserveButtonsLocked(locked) {
     });
 }
 
-// ── QR HELPER ─────────────────────────────────────────────────────────────────
 function renderQR(el, text, size) {
     el.innerHTML = '';
     new QRCode(el, {
@@ -347,7 +340,6 @@ function renderQR(el, text, size) {
     }, 80);
 }
 
-// ── BANNERS ───────────────────────────────────────────────────────────────────
 function renderActiveResBanner(res, rid) {
     const old = document.getElementById('activeResBanner');
     if (old) old.remove();
@@ -374,7 +366,6 @@ function renderActiveResBanner(res, rid) {
     const banner = document.createElement('div');
     banner.id                    = 'activeResBanner';
     banner.className             = 'active-res-banner';
-    // ✅ FIX #24 — Use data attribute instead of emoji text for banner type detection
     banner.dataset.bannerType    = 'reservation';
     banner.innerHTML = `
     <div class="active-res-header">
@@ -426,7 +417,6 @@ function renderActiveWalkinBanner(ticket) {
     const banner = document.createElement('div');
     banner.id                 = 'activeResBanner';
     banner.className          = 'active-res-banner';
-    // ✅ FIX #24 — data attribute marks this as a walkin banner, no emoji text needed
     banner.dataset.bannerType = 'walkin';
     banner.innerHTML = `
     <div class="active-res-header"><span>🎫 Active Ticket</span></div>
@@ -443,7 +433,6 @@ function renderActiveWalkinBanner(ticket) {
     pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 }
 
-// ── CANCEL ────────────────────────────────────────────────────────────────────
 async function cancelReservation(rid, status) {
     if (!confirm(status === 'active'
         ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
@@ -460,7 +449,6 @@ async function cancelReservation(rid, status) {
                 if (ticketSnap.exists()) {
                     const tStatus = ticketSnap.data().status;
                     await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
-                    // ✅ FIX #6 — Only decrement queue if ticket was actually in queue
                     if (tStatus === 'waiting' || tStatus === 'serving') {
                         const dept  = snap.data().department;
                         const dSnap = await getDoc(doc(db, 'departments', dept));
@@ -474,7 +462,6 @@ async function cancelReservation(rid, status) {
             }
         }
 
-        // ✅ FIX #12 — Restore ticketsIssued on cancellation (was never decremented before)
         try {
             await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(-1) });
         } catch (e) {
@@ -488,7 +475,6 @@ async function cancelReservation(rid, status) {
     }
 }
 
-// ── RESERVE MODAL ─────────────────────────────────────────────────────────────
 function openReserveModal(dept) {
     if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
@@ -554,14 +540,12 @@ async function submitReserveDate() {
     if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
     errEl.textContent = '';
 
-    // Pre-check: already has reservation?
     try {
         const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
         const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
         if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
     } catch (e) { console.warn('[pre-check res]', e.code); }
 
-    // Pre-check: already has active ticket?
     try {
         const snap = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
         const waiting = snap.docs.find(d => d.data().status === 'waiting');
@@ -592,11 +576,6 @@ async function submitReserveDate() {
         return;
     }
 
-    // ✅ FIX #4 — REMOVED ticketsIssued increment here.
-    // ticketsIssued must only be incremented at the Kiosk when an actual queue ticket
-    // is physically issued (in kiosk.js issueTicket). Counting at reservation creation
-    // caused every reservation to burn TWO quota slots.
-
     const qrEl = document.getElementById('reserveQR');
     qrEl.innerHTML = '';
     document.getElementById('reserveSummary').textContent =
@@ -606,7 +585,6 @@ async function submitReserveDate() {
     showToast('Reservation saved!', 'success');
 }
 
-// ── HISTORY ───────────────────────────────────────────────────────────────────
 async function loadHistory() {
     const el = document.getElementById('historyList');
     el.innerHTML = '<p class="subtle">Loading...</p>';
@@ -664,11 +642,9 @@ async function loadHistory() {
     }
 }
 
-// ── MODALS ────────────────────────────────────────────────────────────────────
 function closeModal(id)         { document.getElementById(id).classList.remove('active'); }
 function handleOverlay(e, id)   { if (e.target === document.getElementById(id)) closeModal(id); }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'info') {
     const t = document.getElementById('toast');

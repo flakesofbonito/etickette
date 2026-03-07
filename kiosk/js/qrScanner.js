@@ -1,12 +1,9 @@
-// ✅ FIX #2 — Replaced broken imports from non-existent '../../website/js/firebase-config.js'
-// and '../../website/js/ui.js' with direct Firebase SDK imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
     getFirestore, doc, collection, getDoc, setDoc, updateDoc,
     increment, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ✅ FIX #22 — Use public deployment URL so QR codes work from any device
 const PUBLIC_URL = 'https://etickette-78f74.web.app';
 
 const firebaseConfig = {
@@ -138,7 +135,6 @@ async function onScanSuccess(decodedText) {
             called:        false
         });
 
-        // ✅ FIX #7 — Unified status to 'active' (matches app.js listener which checks for 'active')
         await updateDoc(resRef, {
             status:      'active',
             checkedInAt: serverTimestamp(),
@@ -148,7 +144,6 @@ async function onScanSuccess(decodedText) {
         const resultBox = document.getElementById('qrResult');
         resultBox.style.display = 'block';
 
-        // ✅ FIX #22 — Use PUBLIC_URL for tracker link in result
         const trackUrl = PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
         resultBox.innerHTML = `
             <strong>✅ Check-In Successful!</strong><br/>
@@ -157,7 +152,7 @@ async function onScanSuccess(decodedText) {
             <span>Department: ${dept.toUpperCase()}</span><br/>
             <span>Reason: ${res.reason || '—'}</span><br/>
             <a href="${trackUrl}" target="_blank" style="display:inline-block;margin-top:8px;color:#1f3c88;">
-              📱 View Queue Tracker →
+            📱 View Queue Tracker →
             </a>
         `;
         setQrStatus('Ready to serve you!');
@@ -201,7 +196,6 @@ async function submitId() {
         displayName = name;
     }
 
-    // ── Early duplicate check ──────────────────────────────
     const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
 

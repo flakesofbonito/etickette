@@ -1,4 +1,3 @@
-// ✅ FIX — Single import block (duplicate import from dailyReset.js pasted at bottom caused ES module crash)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, doc, collection, onSnapshot,

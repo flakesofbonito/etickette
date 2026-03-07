@@ -52,13 +52,12 @@ export function initKiosk() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
 
-    // ✅ FIX: Expose ALL functions the HTML calls via onclick=
     window.goScreen            = goScreen;
-    window.pickDept            = pickDept;       // HTML uses pickDept(), not selectDept()
-    window.pickUserType        = pickUserType;   // HTML uses pickUserType(), not selectUserType()
+    window.pickDept            = pickDept;      
+    window.pickUserType        = pickUserType;   
     window.submitId            = submitId;
-    window.submitReason        = submitReason;   // ✅ FIX: was missing — "Next — Check Documents" button
-    window.toggleReasonDropdown = toggleReasonDropdown; // ✅ FIX: was missing
+    window.submitReason        = submitReason;  
+    window.toggleReasonDropdown = toggleReasonDropdown; 
     window.proceedIssue        = proceedIssue;
     window.startScanner = startScanner;
     window.stopScanner         = stopScanner;
@@ -66,13 +65,12 @@ export function initKiosk() {
     updateClock();
     setInterval(updateClock, 1000);
     listenToSettings();
-    listenToQueueCounts();   // ✅ FIX: keep queue counts live on dept screen
+    listenToQueueCounts();  
     initIdleTimeout();
 
     goScreen('home');
 }
 
-// ── CLOCK ──────────────────────────────────────────────────────────────────────
 function updateClock() {
     const el = document.getElementById('kioskTime');
     if (el) el.textContent = new Date().toLocaleTimeString('en-PH', {
@@ -80,7 +78,6 @@ function updateClock() {
     });
 }
 
-// ── SETTINGS LISTENER ─────────────────────────────────────────────────────────
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
@@ -91,8 +88,6 @@ function listenToSettings() {
     });
 }
 
-// ── LIVE QUEUE COUNTS ─────────────────────────────────────────────────────────
-// ✅ FIX: keep the "N in queue" sub-labels on the dept pick screen accurate
 function listenToQueueCounts() {
     for (const dept of ['cashier', 'registrar']) {
         onSnapshot(
@@ -133,7 +128,6 @@ function listenToQueueCounts() {
     }
 }
 
-// ── SCREEN NAVIGATION ─────────────────────────────────────────────────────────
 function goScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
@@ -141,8 +135,6 @@ function goScreen(name) {
     else console.warn('[goScreen] Screen not found: screen-' + name);
 }
 
-// ── DEPT SELECTION ────────────────────────────────────────────────────────────
-// ✅ FIX: HTML calls pickDept() — alias that sets selectedDept then routes to usertype
 function pickDept(dept) {
     if (!deptStatus[dept]) {
         const st  = deptStatusLabel[dept];
@@ -154,9 +146,6 @@ function pickDept(dept) {
     goScreen('usertype');
 }
 
-
-// ── USER TYPE SELECTION ───────────────────────────────────────────────────────
-// ✅ FIX: HTML calls pickUserType() — alias that configures the ID screen correctly
 function pickUserType(type) {
     selectedUserType = type;
 
@@ -186,13 +175,12 @@ function pickUserType(type) {
         if (inp) { inp.placeholder = "Child's Student ID (11 digits)"; inp.inputMode = 'numeric'; }
         if (title) title.textContent = "Enter Your Child's Student ID";
 
-    } else { // guest
+    } else { 
         if (idField)   idField.style.display   = 'none';
         if (nameField) nameField.style.display = 'block';
         if (title) title.textContent = 'Enter Your Full Name';
     }
 
-    // Clear previous inputs
     const idInp = document.getElementById('idInput');
     const nameInp = document.getElementById('nameInput');
     const errEl = document.getElementById('idError');
@@ -204,8 +192,6 @@ function pickUserType(type) {
 }
 
 
-// ── REASON DROPDOWN ──────────────────────────────────────────────────────────
-// ✅ FIX: toggleReasonDropdown was called from HTML but never defined
 function toggleReasonDropdown() {
     const list  = document.getElementById('reasonDropdownList');
     const arrow = document.getElementById('reasonArrow');
@@ -216,9 +202,8 @@ function toggleReasonDropdown() {
 }
 
 function buildReasonList() {
-    selectedReason = null; // reset previous selection
+    selectedReason = null; 
 
-    // Reset trigger text
     const trigger = document.getElementById('reasonTriggerText');
     if (trigger) trigger.textContent = '— Please Select a Reason —';
     const arrow = document.getElementById('reasonArrow');
@@ -276,7 +261,6 @@ async function submitId() {
         displayName = name;
     }
 
-    // ── Early duplicate check ──────────────────────────────
     const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
 
@@ -304,7 +288,6 @@ async function submitId() {
     }
 
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
-    // ── End check ──────────────────────────────────────────
 
     pendingUserId       = userId;
     selectedDisplayName = displayName;
@@ -318,7 +301,6 @@ function selectReason(idx) {
     if (trigger && selectedReason) trigger.textContent = selectedReason.label;
 }
 
-// ✅ FIX: submitReason was called from "Next — Check Documents" button but never defined
 function submitReason() {
     const errEl = document.getElementById('reasonError');
     if (!selectedReason) {
@@ -350,13 +332,11 @@ function showDocsScreen(reason) {
     goScreen('docs');
 }
 
-// ── PROCEED TO ISSUE ─────────────────────────────────────────────────────────
 async function proceedIssue() {
     if (!pendingUserId) { goScreen('home'); return; }
     await issueTicket(pendingUserId);
 }
 
-// ── ISSUE TICKET ─────────────────────────────────────────────────────────────
 async function issueTicket(userId) {
     const btn = document.querySelector('#screen-docs .kiosk-submit-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Issuing...'; }
@@ -418,7 +398,6 @@ async function issueTicket(userId) {
     }
 }
 
-// ── TICKET SCREEN ─────────────────────────────────────────────────────────────
 function showTicketScreen(tNum, userId, ahead) {
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     set('issuedDept',   selectedDept.toUpperCase());
@@ -550,7 +529,6 @@ function setScanStatus(msg) {
     if (el) el.textContent = msg;
 }
 
-// ── PRINT ─────────────────────────────────────────────────────────────────────
 async function printTicket(tNum, dept) {
     const qr_link = PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
     try {
@@ -566,7 +544,6 @@ async function printTicket(tNum, dept) {
     }
 }
 
-// ── AUDIO BEEP ────────────────────────────────────────────────────────────────
 function playBeep() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -579,7 +556,6 @@ function playBeep() {
     } catch (_) {}
 }
 
-// ── IDLE TIMEOUT ──────────────────────────────────────────────────────────────
 function initIdleTimeout() {
     const IDLE_MS = 45000;
     let idleTimer = null;

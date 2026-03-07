@@ -29,7 +29,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* ── HEADER ─────────────────────────────────────────── */
 .kiosk-header {
   display: flex;
   align-items: center;
@@ -50,7 +49,6 @@ html, body {
   padding: 6px 14px; border-radius: var(--radius-sm);
 }
 
-/* ── STATUS BANNER ───────────────────────────────────── */
 .kiosk-banner {
   background: var(--blue-deep);
   color: rgba(255,255,255,0.75);
@@ -60,7 +58,6 @@ html, body {
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-/* ── SCREENS ─────────────────────────────────────────── */
 .screen {
   display: none;
   padding: 16px 20px 20px;
@@ -80,7 +77,6 @@ html, body {
   margin-bottom: 28px; text-align: center;
 }
 
-/* ── BIG BUTTONS ─────────────────────────────────────── */
 .big-btn-grid {
   display: flex; flex-direction: column;
   gap: 16px; width: 100%; max-width: 480px; margin-bottom: 24px;
@@ -110,7 +106,6 @@ html, body {
 .big-btn-sub   { font-size: 13px; opacity: .75; }
 .big-btn.disabled { opacity: .45; pointer-events: none; }
 
-/* ── STATUS ROW ──────────────────────────────────────── */
 .status-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .status-chip {
   background: var(--white); border: 1px solid var(--border);
@@ -121,7 +116,6 @@ html, body {
 .chip-break  { color: #f97316; font-weight: 700; }
 .chip-closed { color: #dc2626; font-weight: 700; }
 
-/* ── BACK BUTTON ─────────────────────────────────────── */
 .back-btn {
   align-self: flex-start;
   background: var(--white); border: 1.5px solid var(--border);
@@ -132,7 +126,6 @@ html, body {
 }
 .back-btn:hover { border-color: var(--blue-light); color: var(--blue-mid); }
 
-/* ── ID FORM ─────────────────────────────────────────── */
 .id-form { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
 .kiosk-input {
   width: 100%; padding: 18px;
@@ -146,7 +139,6 @@ html, body {
 .kiosk-input:focus { border-color: var(--blue-mid); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
 .kiosk-error { color: #dc2626; font-size: 13px; text-align: center; min-height: 18px; font-weight: 500; }
 
-/* ── SUBMIT / ACTION BUTTONS ─────────────────────────── */
 .kiosk-submit-btn {
   width: 100%; max-width: 480px; padding: 18px;
   background: linear-gradient(90deg, var(--blue-mid), var(--blue-deep));
@@ -167,7 +159,6 @@ html, body {
 }
 .kiosk-back-btn:hover { border-color: var(--blue-light); color: var(--blue-mid); }
 
-/* ── CANCEL BUTTON (red outline) ─────────────────────── */
 .kiosk-cancel-btn {
   width: 100%; max-width: 480px; padding: 15px;
   background: rgba(220,38,38,.06);
@@ -178,7 +169,6 @@ html, body {
 }
 .kiosk-cancel-btn:hover { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.5); }
 
-/* ── TICKET CARD ─────────────────────────────────────── */
 .ticket-card {
   width: 100%; max-width: 400px;
   background: var(--white); border-radius: var(--radius-lg);
@@ -218,12 +208,10 @@ html, body {
 .ticket-qr { display: flex; justify-content: center; background: var(--white); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
 .ticket-qr-hint { font-size: 12px; color: var(--text-sub); }
 
-/* ── QR SCANNER ──────────────────────────────────────── */
 .kiosk-qr-box { width: 100%; max-width: 320px; border-radius: var(--radius-lg); overflow: hidden; border: 3px solid var(--yellow-mid); margin-bottom: 12px; box-shadow: var(--shadow-md); }
 .scan-status  { font-size: 14px; color: var(--text-sub); text-align: center; margin-bottom: 8px; font-weight: 500; }
 .scan-result  { width: 100%; max-width: 400px; background: rgba(22,163,74,.08); border: 1px solid rgba(22,163,74,.25); border-radius: var(--radius-md); padding: 14px; font-size: 14px; color: #16a34a; text-align: center; margin-bottom: 12px; font-weight: 500; }
 
-/* ── USER TYPE GRID ──────────────────────────────────── */
 .kiosk-name-input { letter-spacing: 0 !important; font-size: 20px !important; font-weight: 600 !important; }
 .usertype-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 560px; }
 .usertype-grid .big-btn       { padding: 20px 12px; }
@@ -235,9 +223,8 @@ html, body {
 #screen-usertype .back-btn        { margin-bottom: 12px; }
 .subtle { color: var(--text-sub); font-size: 13px; }
 
-/* ── REASON SCREEN ───────────────────────────────────── */
 #screen-reason {
-  overflow: visible; /* allow dropdown to overflow */
+  overflow: visible;
 }
 
 .reason-dropdown-wrap {
@@ -299,7 +286,6 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── REASON DROPDOWN ITEMS (JS uses .reason-btn) ─────── */
 .reason-btn {
   display: block;
   width: 100%;
@@ -324,7 +310,6 @@ html, body {
 }
 .reason-btn:active { background: #dbeafe; }
 
-/* ── DOCS SCREEN ─────────────────────────────────────── */
 #screen-docs .screen-subtitle {
   font-size: 13px;
   font-weight: 700;

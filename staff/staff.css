@@ -32,7 +32,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* ── LOGIN ─────────────────────────────────────────────── */
 .login-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: linear-gradient(135deg, var(--blue-deep) 0%, #0d2260 100%);
@@ -101,11 +100,9 @@ html, body {
 .btn-login:hover { opacity: .9; transform: translateY(-1px); }
 .login-hint { text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 10px; }
 
-/* ── DASHBOARD ─────────────────────────────────────────── */
 .dashboard { display: flex; flex-direction: column; }
 .dashboard.hidden { display: none; }
 
-/* ── HEADER ─────────────────────────────────────────────── */
 .dash-header {
   background: var(--blue-deep);
   border-bottom: 4px solid var(--yellow-mid);
@@ -136,7 +133,6 @@ html, body {
 }
 .btn-logout-dash:hover { background: rgba(255,255,255,.2); }
 
-/* ── STATUS BAR ─────────────────────────────────────────── */
 .status-bar {
   background: var(--white);
   border-bottom: 1px solid var(--border);
@@ -168,7 +164,6 @@ html, body {
   line-height: 1;
 }
 
-/* ── MAIN CONTENT GRID ─────────────────────────────────── */
 .dash-content {
   flex: 1;
   display: grid;
@@ -178,7 +173,6 @@ html, body {
   align-items: start;
 }
 
-/* ── PANEL SHARED ─────────────────────────────────────── */
 .panel-label {
   font-size: 11px; font-weight: 800; letter-spacing: 2px;
   text-transform: uppercase; color: var(--text-sub);
@@ -191,7 +185,6 @@ html, body {
   padding: 2px 8px; border-radius: 30px;
 }
 
-/* ── NOW SERVING PANEL ─────────────────────────────────── */
 .now-serving-panel {
   background: var(--panel);
   border-radius: var(--radius-lg);
@@ -272,7 +265,6 @@ html, body {
 .btn-call-next:hover { opacity: .9; transform: translateY(-1px); }
 .btn-call-next:disabled { opacity: .4; transform: none; cursor: not-allowed; }
 
-/* ── QUEUE PANEL ─────────────────────────────────────── */
 .queue-panel {
   background: var(--panel);
   border-radius: var(--radius-lg);
@@ -315,7 +307,6 @@ html, body {
   background: var(--border); padding: 2px 8px; border-radius: 20px;
 }
 
-/* ── STATS PANEL ─────────────────────────────────────── */
 .stats-panel {
   background: var(--panel);
   border-radius: var(--radius-lg);
@@ -386,7 +377,6 @@ html, body {
 }
 .btn-manual:hover { background: rgba(22,163,74,.2); }
 
-/* ── CALL ALERT OVERLAY ─────────────────────────────── */
 .call-alert {
   position: fixed; inset: 0; z-index: 8000;
   background: rgba(31,60,136,.92);
@@ -419,12 +409,10 @@ html, body {
   margin-top: 16px; letter-spacing: 1px;
 }
 
-/* ── SCROLLBAR ─────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 
-/* ── RESPONSIVE ─────────────────────────────────────── */
 @media (max-width: 1100px) {
   .dash-content { grid-template-columns: 280px 1fr; }
   .stats-panel { grid-column: 1 / -1; }
