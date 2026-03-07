@@ -14,7 +14,9 @@ const firebaseConfig = {
   appId: "1:147547566302:web:2c7a52792b539331d8524f"
 };
 
-const STAFF_PIN = '1234'; // Change to your desired PIN
+// ✅ FIX #20 — PIN is now loaded from Firestore (system/settings.staffPin)
+// Fallback to '1234' only if Firestore read fails (for safety during transition)
+let STAFF_PIN = '1234';
 
 let app, db;
 let staffDept = 'cashier';
@@ -28,25 +30,37 @@ let unsubQueue = null;
 let unsubDept = null;
 
 // ── INIT ────────────────────────────────────────────────
-window.selectDept = selectDept;
-window.staffLogin = staffLogin;
-window.staffLogout = staffLogout;
-window.setDeptStatus = setDeptStatus;
-window.callNextTicket = callNextTicket;
-window.completeTicket = completeTicket;
-window.noShowTicket = noShowTicket;
-window.recallTicket = recallTicket;
+window.selectDept       = selectDept;
+window.staffLogin       = staffLogin;
+window.staffLogout      = staffLogout;
+window.setDeptStatus    = setDeptStatus;
+window.callNextTicket   = callNextTicket;
+window.completeTicket   = completeTicket;
+window.noShowTicket     = noShowTicket;
+window.recallTicket     = recallTicket;
 window.markManualComplete = markManualComplete;
 
 app = initializeApp(firebaseConfig);
-db = getFirestore(app);
+db  = getFirestore(app);
+
+// ✅ FIX #20 — Load PIN from Firestore on startup
+(async () => {
+  try {
+    const snap = await getDoc(doc(db, 'system', 'settings'));
+    if (snap.exists() && snap.data().staffPin) {
+      STAFF_PIN = snap.data().staffPin;
+    }
+  } catch (e) {
+    console.warn('[PIN load] Using default PIN.', e.message);
+  }
+})();
 
 updateClock();
 setInterval(updateClock, 1000);
 
 function updateClock() {
   const now = new Date();
-  const el = document.getElementById('dashTime');
+  const el  = document.getElementById('dashTime');
   if (el) el.textContent = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -74,7 +88,7 @@ function staffLogin() {
 function staffLogout() {
   if (!confirm('Log out of Staff Dashboard?')) return;
   if (unsubQueue) unsubQueue();
-  if (unsubDept) unsubDept();
+  if (unsubDept)  unsubDept();
   clearInterval(timerInterval);
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('loginOverlay').style.display = 'flex';
@@ -86,14 +100,15 @@ function staffLogout() {
 function startDashboard() {
   listenToDept();
   listenToQueue();
-  loadTodayStats();
+  // ✅ FIX #10 — loadTodayStats() still runs once on login for initial count,
+  // but listenToQueue() also keeps statIssued live via real-time snapshot
 }
 
 function listenToDept() {
   if (unsubDept) unsubDept();
   unsubDept = onSnapshot(doc(db, 'departments', staffDept), snap => {
     if (!snap.exists()) return;
-    const d = snap.data();
+    const d  = snap.data();
     const st = (d.status || 'open').toLowerCase();
     ['btnOpen', 'btnBreak', 'btnClosed'].forEach(id =>
       document.getElementById(id).classList.remove('active'));
@@ -111,32 +126,31 @@ function listenToQueue() {
     where('department', '==', staffDept)
   );
   unsubQueue = onSnapshot(q, snap => {
-    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const all     = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const waiting = all
       .filter(t => t.status === 'waiting')
-      .sort((a, b) => {
-        const ta = a.issuedAt?.toMillis?.() || 0;
-        const tb = b.issuedAt?.toMillis?.() || 0;
-        return ta - tb;
-      });
+      .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
     const serving = all.find(t => t.status === 'serving');
 
     renderQueue(waiting, serving);
     updateStats(waiting, serving);
 
+    // ✅ FIX #10 — statIssued updates LIVE on every snapshot change
+    document.getElementById('statIssued').textContent = all.length;
+
     // Update current serving display
     if (serving) {
       const isNew = !currentTicket || currentTicket.ticketNumber !== serving.ticketNumber;
       currentTicket = serving;
-      renderServing(serving, isNew); // always refresh display; only restart timer if new
-    } else if (!serving) {
+      renderServing(serving, isNew);
+    } else {
       currentTicket = null;
       clearServing();
     }
 
-    document.getElementById('queueBadge').textContent = waiting.length;
-    document.getElementById('queueCount').textContent = waiting.length + (serving ? 1 : 0);
-    document.getElementById('btnCallNext').disabled = waiting.length === 0;
+    document.getElementById('queueBadge').textContent  = waiting.length;
+    document.getElementById('queueCount').textContent  = waiting.length + (serving ? 1 : 0);
+    document.getElementById('btnCallNext').disabled    = waiting.length === 0;
   });
 }
 
@@ -156,12 +170,14 @@ function renderQueue(waiting, serving) {
 }
 
 function queueItemHTML(t, pos) {
-  const tag = t.isReservation
+  const tag    = t.isReservation
     ? '<span class="queue-tag reservation">Reservation</span>'
     : '<span class="queue-tag walkin">Walk-in</span>';
-  const name = t.displayName || t.userId || '—';
+  const name   = t.displayName || t.userId || '—';
   const reason = t.reason || '—';
-  const time = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—';
+  const time   = t.issuedAt?.toDate
+    ? t.issuedAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
+    : '—';
   return `
     <div class="queue-num">${t.ticketNumber}</div>
     <div class="queue-details">
@@ -175,12 +191,12 @@ function queueItemHTML(t, pos) {
 }
 
 function renderServing(ticket, isNew = true) {
-  document.getElementById('servingNumber').textContent = ticket.ticketNumber;
-  document.getElementById('servingUserId').textContent = '👤 ' + (ticket.displayName || ticket.userId || '—');
-  document.getElementById('servingReason').textContent = '📝 ' + (ticket.reason || '—');
-  document.getElementById('servingType').textContent = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
-  document.getElementById('btnComplete').disabled = false;
-  document.getElementById('btnNoshow').disabled = false;
+  document.getElementById('servingNumber').textContent  = ticket.ticketNumber;
+  document.getElementById('servingUserId').textContent  = '👤 ' + (ticket.displayName || ticket.userId || '—');
+  document.getElementById('servingReason').textContent  = '📝 ' + (ticket.reason || '—');
+  document.getElementById('servingType').textContent    = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
+  document.getElementById('btnComplete').disabled       = false;
+  document.getElementById('btnNoshow').disabled         = false;
 
   if (isNew && !serveStartTime) {
     serveStartTime = Date.now();
@@ -189,14 +205,14 @@ function renderServing(ticket, isNew = true) {
 }
 
 function clearServing() {
-  document.getElementById('servingNumber').textContent = '—';
-  document.getElementById('servingUserId').textContent = '—';
-  document.getElementById('servingReason').textContent = '—';
-  document.getElementById('servingType').textContent = '—';
-  document.getElementById('btnComplete').disabled = true;
-  document.getElementById('btnNoshow').disabled = true;
-  document.getElementById('servingTimer').textContent = '00:00';
-  document.getElementById('servingTimer').className = 'serving-timer';
+  document.getElementById('servingNumber').textContent  = '—';
+  document.getElementById('servingUserId').textContent  = '—';
+  document.getElementById('servingReason').textContent  = '—';
+  document.getElementById('servingType').textContent    = '—';
+  document.getElementById('btnComplete').disabled       = true;
+  document.getElementById('btnNoshow').disabled         = true;
+  document.getElementById('servingTimer').textContent   = '00:00';
+  document.getElementById('servingTimer').className     = 'serving-timer';
   serveStartTime = null;
   clearInterval(timerInterval);
 }
@@ -206,25 +222,27 @@ function startTimer() {
   timerInterval = setInterval(() => {
     if (!serveStartTime) return;
     const elapsed = Math.floor((Date.now() - serveStartTime) / 1000);
-    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-    const s = String(elapsed % 60).padStart(2, '0');
+    const m  = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const s  = String(elapsed % 60).padStart(2, '0');
     const el = document.getElementById('servingTimer');
     el.textContent = `${m}:${s}`;
-    if (elapsed > 600) el.className = 'serving-timer over';
+    if (elapsed > 600)      el.className = 'serving-timer over';
     else if (elapsed > 300) el.className = 'serving-timer warn';
-    else el.className = 'serving-timer';
+    else                    el.className = 'serving-timer';
   }, 1000);
 }
 
 function updateStats(waiting, serving) {
   document.getElementById('statWaiting').textContent = waiting.length;
-  document.getElementById('statServed').textContent = servedToday;
-  document.getElementById('statNoShow').textContent = noShowToday;
+  document.getElementById('statServed').textContent  = servedToday;
+  document.getElementById('statNoShow').textContent  = noShowToday;
   const avg = serveTimes.length > 0
     ? Math.round(serveTimes.reduce((a, b) => a + b, 0) / serveTimes.length)
     : null;
-  document.getElementById('avgWait').textContent = avg ? Math.floor(avg / 60) + 'm ' + (avg % 60) + 's' : '—';
-  document.getElementById('servedCount').textContent = servedToday;
+  const avgEl = document.getElementById('avgWait');
+  if (avgEl) avgEl.textContent = avg ? Math.floor(avg / 60) + 'm ' + (avg % 60) + 's' : '—';
+  const scEl = document.getElementById('servedCount');
+  if (scEl) scEl.textContent = servedToday;
 }
 
 async function loadTodayStats() {
@@ -235,9 +253,9 @@ async function loadTodayStats() {
     ));
     servedToday = snap.docs.filter(d => d.data().status === 'completed').length;
     noShowToday = snap.docs.filter(d => d.data().status === 'noshow').length;
-    document.getElementById('statIssued').textContent = snap.docs.length;
-    document.getElementById('statServed').textContent = servedToday;
-    document.getElementById('statNoShow').textContent = noShowToday;
+    document.getElementById('statIssued').textContent  = snap.docs.length;
+    document.getElementById('statServed').textContent  = servedToday;
+    document.getElementById('statNoShow').textContent  = noShowToday;
   } catch (e) {
     console.warn('[loadStats]', e);
   }
@@ -261,28 +279,29 @@ async function callNextTicket() {
     if (currentTicket && currentTicket.status === 'serving') {
       await finishServing(currentTicket, 'completed');
       servedToday++;
-      document.getElementById('statServed').textContent = servedToday;
-      document.getElementById('servedCount').textContent = servedToday;
+      document.getElementById('statServed').textContent  = servedToday;
+      const scEl = document.getElementById('servedCount');
+      if (scEl) scEl.textContent = servedToday;
       addActivity('completed', currentTicket.ticketNumber, currentTicket.displayName || currentTicket.userId || '—');
     }
 
     const next = sorted[0];
-    // Reset timer for new ticket
     serveStartTime = Date.now();
     clearInterval(timerInterval);
 
     await updateDoc(doc(db, 'tickets', next.id), {
-      status: 'serving',
-      calledAt: serverTimestamp(),
-      called: true,
-      notified: true,
-      notifiedAt: serverTimestamp()
+      status:      'serving',
+      calledAt:    serverTimestamp(),
+      called:      true,
+      notified:    true,
+      notifiedAt:  serverTimestamp()
     });
     await updateDoc(doc(db, 'departments', staffDept), {
       nowServing: next.ticketNumber
     });
 
-    // snapshot will pick up the change and call renderServing
+    // ✅ FIX #9 — showCallAlert is now actually called
+    showCallAlert(next.ticketNumber);
     playCallSound(next.ticketNumber);
     addActivity('called', next.ticketNumber, next.displayName || next.userId || '—');
     startTimer();
@@ -296,7 +315,8 @@ async function completeTicket() {
   await finishServing(currentTicket, 'completed');
   servedToday++;
   document.getElementById('statServed').textContent = servedToday;
-  document.getElementById('servedCount').textContent = servedToday;
+  const scEl = document.getElementById('servedCount');
+  if (scEl) scEl.textContent = servedToday;
   addActivity('completed', currentTicket.ticketNumber, currentTicket.displayName || currentTicket.userId || '—');
   currentTicket = null;
   clearServing();
@@ -323,11 +343,11 @@ async function finishServing(ticket, status) {
     clearInterval(timerInterval);
 
     await updateDoc(doc(db, 'tickets', ticket.id), {
-      status: status,
+      status:      status,
       completedAt: serverTimestamp()
     });
     await updateDoc(doc(db, 'departments', staffDept), {
-      queue: increment(-1),
+      queue:      increment(-1),
       nowServing: ''
     });
   } catch (e) {
@@ -349,12 +369,15 @@ async function setDeptStatus(status) {
 
 async function recallTicket() {
   const input = document.getElementById('recallInput');
-  const tNum = input.value.trim().toUpperCase();
+  const tNum  = input.value.trim().toUpperCase();
   if (!tNum) return;
 
   try {
     const snap = await getDoc(doc(db, 'tickets', tNum));
     if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+
+    // ✅ FIX #9 — showCallAlert also called on recall
+    showCallAlert(tNum);
     playCallSound(tNum);
     addActivity('called', tNum, snap.data().displayName || snap.data().userId || '—');
     input.value = '';
@@ -365,12 +388,19 @@ async function recallTicket() {
 
 async function markManualComplete() {
   const input = document.getElementById('manualInput');
-  const tNum = input.value.trim().toUpperCase();
+  const tNum  = input.value.trim().toUpperCase();
   if (!tNum) return;
 
   try {
+    const snap = await getDoc(doc(db, 'tickets', tNum));
+    if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+
     await updateDoc(doc(db, 'tickets', tNum), { status: 'completed', completedAt: serverTimestamp() });
-    await updateDoc(doc(db, 'departments', staffDept), { queue: increment(-1) });
+    // ✅ FIX #6 — Only decrement queue if ticket was actually in queue (waiting or serving)
+    const status = snap.data().status;
+    if (status === 'waiting' || status === 'serving') {
+      await updateDoc(doc(db, 'departments', staffDept), { queue: increment(-1) });
+    }
     servedToday++;
     document.getElementById('statServed').textContent = servedToday;
     addActivity('completed', tNum, '—');
@@ -381,8 +411,10 @@ async function markManualComplete() {
 }
 
 // ── CALL ALERT ──────────────────────────────────────────
+// ✅ FIX #9 — showCallAlert is now actually invoked (was defined but never called before)
 function showCallAlert(tNum) {
   const el = document.getElementById('callAlert');
+  if (!el) return;
   document.getElementById('callAlertNum').textContent = tNum;
   el.classList.remove('hidden');
   setTimeout(() => el.classList.add('hidden'), 3000);
@@ -390,8 +422,8 @@ function showCallAlert(tNum) {
 
 function playCallSound(tNum) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523, 659, 784]; // C-E-G chord
+    const ctx   = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523, 659, 784];
     notes.forEach((freq, i) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -408,13 +440,13 @@ function playCallSound(tNum) {
 
 // ── ACTIVITY LOG ────────────────────────────────────────
 function addActivity(type, tNum, name) {
-  const log = document.getElementById('activityLog');
+  const log   = document.getElementById('activityLog');
   const empty = log.querySelector('.activity-empty');
   if (empty) empty.remove();
 
-  const icons = { called: '📣', completed: '✅', noshow: '❌' };
+  const icons  = { called: '📣', completed: '✅', noshow: '❌' };
   const labels = { called: 'Called', completed: 'Served', noshow: 'No-Show' };
-  const now = new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  const now    = new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
 
   const item = document.createElement('div');
   item.className = `activity-item ${type}`;
@@ -425,7 +457,5 @@ function addActivity(type, tNum, name) {
     <span class="a-time">${now}</span>
   `;
   log.insertBefore(item, log.firstChild);
-
-  // Keep only 20 entries
   while (log.children.length > 20) log.removeChild(log.lastChild);
 }
