@@ -31,12 +31,10 @@
           onkeydown="if(event.key==='Enter') staffLogin()" />
         <p id="loginErr" class="login-err"></p>
         <button class="btn-login" onclick="staffLogin()">Enter Dashboard →</button>
-        <!-- ✅ FIX — "Default PIN: 1234" hint removed -->
       </div>
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
   <div id="dashboard" class="dashboard hidden">
     <div class="dash-header">
       <div class="dash-brand">
@@ -113,7 +111,6 @@
           <p style="font-size:12px;color:#dc2626;font-weight:600;margin-bottom:10px;">
             ⚠️ Daily Reset — clears ALL tickets and resets counters to zero. Only do this at the start of a new school day.
           </p>
-          <!-- ✅ FIX — Restored missing '<' before 'button' -->
           <button class="btn-manual"
             style="background:rgba(220,38,38,.1);color:#dc2626;border-color:rgba(220,38,38,.3);width:100%;"
             onclick="dailyReset()">🔄 Reset System for Today</button>

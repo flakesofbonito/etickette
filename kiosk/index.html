@@ -10,7 +10,6 @@
 </head>
 <body>
 
-    <!-- HEADER -->
     <div class="kiosk-header">
         <img src="../assets/sti-logo.png" class="kiosk-logo" />
         <div>
@@ -20,10 +19,8 @@
         <div class="kiosk-time" id="kioskTime">00:00</div>
     </div>
 
-    <!-- STATUS BANNER -->
     <div class="kiosk-banner" id="kioskBanner">🟢 Kiosk is Ready</div>
 
-    <!-- ── SCREEN: HOME ─────────────────────────────── -->
     <div id="screen-home" class="screen active">
         <p class="screen-subtitle">Welcome! What would you like to do?</p>
         <div class="big-btn-grid">
@@ -44,7 +41,6 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: PICK DEPARTMENT ──────────────────── -->
     <div id="screen-dept" class="screen">
         <button class="back-btn" onclick="goScreen('home')">← Back</button>
         <p class="screen-title">Pick a Department</p>
@@ -62,7 +58,6 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: PICK USER TYPE ──────────────────── -->
     <div id="screen-usertype" class="screen">
         <button class="back-btn" onclick="goScreen('dept')">← Back</button>
         <p class="screen-title">Who Are You?</p>
@@ -91,7 +86,6 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
     <div id="screen-id" class="screen">
         <button class="back-btn" onclick="goScreen('usertype')">← Back</button>
         <p class="screen-title" id="idScreenTitle">Enter Your ID</p>
@@ -113,19 +107,16 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: SELECT REASON ────────────────────── -->
     <div id="screen-reason" class="screen">
         <button class="back-btn" onclick="goScreen('id')">← Back</button>
         <p class="screen-title">Why Are You Here?</p>
         <p class="screen-subtitle" id="reasonDeptLabel">CASHIER</p>
 
-        <!-- Dropdown trigger -->
         <div class="reason-dropdown-wrap">
             <div class="reason-dropdown-trigger" id="reasonTrigger" onclick="toggleReasonDropdown()">
                 <span id="reasonTriggerText">— Please Select a Reason —</span>
                 <span class="reason-dropdown-arrow" id="reasonArrow">▼</span>
             </div>
-            <!-- Dropdown list -->
             <div class="reason-dropdown-list hidden" id="reasonDropdownList"></div>
         </div>
 
@@ -134,7 +125,6 @@
         <button class="kiosk-cancel-btn" onclick="goScreen('home')">✕ Cancel — Go Back to Home</button>
     </div>
 
-    <!-- ── SCREEN: REQUIRED DOCUMENTS ──────────────── -->
     <div id="screen-docs" class="screen">
         <p class="screen-title">Documents Required</p>
         <p class="screen-subtitle" id="docsReasonLabel">—</p>
@@ -150,7 +140,6 @@
         </div>
     </div>
 
-    <!-- ── SCREEN: TICKET ISSUED ────────────────────── -->
     <div id="screen-ticket" class="screen">
         <div class="ticket-card">
             <div class="ticket-school">STI College Fairview</div>
@@ -168,7 +157,6 @@
         <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
     </div>
 
-    <!-- ── SCREEN: QR SCANNER ───────────────────────── -->
     <div id="screen-scan" class="screen">
         <button class="back-btn" onclick="goScreen('home'); stopScanner()">← Back</button>
         <p class="screen-title">Scan Your QR Code</p>
@@ -179,7 +167,6 @@
         <button class="kiosk-back-btn" onclick="goScreen('home'); stopScanner()">Cancel</button>
     </div>
 
-    <!-- ── SCREEN: SCAN SUCCESS ─────────────────────── -->
     <div id="screen-scan-success" class="screen">
         <div class="ticket-card">
             <div class="ticket-school">STI College Fairview</div>

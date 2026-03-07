@@ -21,7 +21,6 @@ let notifGranted = false;
 
 window.requestNotification = requestNotification;
 
-// ── INIT ──────────────────────────────────────────────────
 app = initializeApp(firebaseConfig);
 db = getFirestore(app);
 
@@ -36,7 +35,6 @@ if (!ticketNum) {
   loadTicket(ticketNum);
 }
 
-// ── LOAD ──────────────────────────────────────────────────
 async function loadTicket(tNum) {
   try {
     const snap = await getDoc(doc(db, 'tickets', tNum));
@@ -51,9 +49,7 @@ async function loadTicket(tNum) {
   }
 }
 
-// ── LISTENERS ─────────────────────────────────────────────
 function startListeners(tNum) {
-  // Listen to this specific ticket
   onSnapshot(doc(db, 'tickets', tNum), snap => {
     if (!snap.exists()) return;
     myTicket = { id: snap.id, ...snap.data() };
@@ -61,7 +57,6 @@ function startListeners(tNum) {
     renderTicketCard(myTicket);
   });
 
-  // Listen to the dept queue for position updates
   onSnapshot(
     query(collection(db, 'tickets'), where('department', '==', myDept)),
     snap => {
@@ -70,7 +65,6 @@ function startListeners(tNum) {
     }
   );
 
-  // Listen to dept doc for nowServing
   onSnapshot(doc(db, 'departments', myDept), snap => {
     if (!snap.exists()) return;
     const d = snap.data();
@@ -79,16 +73,13 @@ function startListeners(tNum) {
   });
 }
 
-// ── STATE MANAGEMENT ──────────────────────────────────────
 function checkAndShowState(ticket) {
   const status = ticket.status;
 
-  // Terminal states
   if (status === 'completed') { showState('completed'); return; }
   if (status === 'noshow')    { showState('noshow');    return; }
   if (status === 'cancelled') { showState('cancelled'); return; }
 
-  // Active state
   showState('active');
 
   const statusCard = document.getElementById('statusCard');
@@ -107,7 +98,6 @@ function checkAndShowState(ticket) {
     document.getElementById('calledDept').textContent = myDept.toUpperCase();
     document.getElementById('positionCard').style.opacity = '0.5';
 
-    // Trigger notification if first time detecting serving status
     if (lastStatus !== 'serving') {
       triggerNotification(ticket.ticketNumber);
       playAlertSound();
@@ -135,7 +125,6 @@ function showState(state) {
   }
 }
 
-// ── TICKET CARD ───────────────────────────────────────────
 function renderTicketCard(ticket) {
   document.getElementById('tcDept').textContent   = (ticket.department || myDept).toUpperCase();
   document.getElementById('tcNumber').textContent = ticket.ticketNumber;
@@ -144,7 +133,6 @@ function renderTicketCard(ticket) {
   document.getElementById('tcType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
 }
 
-// ── POSITION INFO ─────────────────────────────────────────
 function updatePositionInfo(all) {
   const waiting = all
     .filter(t => t.status === 'waiting' || t.status === 'serving')
@@ -163,14 +151,12 @@ function updatePositionInfo(all) {
   document.getElementById('posAhead').textContent = ahead > 0 ? ahead + ' ahead of you' : myPos === 0 ? 'You\'re next!' : '—';
   document.getElementById('estWait').textContent = myPos >= 0 ? (estWait || '<1') : '—';
 
-  // Progress bar
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   document.getElementById('progBar').style.width = pct + '%';
   document.getElementById('progServed').textContent = completed + ' served';
   document.getElementById('progTotal').textContent  = total + ' total';
 }
 
-// ── NOTIFICATIONS ─────────────────────────────────────────
 async function requestNotification() {
   const btn = document.getElementById('btnNotif');
   if (!('Notification' in window)) {
@@ -198,10 +184,8 @@ async function requestNotification() {
 }
 
 function triggerNotification(tNum) {
-  // In-page vibration
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
 
-  // Browser notification
   if (notifGranted && Notification.permission === 'granted') {
     new Notification('📣 It\'s Your Turn!', {
       body: 'Ticket ' + tNum + ' — Please proceed to the ' + myDept.toUpperCase() + ' counter.',
@@ -211,7 +195,6 @@ function triggerNotification(tNum) {
     });
   }
 
-  // Page title flash
   let flashing = true;
   const origTitle = document.title;
   const flashInterval = setInterval(() => {
@@ -227,7 +210,6 @@ function triggerNotification(tNum) {
 function playAlertSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Three ascending beeps
     [440, 554, 659].forEach((freq, i) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -248,7 +230,6 @@ function pulseIcon() {
   setTimeout(() => el.classList.remove('ping'), 600);
 }
 
-// Check notification permission on load
 if ('Notification' in window && Notification.permission === 'granted') {
   notifGranted = true;
   const btn = document.getElementById('btnNotif');

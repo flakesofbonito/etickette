@@ -58,7 +58,6 @@ function listenToDept(dept) {
 }
 
 function listenToQueue(dept) {
-    // Only listen to active tickets (waiting + serving) — faster and always fresh
     const q = query(
         collection(db, 'tickets'),
         where('department', '==', dept),
@@ -77,11 +76,9 @@ function listenToQueue(dept) {
         const serving = all.find(t => t.status === 'serving');
         const waiting = all.filter(t => t.status === 'waiting');
 
-        // ── NOW SERVING — always overwrite, never let it go stale ──
         const nowEl = document.getElementById(dept + 'Now');
         nowEl.textContent = serving ? serving.ticketNumber : '—';
 
-        // ── NEXT IN LINE ──
         const nextEl = document.getElementById(dept + 'Next');
         if (waiting.length === 0) {
             nextEl.innerHTML = '<span class="next-item empty">No tickets waiting</span>';
@@ -91,7 +88,6 @@ function listenToQueue(dept) {
                 .join('');
         }
 
-        // ── TOTAL — only waiting tickets ──
         document.getElementById(dept + 'Total').textContent = waiting.length;
     });
 }

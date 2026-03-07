@@ -11,10 +11,6 @@
 </head>
 
 <body>
-
-    <!-- ══════════════════════════════════════════════════════
-     FULL-PAGE LOGIN OVERLAY
-══════════════════════════════════════════════════════ -->
     <div id="loginOverlay" class="login-overlay">
 
         <div class="login-left">
@@ -42,81 +38,75 @@
 
         <div class="login-right">
             <div class="login-card">
-  <div class="login-card-header">
+    <div class="login-card-header">
     <div class="login-avatar">🎓</div>
     <h2>Welcome</h2>
     <p>Select your type and enter your details</p>
-  </div>
+    </div>
 
-  <!-- USER TYPE SELECTOR -->
-  <div class="user-type-grid">
+    <div class="user-type-grid">
     <div class="user-type-btn active" data-type="student" onclick="selectUserType('student')">
-      <span>🎓</span><span>Student</span>
+        <span>🎓</span><span>Student</span>
     </div>
     <div class="user-type-btn" data-type="teacher" onclick="selectUserType('teacher')">
-      <span>👨‍🏫</span><span>Teacher</span>
+        <span>👨‍🏫</span><span>Teacher</span>
     </div>
     <div class="user-type-btn" data-type="parent" onclick="selectUserType('parent')">
-      <span>👨‍👩‍👧</span><span>Parent</span>
+        <span>👨‍👩‍👧</span><span>Parent</span>
     </div>
     <div class="user-type-btn" data-type="guest" onclick="selectUserType('guest')">
-      <span>👤</span><span>Guest</span>
+        <span>👤</span><span>Guest</span>
     </div>
-  </div>
+    </div>
 
-  <div class="login-form">
-    <!-- Student / Teacher: ID input -->
+    <div class="login-form">
     <div id="inputId" class="login-field">
-      <label class="login-label" id="idLabel">Student ID Number</label>
-      <div class="login-input-wrap">
+        <label class="login-label" id="idLabel">Student ID Number</label>
+        <div class="login-input-wrap">
         <span class="login-input-icon">🪪</span>
         <input type="text" id="loginId" class="login-input" maxlength="11"
-          placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
-          oninput="this.value=this.value.replace(/\D/g,'')"
-          onkeydown="if(event.key==='Enter') loginStudent()" />
-      </div>
+            placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+            oninput="this.value=this.value.replace(/\D/g,'')"
+            onkeydown="if(event.key==='Enter') loginStudent()" />
+        </div>
     </div>
 
     <!-- Parent: Child's Student ID -->
     <div id="inputParentChildId" class="login-field" style="display:none">
-      <label class="login-label">Child's Student ID</label>
-      <div class="login-input-wrap">
+        <label class="login-label">Child's Student ID</label>
+        <div class="login-input-wrap">
         <span class="login-input-icon">🪪</span>
         <input type="text" id="loginChildId" class="login-input" maxlength="11"
-          placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
-          oninput="this.value=this.value.replace(/\D/g,'')" />
-      </div>
+            placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+            oninput="this.value=this.value.replace(/\D/g,'')" />
+        </div>
     </div>
 
     <!-- Parent / Guest: Full Name -->
     <div id="inputName" class="login-field" style="display:none">
-      <label class="login-label" id="nameLabel">Your Full Name</label>
-      <div class="login-input-wrap">
+        <label class="login-label" id="nameLabel">Your Full Name</label>
+        <div class="login-input-wrap">
         <span class="login-input-icon">✏️</span>
         <input type="text" id="loginName" class="login-input name-input"
-          placeholder="e.g. Juan Dela Cruz" autocomplete="off"
-          onkeydown="if(event.key==='Enter') loginStudent()" />
-      </div>
+            placeholder="e.g. Juan Dela Cruz" autocomplete="off"
+            onkeydown="if(event.key==='Enter') loginStudent()" />
+        </div>
     </div>
 
     <p id="loginError" class="login-error"></p>
     <button class="login-btn" onclick="loginStudent()">
-      <span>Continue</span>
-      <span class="login-btn-arrow">→</span>
+        <span>Continue</span>
+        <span class="login-btn-arrow">→</span>
     </button>
-  </div>
-  <p class="login-hint" id="loginHint">Student ID required</p>
+    </div>
+    <p class="login-hint" id="loginHint">Student ID required</p>
 </div>
         </div>
 
     </div>
 
-    <!-- ══════════════════════════════════════════════════════
-     MAIN APP
-══════════════════════════════════════════════════════ -->
     <div id="appShell" class="app-shell locked">
 
-        <!-- Desktop sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="icon-bar">
                 <button class="menu-btn" onclick="toggleMenu()">☰</button>
@@ -142,23 +132,22 @@
             </div>
         </div>
 
-        <!-- Mobile bottom nav -->
         <nav class="bottom-nav" id="bottomNav">
             <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
-      <img src="../assets/home.png" alt="Home"/>
-      Home
+        <img src="../assets/home.png" alt="Home"/>
+        Home
     </button>
             <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
-      <img src="../assets/about.png" alt="About"/>
-      About
+        <img src="../assets/about.png" alt="About"/>
+        About
     </button>
             <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
-      <img src="../assets/ticket.png" alt="My Ticket"/>
-      My Ticket
+        <img src="../assets/ticket.png" alt="My Ticket"/>
+        My Ticket
     </button>
             <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
-      <img src="../assets/profile.png" alt="Profile"/>
-      Profile
+        <img src="../assets/profile.png" alt="Profile"/>
+        Profile
     </button>
         </nav>
 
@@ -176,7 +165,6 @@
                 </div>
             </div>
 
-            <!-- HOME VIEW -->
             <div id="view-home" class="view active">
                 <div class="status-banner" id="globalStatus">🟢 System is LIVE</div>
                 <div class="content">
@@ -203,7 +191,7 @@
                                 </div>
                             </div>
                             <button class="btn-primary" id="cashierBtn" onclick="openReserveModal('cashier')">
-              📅 RESERVE CASHIER TICKET
+                📅 RESERVE CASHIER TICKET
             </button>
                         </div>
 
@@ -217,14 +205,13 @@
                                 </div>
                             </div>
                             <button class="btn-primary" id="registrarBtn" onclick="openReserveModal('registrar')">
-              📅 RESERVE REGISTRAR TICKET
+                📅 RESERVE REGISTRAR TICKET
             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- HISTORY VIEW -->
             <div id="view-history" class="view">
                 <div class="page-card">
                     <h2>My Ticket</h2>
@@ -234,7 +221,6 @@
                 </div>
             </div>
 
-            <!-- ABOUT VIEW -->
             <div id="view-about" class="view">
                 <div class="page-card">
                     <h2>About eTickette</h2>
@@ -249,7 +235,6 @@
                 </div>
             </div>
 
-            <!-- PROFILE VIEW -->
             <div id="view-profile" class="view">
                 <div class="page-card">
                     <h2>Profile</h2>
@@ -258,12 +243,8 @@
             </div>
 
         </div>
-        <!-- /main -->
     </div>
-    <!-- /appShell -->
 
-    <!-- RESERVE MODAL -->
-    <!-- RESERVE MODAL -->
 <div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
     <div class="modal">
         <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
@@ -280,13 +261,11 @@
             <div class="step-dot" id="rdot4"></div>
         </div>
 
-        <!-- STEP 1: Pick Reason -->
         <div id="rstep1" class="modal-step active">
             <p class="step-label">What do you need?</p>
             <div id="reserveReasonList" class="reason-list"></div>
         </div>
 
-        <!-- STEP 2: Documents Required -->
         <div id="rstep2" class="modal-step">
             <p class="step-label">Bring these documents to the <strong id="docsForDept">Cashier</strong>:</p>
             <div id="requiredDocsList" class="docs-list"></div>
@@ -295,7 +274,6 @@
             <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
         </div>
 
-        <!-- STEP 3: Pick Date -->
         <div id="rstep3" class="modal-step">
             <p class="step-label">Pick a date:</p>
             <input type="date" id="reserveDate" class="modal-input" />
@@ -304,7 +282,6 @@
             <button class="btn-ghost" onclick="rGoStep(2)">← Back</button>
         </div>
 
-        <!-- STEP 4: Confirmed -->
         <div id="rstep4" class="modal-step">
             <div class="success-anim">✅</div>
             <h3 style="text-align:center">Reservation Confirmed!</h3>

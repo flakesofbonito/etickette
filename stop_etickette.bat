@@ -7,7 +7,6 @@ echo.
 echo  Stopping eTickette local services...
 echo.
 
-:: Stop printer server
 taskkill /f /im python.exe >nul 2>&1
 echo  [OK] Printer server stopped.
 
