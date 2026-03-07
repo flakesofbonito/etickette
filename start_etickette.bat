@@ -45,7 +45,7 @@ timeout /t 1 /nobreak >nul
 start "" "https://etickette-78f74.web.app/staff/index.html"
 timeout /t 2 /nobreak >nul
 
-start "" "https://etickette-78f74.web.app/kiosk/index.html"
+start "" "http://localhost:8000/kiosk/index.html"
 timeout /t 2 /nobreak >nul
 
 powershell -command "(New-Object -ComObject WScript.Shell).SendKeys('{F11}')"

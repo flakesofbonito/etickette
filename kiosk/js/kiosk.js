@@ -62,9 +62,7 @@ export function initKiosk() {
     window.startScanner = startScanner;
     window.stopScanner         = stopScanner;
     window.addEventListener('beforeunload', () => stopScanner());
-    document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopScanner();
-    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopScanner(); });
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -429,31 +427,77 @@ function showTicketScreen(tNum, userId, ahead) {
 
 function startScanner() {
     if (scannerActive) return;
-    html5QrCode = new Html5Qrcode('qr-reader');
-    Html5Qrcode.getCameras().then(cams => {
-        if (!cams || cams.length === 0) { setScanStatus('❌ No camera found.'); return; }
-        const cam = cams.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear'))
-                    || cams[cams.length - 1];
-        return html5QrCode.start(cam.id, { fps: 10, qrbox: { width: 240, height: 240 } }, onScanSuccess, () => {});
-    }).then(() => {
-        scannerActive = true;
-        setScanStatus('Ready — point at QR code');
-    }).catch(e => {
-    if (String(e).includes('NotReadableError')) {
-        setScanStatus('❌ Camera is in use by another app. Close it and try again.');
-    } else if (String(e).includes('NotAllowedError')) {
-        setScanStatus('❌ Camera permission denied. Please allow camera access.');
-    } else {
-        setScanStatus('❌ Camera error. Please try again.');
-    }
-});
+
+    setScanStatus('📷 Initializing camera...');
+
+    document.querySelectorAll('video').forEach(v => {
+        if (v.srcObject) {
+            v.srcObject.getTracks().forEach(t => t.stop());
+            v.srcObject = null;
+        }
+    });
+
+    setTimeout(() => {
+        html5QrCode = new Html5Qrcode('qr-reader');
+
+        Html5Qrcode.getCameras()
+            .then(cams => {
+                if (!cams || cams.length === 0) {
+                    setScanStatus('❌ No camera found.');
+                    return;
+                }
+                const cam = cams.find(c =>
+                    c.label.toLowerCase().includes('back') ||
+                    c.label.toLowerCase().includes('rear')
+                ) || cams[cams.length - 1];
+
+                return html5QrCode.start(
+                    cam.id,
+                    { fps: 10, qrbox: { width: 240, height: 240 } },
+                    onScanSuccess,
+                    () => {}
+                );
+            })
+            .then(() => {
+                scannerActive = true;
+                setScanStatus('Ready — point at QR code');
+            })
+            .catch(e => {
+                scannerActive = false;
+                html5QrCode = null;
+
+                if (String(e).includes('NotReadableError')) {
+                    setScanStatus('⏳ Camera busy, retrying...');
+                    setTimeout(() => startScanner(), 2000);
+                } else if (String(e).includes('NotAllowedError')) {
+                    setScanStatus('❌ Camera permission denied. Please allow camera access.');
+                } else {
+                    setScanStatus('❌ Camera error. Please try again.');
+                }
+            });
+    }, 500);
 }
 
 function stopScanner() {
+    const killStream = () => {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => stream.getTracks().forEach(t => t.stop()))
+            .catch(() => {});
+
+        document.querySelectorAll('video').forEach(v => {
+            if (v.srcObject) {
+                v.srcObject.getTracks().forEach(t => t.stop());
+                v.srcObject = null;
+            }
+        });
+    };
+
     if (html5QrCode && scannerActive) {
         html5QrCode.stop()
-            .then(() => { scannerActive = false; html5QrCode = null; })
-            .catch(() => { scannerActive = false; html5QrCode = null; });
+            .then(() => { scannerActive = false; html5QrCode = null; killStream(); })
+            .catch(() => { scannerActive = false; html5QrCode = null; killStream(); });
+    } else {
+        killStream(); 
     }
 }
 
