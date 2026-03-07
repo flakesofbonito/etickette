@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
@@ -9,7 +8,6 @@
     <link rel="icon" href="../assets/logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-
 <body>
 
     <!-- HEADER -->
@@ -28,30 +26,21 @@
     <!-- ── SCREEN: HOME ─────────────────────────────── -->
     <div id="screen-home" class="screen active">
         <p class="screen-subtitle">Welcome! What would you like to do?</p>
-
         <div class="big-btn-grid">
-
             <div class="big-btn btn-blue" onclick="goScreen('dept')">
                 <div class="big-btn-icon">🎫</div>
                 <div class="big-btn-label">ISSUE A TICKET</div>
                 <div class="big-btn-sub">Walk-in — get your number now</div>
             </div>
-
             <div class="big-btn btn-yellow" onclick="goScreen('scan')">
                 <div class="big-btn-icon">📱</div>
                 <div class="big-btn-label">I HAVE A RESERVATION</div>
                 <div class="big-btn-sub">Scan your QR to activate</div>
             </div>
-
         </div>
-
         <div class="status-row">
-            <div class="status-chip">
-                Cashier: <span id="cashierStatus" class="chip-open">OPEN</span>
-            </div>
-            <div class="status-chip">
-                Registrar: <span id="registrarStatus" class="chip-open">OPEN</span>
-            </div>
+            <div class="status-chip">Cashier: <span id="cashierStatus" class="chip-open">OPEN</span></div>
+            <div class="status-chip">Registrar: <span id="registrarStatus" class="chip-open">OPEN</span></div>
         </div>
     </div>
 
@@ -59,80 +48,107 @@
     <div id="screen-dept" class="screen">
         <button class="back-btn" onclick="goScreen('home')">← Back</button>
         <p class="screen-title">Pick a Department</p>
-
         <div class="big-btn-grid">
-
             <div class="big-btn btn-blue" id="deptCashier" onclick="pickDept('cashier')">
                 <div class="big-btn-icon">💰</div>
                 <div class="big-btn-label">CASHIER</div>
                 <div class="big-btn-sub" id="cashierQueueText">0 in queue</div>
             </div>
-
             <div class="big-btn btn-blue" id="deptRegistrar" onclick="pickDept('registrar')">
                 <div class="big-btn-icon">📋</div>
                 <div class="big-btn-label">REGISTRAR</div>
                 <div class="big-btn-sub" id="registrarQueueText">0 in queue</div>
             </div>
-
         </div>
     </div>
 
     <!-- ── SCREEN: PICK USER TYPE ──────────────────── -->
-<!-- ── SCREEN: PICK USER TYPE ──────────────────── -->
-<div id="screen-usertype" class="screen">
-    <button class="back-btn" onclick="goScreen('dept')">← Back</button>
-    <p class="screen-title">Who Are You?</p>
-    <p class="screen-subtitle">Select your visitor type to continue</p>
-
-    <div class="usertype-grid">
-        <div class="big-btn btn-blue" onclick="pickUserType('student')">
-            <div class="big-btn-icon">🎓</div>
-            <div class="big-btn-label">STUDENT</div>
-            <div class="big-btn-sub">Enter your Student ID</div>
-        </div>
-        <div class="big-btn btn-blue" onclick="pickUserType('teacher')">
-            <div class="big-btn-icon">👨‍🏫</div>
-            <div class="big-btn-label">TEACHER / STAFF</div>
-            <div class="big-btn-sub">Enter your Employee ID</div>
-        </div>
-        <div class="big-btn btn-blue" onclick="pickUserType('parent')">
-            <div class="big-btn-icon">👨‍👩‍👧</div>
-            <div class="big-btn-label">PARENT</div>
-            <div class="big-btn-sub">Enter your child's Student ID</div>
-        </div>
-        <div class="big-btn btn-yellow" onclick="pickUserType('guest')">
-            <div class="big-btn-icon">👤</div>
-            <div class="big-btn-label">GUEST</div>
-            <div class="big-btn-sub">Enter your full name</div>
+    <div id="screen-usertype" class="screen">
+        <button class="back-btn" onclick="goScreen('dept')">← Back</button>
+        <p class="screen-title">Who Are You?</p>
+        <p class="screen-subtitle">Select your visitor type to continue</p>
+        <div class="usertype-grid">
+            <div class="big-btn btn-blue" onclick="pickUserType('student')">
+                <div class="big-btn-icon">🎓</div>
+                <div class="big-btn-label">STUDENT</div>
+                <div class="big-btn-sub">Enter your Student ID</div>
+            </div>
+            <div class="big-btn btn-blue" onclick="pickUserType('teacher')">
+                <div class="big-btn-icon">👨‍🏫</div>
+                <div class="big-btn-label">TEACHER / STAFF</div>
+                <div class="big-btn-sub">Enter your Employee ID</div>
+            </div>
+            <div class="big-btn btn-blue" onclick="pickUserType('parent')">
+                <div class="big-btn-icon">👨‍👩‍👧</div>
+                <div class="big-btn-label">PARENT</div>
+                <div class="big-btn-sub">Enter your child's Student ID</div>
+            </div>
+            <div class="big-btn btn-yellow" onclick="pickUserType('guest')">
+                <div class="big-btn-icon">👤</div>
+                <div class="big-btn-label">GUEST</div>
+                <div class="big-btn-sub">Enter your full name</div>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
-    <!-- ── SCREEN: ENTER ID ─────────────────────────── -->
-<div id="screen-id" class="screen">
-    <button class="back-btn" onclick="goScreen('usertype')">← Back</button>
-    <p class="screen-title" id="idScreenTitle">Enter Your ID</p>
-    <p class="screen-subtitle" id="deptChosen">CASHIER</p>
-
-    <div class="id-form">
-        <!-- ID input (student/teacher/parent) -->
-        <div id="kioskIdField">
-            <input type="text" id="idInput" class="kiosk-input"
-                placeholder="e.g. 02000385394" inputmode="numeric"
-                maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"
-                onkeydown="if(event.key==='Enter') submitId()" />
+    <div id="screen-id" class="screen">
+        <button class="back-btn" onclick="goScreen('usertype')">← Back</button>
+        <p class="screen-title" id="idScreenTitle">Enter Your ID</p>
+        <p class="screen-subtitle" id="deptChosen">CASHIER</p>
+        <div class="id-form">
+            <div id="kioskIdField">
+                <input type="text" id="idInput" class="kiosk-input"
+                    placeholder="e.g. 02000385394" inputmode="numeric"
+                    maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"
+                    onkeydown="if(event.key==='Enter') submitId()" />
+            </div>
+            <div id="kioskNameField" style="display:none">
+                <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
+                    placeholder="Your full name"
+                    onkeydown="if(event.key==='Enter') submitId()" />
+            </div>
+            <p id="idError" class="kiosk-error"></p>
+            <button class="kiosk-submit-btn" onclick="submitId()">Next →</button>
         </div>
-        <!-- Name input (guest + parent) -->
-        <div id="kioskNameField" style="display:none">
-            <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
-                placeholder="Your full name"
-                onkeydown="if(event.key==='Enter') submitId()" />
-        </div>
-        <p id="idError" class="kiosk-error"></p>
-        <button class="kiosk-submit-btn" onclick="submitId()">Get Ticket →</button>
     </div>
-</div>
+
+    <!-- ── SCREEN: SELECT REASON ────────────────────── -->
+    <div id="screen-reason" class="screen">
+        <button class="back-btn" onclick="goScreen('id')">← Back</button>
+        <p class="screen-title">Why Are You Here?</p>
+        <p class="screen-subtitle" id="reasonDeptLabel">CASHIER</p>
+
+        <!-- Dropdown trigger -->
+        <div class="reason-dropdown-wrap">
+            <div class="reason-dropdown-trigger" id="reasonTrigger" onclick="toggleReasonDropdown()">
+                <span id="reasonTriggerText">— Please Select a Reason —</span>
+                <span class="reason-dropdown-arrow" id="reasonArrow">▼</span>
+            </div>
+            <!-- Dropdown list -->
+            <div class="reason-dropdown-list hidden" id="reasonDropdownList"></div>
+        </div>
+
+        <p id="reasonError" class="kiosk-error" style="margin-top:10px"></p>
+        <button class="kiosk-submit-btn" onclick="submitReason()" style="margin-top:20px">Next — Check Documents →</button>
+        <button class="kiosk-cancel-btn" onclick="goScreen('home')">✕ Cancel — Go Back to Home</button>
+    </div>
+
+    <!-- ── SCREEN: REQUIRED DOCUMENTS ──────────────── -->
+    <div id="screen-docs" class="screen">
+        <p class="screen-title">Documents Required</p>
+        <p class="screen-subtitle" id="docsReasonLabel">—</p>
+
+        <div class="docs-checklist-wrap">
+            <p class="docs-intro">Please make sure you have <strong>ALL</strong> of the following before proceeding:</p>
+            <div id="kioskDocsList" class="kiosk-docs-list"></div>
+        </div>
+
+        <div class="docs-action-row">
+            <button class="kiosk-submit-btn" onclick="proceedIssue()">✅ I Have All Documents — Get Ticket</button>
+            <button class="kiosk-cancel-btn" onclick="goScreen('home')">✕ I Don't Have Them — Cancel</button>
+        </div>
+    </div>
 
     <!-- ── SCREEN: TICKET ISSUED ────────────────────── -->
     <div id="screen-ticket" class="screen">
@@ -141,20 +157,14 @@
             <div class="ticket-dept-tag" id="issuedDept">CASHIER</div>
             <div class="ticket-big-num" id="issuedNumber">C-01</div>
             <div class="ticket-details">
-                <div class="ticket-detail-row">
-                    <span>ID</span><strong id="issuedId">—</strong>
-                </div>
-                <div class="ticket-detail-row">
-                    <span>Ahead</span><strong id="issuedAhead">—</strong>
-                </div>
-                <div class="ticket-detail-row">
-                    <span>Est. Wait</span><strong id="issuedWait">—</strong>
-                </div>
+                <div class="ticket-detail-row"><span>ID</span><strong id="issuedId">—</strong></div>
+                <div class="ticket-detail-row"><span>Reason</span><strong id="issuedReason">—</strong></div>
+                <div class="ticket-detail-row"><span>Ahead</span><strong id="issuedAhead">—</strong></div>
+                <div class="ticket-detail-row"><span>Est. Wait</span><strong id="issuedWait">—</strong></div>
             </div>
             <div id="ticketQR" class="ticket-qr"></div>
             <p class="ticket-qr-hint">Scan to track on your phone</p>
         </div>
-
         <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
     </div>
 
@@ -163,45 +173,34 @@
         <button class="back-btn" onclick="goScreen('home'); stopScanner()">← Back</button>
         <p class="screen-title">Scan Your QR Code</p>
         <p class="screen-subtitle">Point the camera at your reservation QR</p>
-
         <div id="qr-reader" class="kiosk-qr-box"></div>
         <p id="scanStatus" class="scan-status">Initializing camera…</p>
         <div id="scanResult" class="scan-result" style="display:none"></div>
-
         <button class="kiosk-back-btn" onclick="goScreen('home'); stopScanner()">Cancel</button>
     </div>
 
     <!-- ── SCREEN: SCAN SUCCESS ─────────────────────── -->
-    <!-- ── SCREEN: SCAN SUCCESS ─────────────────────── -->
-<div id="screen-scan-success" class="screen">
-    <div class="ticket-card">
-        <div class="ticket-school">STI College Fairview</div>
-        <div class="success-badge">✅ Reservation Activated!</div>
-        <div class="ticket-dept-tag" id="scanDept">REGISTRAR</div>
-        <div class="ticket-big-num" id="scanNumber">R-01</div>
-        <div class="ticket-details">
-            <div class="ticket-detail-row">
-                <span>Student ID</span><strong id="scanId">—</strong>
+    <div id="screen-scan-success" class="screen">
+        <div class="ticket-card">
+            <div class="ticket-school">STI College Fairview</div>
+            <div class="success-badge">✅ Reservation Activated!</div>
+            <div class="ticket-dept-tag" id="scanDept">REGISTRAR</div>
+            <div class="ticket-big-num" id="scanNumber">R-01</div>
+            <div class="ticket-details">
+                <div class="ticket-detail-row"><span>Student ID</span><strong id="scanId">—</strong></div>
+                <div class="ticket-detail-row"><span>Reason</span><strong id="scanReason">—</strong></div>
+                <div class="ticket-detail-row"><span>Ahead</span><strong id="scanAhead">—</strong></div>
             </div>
-            <div class="ticket-detail-row">
-                <span>Reason</span><strong id="scanReason">—</strong>
-            </div>
-            <div class="ticket-detail-row">
-                <span>Ahead</span><strong id="scanAhead">—</strong>
-            </div>
+            <div id="scanTicketQR" class="ticket-qr"></div>
+            <p class="ticket-qr-hint">Scan to track your queue online</p>
         </div>
-        <div id="scanTicketQR" class="ticket-qr"></div>
-        <p class="ticket-qr-hint">Scan to track your queue online</p>
+        <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
     </div>
-    <button class="kiosk-submit-btn" onclick="goScreen('home')">Done ✓</button>
-</div>
 
 </body>
-
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
     import { initKiosk } from './js/kiosk.js'; initKiosk();
 </script>
-
 </html>

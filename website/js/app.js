@@ -334,6 +334,12 @@ function listenToActiveReservation() {
         }
     );
 
+    // ─────────────────────────────────────────────────────────────────────────────
+// PATCH for website/js/app.js
+// Inside listenToActiveReservation(), replace the SECOND onSnapshot
+// (the one listening to 'tickets') with this fixed version.
+// ─────────────────────────────────────────────────────────────────────────────
+
     onSnapshot(
         query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
         snap => {
@@ -341,10 +347,22 @@ function listenToActiveReservation() {
                 const s = d.data().status;
                 return s === 'waiting' || s === 'serving';
             });
-            if (active && !document.getElementById('activeResBanner')) {
+
+            if (active) {
+                // Show or update the banner
                 hasActiveReservation = true;
                 setReserveButtonsLocked(true);
                 renderActiveWalkinBanner(active.data());
+            } else {
+                // ✅ FIX: No active ticket — remove the banner and unlock buttons
+                // But only if it's a walk-in banner (not a reservation banner)
+                const banner = document.getElementById('activeResBanner');
+                if (banner && banner.querySelector('.active-res-header span')?.textContent?.includes('🎫')) {
+                    banner.remove();
+                    hasActiveReservation = false;
+                    setReserveButtonsLocked(false);
+                    loadHistory(); // Refresh history list to show completed ticket
+                }
             }
         },
         err => console.warn('[ticket snapshot]', err.code)
@@ -390,25 +408,25 @@ function renderActiveResBanner(res, rid) {
     if (old) old.remove();
 
     const canCancel = res.status === 'pending' || res.status === 'active';
-    const statusLabel = res.status === 'pending' ?
-        '<span class="break">Pending — not yet activated at Kiosk</span>' :
-        '<span class="open">Active — ticket assigned</span>';
+    const statusLabel = res.status === 'pending'
+        ? '<span class="break">Pending — not yet activated at Kiosk</span>'
+        : '<span class="open">Active — ticket assigned</span>';
+    const ticketLine = res.ticketNumber
+        ? `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
 
-    const trackingUrl = res.ticketNumber
-  ? `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${res.department}`
-  : null;
-
-const ticketLine = res.ticketNumber ? `
-  <p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
-
-const trackingCard = res.ticketNumber ? `
-  <div class="tracking-card">
-    <span class="tracking-label">Track your queue live</span>
-    <div class="tracking-actions">
-      <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
-      <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(() => { this.textContent='✓ Copied!'; setTimeout(() => this.textContent='🔗 Copy', 2000); })">🔗 Copy</button>
-    </div>
-  </div>` : '';
+    // Tracking card — only shown once ticket is assigned (after kiosk activation)
+    let trackingCard = '';
+    if (res.ticketNumber) {
+        const trackingUrl = `${window.location.origin}/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
+        trackingCard = `
+        <div class="tracking-card">
+          <span class="tracking-label">🔴 Live Queue Tracker</span>
+          <div class="tracking-actions">
+            <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
+            <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
+          </div>
+        </div>`;
+    }
 
     const banner = document.createElement('div');
     banner.id = 'activeResBanner';
@@ -431,31 +449,40 @@ const trackingCard = res.ticketNumber ? `
     </div>
     ${trackingCard}`;
 
-  const pageCard = document.getElementById('view-history').querySelector('.page-card');
-  pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
+    const pageCard = document.getElementById('view-history').querySelector('.page-card');
+    pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 
-  if (res.status === 'pending') {
-    requestAnimationFrame(() => {
-      const qrEl = document.getElementById('bannerQR');
-      if (qrEl) renderQR(qrEl, rid, 160);
-    });
-  }
+    if (res.status === 'pending') {
+        requestAnimationFrame(() => {
+            const qrEl = document.getElementById('bannerQR');
+            if (qrEl) renderQR(qrEl, rid, 160);
+        });
+    }
 }
 
 function renderActiveWalkinBanner(ticket) {
-  const old = document.getElementById('activeResBanner');
-  if (old) old.remove();
+    const old = document.getElementById('activeResBanner');
+    if (old) old.remove();
 
-  const statusLabel = ticket.status === 'serving'
-    ? '<span class="open">Now Serving — proceed to counter</span>'
-    : '<span class="break">Waiting — watch the lobby monitor</span>';
+    const statusLabel = ticket.status === 'serving'
+        ? '<span class="open">Now Serving — proceed to counter</span>'
+        : '<span class="break">Waiting — watch the lobby monitor</span>';
 
-  const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${ticket.department}`;
+    // Always has a ticket number for walk-ins
+    const trackingUrl = `${window.location.origin}/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
+    const trackingCard = `
+    <div class="tracking-card">
+      <span class="tracking-label">🔴 Live Queue Tracker</span>
+      <div class="tracking-actions">
+        <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
+        <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
+      </div>
+    </div>`;
 
-  const banner = document.createElement('div');
-  banner.id        = 'activeResBanner';
-  banner.className = 'active-res-banner';
-  banner.innerHTML = `
+    const banner = document.createElement('div');
+    banner.id        = 'activeResBanner';
+    banner.className = 'active-res-banner';
+    banner.innerHTML = `
     <div class="active-res-header"><span>🎫 Active Ticket</span></div>
     <div class="active-res-body">
       <div class="active-res-info">
@@ -464,17 +491,12 @@ function renderActiveWalkinBanner(ticket) {
         <p><strong>Status:</strong> ${statusLabel}</p>
       </div>
     </div>
-    <div class="tracking-card">
-      <span class="tracking-label">Track your queue live</span>
-      <div class="tracking-actions">
-        <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
-        <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(() => { this.textContent='✓ Copied!'; setTimeout(() => this.textContent='🔗 Copy', 2000); })">🔗 Copy</button>
-      </div>
-    </div>`;
+    ${trackingCard}`;
 
-  const pageCard = document.getElementById('view-history').querySelector('.page-card');
-  pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
+    const pageCard = document.getElementById('view-history').querySelector('.page-card');
+    pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 }
+
 
 // ── CANCEL ────────────────────────────────────────────────────────────────────
 async function cancelReservation(rid, status) {
