@@ -61,6 +61,10 @@ export function initKiosk() {
     window.proceedIssue        = proceedIssue;
     window.startScanner = startScanner;
     window.stopScanner         = stopScanner;
+    window.addEventListener('beforeunload', () => stopScanner());
+    document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopScanner();
+    });
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -129,10 +133,14 @@ function listenToQueueCounts() {
 }
 
 function goScreen(name) {
+    const current = document.querySelector('.screen.active');
+    if (current && current.id === 'screen-scan' && name !== 'scan') {
+        stopScanner();
+    }
+
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
     if (el) el.classList.add('active');
-    else console.warn('[goScreen] Screen not found: screen-' + name);
 }
 
 function pickDept(dept) {

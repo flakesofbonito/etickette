@@ -42,7 +42,10 @@ timeout /t 1 /nobreak >nul
 start "" "https://etickette-78f74.web.app/monitor/index.html"
 timeout /t 1 /nobreak >nul
 
-start "" "C:\Users\Kurt\Desktop\eTickette\kiosk\index.html"
+start "" "https://etickette-78f74.web.app/staff/index.html"
+timeout /t 2 /nobreak >nul
+
+start "" "https://etickette-78f74.web.app/kiosk/index.html"
 timeout /t 2 /nobreak >nul
 
 powershell -command "(New-Object -ComObject WScript.Shell).SendKeys('{F11}')"

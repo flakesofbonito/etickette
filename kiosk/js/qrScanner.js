@@ -55,10 +55,20 @@ function startScanner() {
             scannerActive = true;
             setQrStatus('📷 Point camera at QR code…');
         })
-        .catch(err => {
-            console.error('[QR Scanner]', err);
-            setQrStatus('❌ Camera error: ' + err);
-        });
+        .catch(e => {
+        scannerActive = false;
+        if (String(e).includes('NotReadableError')) {
+        setScanStatus('⏳ Camera busy, retrying in 2 seconds...');
+        setTimeout(() => {
+            html5QrCode = null;
+            startScanner();
+            }, 2000);
+        } else if (String(e).includes('NotAllowedError')) {
+        setScanStatus('❌ Camera permission denied.');
+        } else {
+        setScanStatus('❌ Camera error: ' + e);
+        }
+    });   
 }
 
 function stopScanner() {
