@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eTickette – Staff Dashboard</title>
+  <link rel="stylesheet" href="staff.css" />
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">
+        <img src="../assets/sti-logo.png" alt="STI" />
+        <div>
+          <h1>eTickette</h1>
+          <p>Staff Dashboard</p>
+        </div>
+      </div>
+      <div class="login-form">
+        <label>Department</label>
+        <div class="dept-selector">
+          <div class="dept-opt active" data-dept="cashier" onclick="selectDept('cashier')">💰 Cashier</div>
+          <div class="dept-opt" data-dept="registrar" onclick="selectDept('registrar')">📋 Registrar</div>
+        </div>
+        <label>Staff PIN</label>
+        <input type="password" id="pinInput" class="pin-input" placeholder="Enter PIN" maxlength="6"
+          onkeydown="if(event.key==='Enter') staffLogin()" />
+        <p id="loginErr" class="login-err"></p>
+        <button class="btn-login" onclick="staffLogin()">Enter Dashboard →</button>
+        <p class="login-hint">Default PIN: <strong>1234</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboard" class="dashboard hidden">
+
+    <!-- HEADER -->
+    <div class="dash-header">
+      <div class="dash-brand">
+        <img src="../assets/sti-logo.png" />
+        <div>
+          <h1>eTickette</h1>
+          <span class="dash-sub">Staff Dashboard</span>
+        </div>
+      </div>
+      <div class="dash-dept-tag" id="deptTag">CASHIER</div>
+      <div class="dash-header-right">
+        <div class="dash-time" id="dashTime">00:00</div>
+        <button class="btn-logout-dash" onclick="staffLogout()">Log Out</button>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span>Department Status</span>
+        <div class="status-toggle-group">
+          <button class="status-btn active" id="btnOpen" onclick="setDeptStatus('open')">🟢 Open</button>
+          <button class="status-btn" id="btnBreak" onclick="setDeptStatus('break')">🟡 Break</button>
+          <button class="status-btn" id="btnClosed" onclick="setDeptStatus('closed')">🔴 Closed</button>
+        </div>
+      </div>
+      <div class="status-item">
+        <span>Queue</span>
+        <strong id="queueCount" class="stat-big">0</strong>
+      </div>
+      <div class="status-item">
+        <span>Served Today</span>
+        <strong id="servedCount" class="stat-big">0</strong>
+      </div>
+      <div class="status-item">
+        <span>Avg Wait</span>
+        <strong id="avgWait" class="stat-big">—</strong>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="dash-content">
+
+      <!-- NOW SERVING PANEL -->
+      <div class="now-serving-panel">
+        <div class="panel-label">NOW SERVING</div>
+        <div class="serving-number" id="servingNumber">—</div>
+        <div class="serving-info" id="servingInfo">
+          <p id="servingUserId">—</p>
+          <p id="servingReason">—</p>
+          <p id="servingType" class="serving-badge">—</p>
+        </div>
+        <div class="serving-timer" id="servingTimer">00:00</div>
+        <div class="serving-actions">
+          <button class="btn-complete" id="btnComplete" onclick="completeTicket()" disabled>✅ Complete</button>
+          <button class="btn-noshow" id="btnNoshow" onclick="noShowTicket()" disabled>❌ No-Show</button>
+        </div>
+        <button class="btn-call-next" id="btnCallNext" onclick="callNextTicket()">
+          📣 Call Next Ticket
+        </button>
+      </div>
+
+      <!-- QUEUE LIST -->
+      <div class="queue-panel">
+        <div class="panel-label">
+          WAITING QUEUE
+          <span class="queue-badge" id="queueBadge">0</span>
+        </div>
+        <div id="queueList" class="queue-list">
+          <div class="queue-empty">No tickets waiting</div>
+        </div>
+      </div>
+
+      <!-- STATS PANEL -->
+      <div class="stats-panel">
+        <div class="panel-label">TODAY'S SUMMARY</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🎫</div>
+            <div class="stat-val" id="statIssued">0</div>
+            <div class="stat-lbl">Issued</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-val" id="statServed">0</div>
+            <div class="stat-lbl">Served</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-val" id="statNoShow">0</div>
+            <div class="stat-lbl">No-Show</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-val" id="statWaiting">0</div>
+            <div class="stat-lbl">Waiting</div>
+          </div>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">RECENT ACTIVITY</div>
+        <div id="activityLog" class="activity-log">
+          <div class="activity-empty">No activity yet</div>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">RECALL / OVERRIDE</div>
+        <div class="recall-row">
+          <input type="text" id="recallInput" class="recall-input" placeholder="e.g. C-05" />
+          <button class="btn-recall" onclick="recallTicket()">📣 Recall</button>
+        </div>
+        <div class="manual-row">
+          <button class="btn-manual" onclick="markManualComplete()">Mark Ticket Done</button>
+          <input type="text" id="manualInput" class="recall-input" placeholder="Ticket #" style="flex:1" />
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CALL ALERT OVERLAY (flashes on screen when calling) -->
+  <div id="callAlert" class="call-alert hidden">
+    <div class="call-alert-inner">
+      <div class="call-alert-num" id="callAlertNum">C-01</div>
+      <div class="call-alert-msg">Please proceed to the window</div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/staff.js"></script>
+</body>
+</html>
