@@ -60,6 +60,11 @@
       <div class="status-item"><span>Queue</span><strong id="queueCount" class="stat-big">0</strong></div>
       <div class="status-item"><span>Served Today</span><strong id="servedCount" class="stat-big">0</strong></div>
       <div class="status-item"><span>Avg Wait</span><strong id="avgWait" class="stat-big">—</strong></div>
+      <div class="status-item" style="margin-left: auto;">
+      <span>Daily Quota</span>
+      <strong id="quotaStatusDisplay" class="stat-big" style="color:#2563eb;">0/100</strong>
+      <span id="quotaStatusSub" style="font-size:11px;color:#6b7280;font-weight:600;">100 left</span>
+      </div>
     </div>
 
     <div class="dash-content">
@@ -104,6 +109,22 @@
         <div class="manual-row">
           <button class="btn-manual" onclick="markManualComplete()">Mark Ticket Done</button>
           <input type="text" id="manualInput" class="recall-input" placeholder="Ticket #" style="flex:1" />
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">SET DAILY QUOTA</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+          <input 
+            type="number" 
+            id="quotaInput" 
+            min="1" max="999" 
+            placeholder="Max tickets e.g. 100"
+            style="flex:1;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;color:#1f3c88;background:#f0f2f8;text-align:center;"
+          />
+          <button 
+            onclick="setDailyQuota()" 
+            style="padding:10px 16px;background:linear-gradient(90deg,#2563eb,#1f3c88);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            ✅ Set
+          </button>
         </div>
 
         <div class="panel-label" style="margin-top:20px">SYSTEM RESET</div>

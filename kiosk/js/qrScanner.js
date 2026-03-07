@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
     getFirestore, doc, collection, getDoc, setDoc, updateDoc,
-    increment, serverTimestamp
+    increment, serverTimestamp, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const PUBLIC_URL = 'https://etickette-78f74.web.app';
@@ -16,8 +16,6 @@ const firebaseConfig = {
 };
 
 let app, db;
-let html5QrCode = null;
-let scannerActive = false;
 
 export function initScanner() {
     app = initializeApp(firebaseConfig);
@@ -33,80 +31,85 @@ export function openQRScanner() {
     startScanner();
 }
 
+let scannerActive = false;
+let rawStream = null;
+let scanLoop = null;
+
 function startScanner() {
     if (scannerActive) return;
+    setScanStatus('📷 Starting camera...');
 
-    setScanStatus('📷 Initializing camera...');
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: 640, height: 480 }
+    })
+    .then(stream => {
+        rawStream = stream;
+        scannerActive = true;
 
-    document.querySelectorAll('video').forEach(v => {
-        if (v.srcObject) {
-            v.srcObject.getTracks().forEach(t => t.stop());
-            v.srcObject = null;
+        const container = document.getElementById('qr-reader');
+        container.innerHTML = '';
+
+        const video = document.createElement('video');
+        video.id = 'qr-video';
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
+        video.style.cssText = 'width:100%;border-radius:12px;';
+        container.appendChild(video);
+
+        video.srcObject = stream;
+        video.play();
+
+        setScanStatus('Ready — point at QR code');
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        scanLoop = setInterval(() => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width  = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code && code.data) {
+                    onScanSuccess(code.data);
+                }
+            }
+        }, 200);
+    })
+    .catch(e => {
+        scannerActive = false;
+        console.error('[Camera]', e.name, e.message);
+        if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+            setScanStatus('❌ Camera is in use by another app. Close it and try again.');
+        } else if (e.name === 'NotAllowedError') {
+            setScanStatus('❌ Camera permission denied. Please allow camera access.');
+        } else if (e.name === 'NotFoundError') {
+            setScanStatus('❌ No camera found on this device.');
+        } else {
+            setScanStatus('❌ Camera error: ' + e.message);
         }
     });
-
-    setTimeout(() => {
-        html5QrCode = new Html5Qrcode('qr-reader');
-
-        Html5Qrcode.getCameras()
-            .then(cams => {
-                if (!cams || cams.length === 0) {
-                    setScanStatus('❌ No camera found.');
-                    return;
-                }
-                const cam = cams.find(c =>
-                    c.label.toLowerCase().includes('back') ||
-                    c.label.toLowerCase().includes('rear')
-                ) || cams[cams.length - 1];
-
-                return html5QrCode.start(
-                    cam.id,
-                    { fps: 10, qrbox: { width: 240, height: 240 } },
-                    onScanSuccess,
-                    () => {}
-                );
-            })
-            .then(() => {
-                scannerActive = true;
-                setScanStatus('Ready — point at QR code');
-            })
-            .catch(e => {
-                scannerActive = false;
-                html5QrCode = null;
-
-                if (String(e).includes('NotReadableError')) {
-                    setScanStatus('⏳ Camera busy, retrying...');
-                    setTimeout(() => startScanner(), 2000);
-                } else if (String(e).includes('NotAllowedError')) {
-                    setScanStatus('❌ Camera permission denied. Please allow camera access.');
-                } else {
-                    setScanStatus('❌ Camera error. Please try again.');
-                }
-            });
-    }, 500);
 }
 
 function stopScanner() {
-    const killStream = () => {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => stream.getTracks().forEach(t => t.stop()))
-            .catch(() => {});
+    clearInterval(scanLoop);
+    scanLoop = null;
+    scannerActive = false;
 
-        document.querySelectorAll('video').forEach(v => {
-            if (v.srcObject) {
-                v.srcObject.getTracks().forEach(t => t.stop());
-                v.srcObject = null;
-            }
-        });
-    };
-
-    if (html5QrCode && scannerActive) {
-        html5QrCode.stop()
-            .then(() => { scannerActive = false; html5QrCode = null; killStream(); })
-            .catch(() => { scannerActive = false; html5QrCode = null; killStream(); });
-    } else {
-        killStream(); 
+    if (rawStream) {
+        rawStream.getTracks().forEach(t => t.stop());
+        rawStream = null;
     }
+
+    const video = document.getElementById('qr-video');
+    if (video) {
+        video.pause();
+        video.srcObject = null;
+    }
+
+    const container = document.getElementById('qr-reader');
+    if (container) container.innerHTML = '';
 }
 
 async function onScanSuccess(decodedText) {
@@ -145,10 +148,16 @@ async function onScanSuccess(decodedText) {
             return;
         }
 
-        const today   = new Date().toDateString();
-        const resDate = res.reservationDate?.toDate?.()?.toDateString() || res.reservationDate;
-        if (resDate && resDate !== today) {
-            setQrStatus('❌ This reservation is not for today.');
+        const now = new Date();
+        const todayPH = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        let resDateStr = '';
+        if (res.reservationDate?.toDate) {
+            resDateStr = res.reservationDate.toDate().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        } else {
+            resDateStr = res.reservationDate || '';
+        }
+        if (resDateStr && resDateStr !== todayPH) {
+            setQrStatus('❌ This reservation is not for today. (Reserved: ' + resDateStr + ')');
             return;
         }
 
@@ -156,29 +165,33 @@ async function onScanSuccess(decodedText) {
         const prefix = dept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', dept);
 
-        await updateDoc(dRef, { counter: increment(1), queue: increment(1) });
-        const dSnap = await getDoc(dRef);
-        const num   = dSnap.data().counter;
-        const tNum  = `${prefix}-${String(num).padStart(2, '0')}`;
-
-        await setDoc(doc(collection(db, 'tickets'), tNum), {
-            ticketNumber:  tNum,
-            department:    dept,
-            userId:        res.studentId || res.userId || 'N/A',
-            userType:      res.userType  || 'student',
-            displayName:   res.displayName || res.studentId || 'N/A',
-            reason:        res.reason || 'Reservation Check-In',
-            status:        'waiting',
-            issuedAt:      serverTimestamp(),
-            reservationId: reservationId,
-            isReservation: true,
-            called:        false
-        });
-
-        await updateDoc(resRef, {
-            status:      'active',
-            checkedInAt: serverTimestamp(),
-            ticketNumber: tNum
+        let tNum;
+        await runTransaction(db, async (transaction) => {
+            const dSnap      = await transaction.get(dRef);
+            if (!dSnap.exists()) throw new Error('Department doc missing');
+            const newCounter = (dSnap.data().counter || 0) + 1;
+            const newQueue   = (dSnap.data().queue   || 0) + 1;
+            tNum = `${prefix}-${String(newCounter).padStart(2, '0')}`;
+            const ticketRef  = doc(collection(db, 'tickets'), tNum);
+            transaction.update(dRef, { counter: newCounter, queue: newQueue });
+            transaction.set(ticketRef, {
+                ticketNumber:  tNum,
+                department:    dept,
+                userId:        res.studentId || res.userId || 'N/A',
+                userType:      res.userType  || 'student',
+                displayName:   res.displayName || res.studentId || 'N/A',
+                reason:        res.reason || 'Reservation Check-In',
+                status:        'waiting',
+                issuedAt:      serverTimestamp(),
+                reservationId: reservationId,
+                isReservation: true,
+                called:        false
+            });
+            transaction.update(resRef, {
+                status:       'active',
+                checkedInAt:  serverTimestamp(),
+                ticketNumber: tNum
+            });
         });
 
         const resultBox = document.getElementById('qrResult');

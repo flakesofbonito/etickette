@@ -42,12 +42,9 @@ let selectedUserType    = 'student';
 let selectedDisplayName = null;
 let selectedReason      = null;
 let pendingUserId       = null;
-let html5QrCode         = null;
-let scannerActive       = false;
 let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
@@ -83,10 +80,37 @@ function updateClock() {
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d   = snap.data();
-        const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
-        const el  = document.getElementById('quotaDisplay');
-        if (el) el.textContent = 'Slots: ' + rem + ' / ' + (d.dailyQuota || 100);
+        const d     = snap.data();
+        const quota = d.dailyQuota    || 100;
+        const issued = d.ticketsIssued || 0;
+        const rem   = Math.max(0, quota - issued);
+        const full  = issued >= quota;
+
+        const el = document.getElementById('quotaDisplay');
+        if (el) {
+            el.textContent = 'Slots: ' + rem + ' / ' + quota;
+            el.style.color = full ? '#dc2626' : '';
+            el.style.fontWeight = full ? '800' : '';
+        }
+
+        const issueBtn = document.getElementById('btnIssueTicket');
+        if (issueBtn) {
+            issueBtn.classList.toggle('disabled', full);
+            issueBtn.style.opacity      = full ? '0.5' : '';
+            issueBtn.style.pointerEvents = full ? 'none' : '';
+            issueBtn.title = full ? 'No more slots available today.' : '';
+        }
+
+        const resBtn = document.getElementById('btnHaveReservation');
+        if (resBtn) {
+            resBtn.classList.toggle('disabled', full);
+            resBtn.style.opacity       = full ? '0.5' : '';
+            resBtn.style.pointerEvents = full ? 'none' : '';
+            resBtn.title = full ? 'No more slots available today.' : '';
+        }
+
+        const fullMsg = document.getElementById('quotaFullMsg');
+        if (fullMsg) fullMsg.style.display = full ? 'block' : 'none';
     });
 }
 
@@ -263,7 +287,7 @@ async function submitId() {
     } else {
         const name = (document.getElementById('nameInput')?.value || '').trim();
         if (name.length < 2) { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
-        userId      = 'GUEST-' + Date.now();
+        userId      = 'GUEST-' + name.trim().toLowerCase().replace(/\s+/g, '-');
         displayName = name;
     }
 
@@ -318,6 +342,9 @@ function submitReason() {
 }
 
 function showDocsScreen(reason) {
+    const btn = document.querySelector('#screen-docs .kiosk-submit-btn');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+
     const lbl = document.getElementById('docsReasonLabel');
     if (lbl) lbl.textContent = selectedDept.toUpperCase() + ' — ' + reason.label;
 
@@ -362,6 +389,16 @@ async function issueTicket(userId) {
             collection(db, 'tickets'),
             where('userId', '==', userId), where('status', '==', 'waiting')
         ));
+
+        const sSnap = await getDoc(doc(db, 'system', 'settings'));
+        const sData = sSnap.data();
+        if ((sData.ticketsIssued || 0) >= (sData.dailyQuota || 100)) {
+            if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+            alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
+            goScreen('home');
+            return;
+        }
+
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
@@ -425,80 +462,85 @@ function showTicketScreen(tNum, userId, ahead) {
 }
 
 
+let scannerActive = false;
+let rawStream = null;
+let scanLoop = null;
+
 function startScanner() {
     if (scannerActive) return;
+    setScanStatus('📷 Starting camera...');
 
-    setScanStatus('📷 Initializing camera...');
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: 640, height: 480 }
+    })
+    .then(stream => {
+        rawStream = stream;
+        scannerActive = true;
 
-    document.querySelectorAll('video').forEach(v => {
-        if (v.srcObject) {
-            v.srcObject.getTracks().forEach(t => t.stop());
-            v.srcObject = null;
+        const container = document.getElementById('qr-reader');
+        container.innerHTML = '';
+
+        const video = document.createElement('video');
+        video.id = 'qr-video';
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
+        video.style.cssText = 'width:100%;border-radius:12px;';
+        container.appendChild(video);
+
+        video.srcObject = stream;
+        video.play();
+
+        setScanStatus('Ready — point at QR code');
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        scanLoop = setInterval(() => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width  = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code && code.data) {
+                    onScanSuccess(code.data);
+                }
+            }
+        }, 200);
+    })
+    .catch(e => {
+        scannerActive = false;
+        console.error('[Camera]', e.name, e.message);
+        if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+            setScanStatus('❌ Camera is in use by another app. Close it and try again.');
+        } else if (e.name === 'NotAllowedError') {
+            setScanStatus('❌ Camera permission denied. Please allow camera access.');
+        } else if (e.name === 'NotFoundError') {
+            setScanStatus('❌ No camera found on this device.');
+        } else {
+            setScanStatus('❌ Camera error: ' + e.message);
         }
     });
-
-    setTimeout(() => {
-        html5QrCode = new Html5Qrcode('qr-reader');
-
-        Html5Qrcode.getCameras()
-            .then(cams => {
-                if (!cams || cams.length === 0) {
-                    setScanStatus('❌ No camera found.');
-                    return;
-                }
-                const cam = cams.find(c =>
-                    c.label.toLowerCase().includes('back') ||
-                    c.label.toLowerCase().includes('rear')
-                ) || cams[cams.length - 1];
-
-                return html5QrCode.start(
-                    cam.id,
-                    { fps: 10, qrbox: { width: 240, height: 240 } },
-                    onScanSuccess,
-                    () => {}
-                );
-            })
-            .then(() => {
-                scannerActive = true;
-                setScanStatus('Ready — point at QR code');
-            })
-            .catch(e => {
-                scannerActive = false;
-                html5QrCode = null;
-
-                if (String(e).includes('NotReadableError')) {
-                    setScanStatus('⏳ Camera busy, retrying...');
-                    setTimeout(() => startScanner(), 2000);
-                } else if (String(e).includes('NotAllowedError')) {
-                    setScanStatus('❌ Camera permission denied. Please allow camera access.');
-                } else {
-                    setScanStatus('❌ Camera error. Please try again.');
-                }
-            });
-    }, 500);
 }
 
 function stopScanner() {
-    const killStream = () => {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => stream.getTracks().forEach(t => t.stop()))
-            .catch(() => {});
+    clearInterval(scanLoop);
+    scanLoop = null;
+    scannerActive = false;
 
-        document.querySelectorAll('video').forEach(v => {
-            if (v.srcObject) {
-                v.srcObject.getTracks().forEach(t => t.stop());
-                v.srcObject = null;
-            }
-        });
-    };
-
-    if (html5QrCode && scannerActive) {
-        html5QrCode.stop()
-            .then(() => { scannerActive = false; html5QrCode = null; killStream(); })
-            .catch(() => { scannerActive = false; html5QrCode = null; killStream(); });
-    } else {
-        killStream(); 
+    if (rawStream) {
+        rawStream.getTracks().forEach(t => t.stop());
+        rawStream = null;
     }
+
+    const video = document.getElementById('qr-video');
+    if (video) {
+        video.pause();
+        video.srcObject = null;
+    }
+
+    const container = document.getElementById('qr-reader');
+    if (container) container.innerHTML = '';
 }
 
 async function onScanSuccess(decoded) {
@@ -519,9 +561,18 @@ async function onScanSuccess(decoded) {
         const res = resSnap.data();
         if (res.status !== 'pending') { setScanStatus('❌ Reservation already used or cancelled.'); return; }
 
-        const today   = new Date().toDateString();
-        const resDate = res.reservationDate?.toDate?.()?.toDateString() || res.reservationDate;
-        if (resDate && resDate !== today) { setScanStatus('❌ This reservation is not for today.'); return; }
+        const now = new Date();
+        const todayPH = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); // gives "YYYY-MM-DD"
+        let resDateStr = '';
+        if (res.reservationDate?.toDate) {
+            resDateStr = res.reservationDate.toDate().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        } else {
+            resDateStr = res.reservationDate || '';
+        }
+        if (resDateStr && resDateStr !== todayPH) {
+            setScanStatus('❌ This reservation is not for today. (Reserved: ' + resDateStr + ')');
+            return;
+        }
 
         const dept   = res.department;
         const prefix = dept === 'cashier' ? 'C' : 'R';
@@ -529,6 +580,14 @@ async function onScanSuccess(decoded) {
         const resRef = doc(db, 'reservations', reservationId);
 
         let tNum, ahead;
+
+        const sSnap = await getDoc(doc(db, 'system', 'settings'));
+        const sData = sSnap.data();
+        if ((sData.ticketsIssued || 0) >= (sData.dailyQuota || 100)) {
+            setScanStatus('❌ Daily quota is full. Please come back tomorrow or ask staff.');
+            return;
+        }
+
         await runTransaction(db, async (transaction) => {
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
@@ -548,6 +607,7 @@ async function onScanSuccess(decoded) {
                 printed: false, called: false,
                 isReservation: true, reservationId
             });
+            transaction.update(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
             transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
         });
 
