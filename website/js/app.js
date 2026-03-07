@@ -393,8 +393,22 @@ function renderActiveResBanner(res, rid) {
     const statusLabel = res.status === 'pending' ?
         '<span class="break">Pending — not yet activated at Kiosk</span>' :
         '<span class="open">Active — ticket assigned</span>';
-    const ticketLine = res.ticketNumber ?
-        `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
+
+    const trackingUrl = res.ticketNumber
+  ? `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${res.department}`
+  : null;
+
+const ticketLine = res.ticketNumber ? `
+  <p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
+
+const trackingCard = res.ticketNumber ? `
+  <div class="tracking-card">
+    <span class="tracking-label">Track your queue live</span>
+    <div class="tracking-actions">
+      <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
+      <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(() => { this.textContent='✓ Copied!'; setTimeout(() => this.textContent='🔗 Copy', 2000); })">🔗 Copy</button>
+    </div>
+  </div>` : '';
 
     const banner = document.createElement('div');
     banner.id = 'activeResBanner';
@@ -414,7 +428,8 @@ function renderActiveResBanner(res, rid) {
         ${res.status === 'pending' ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>' : ''}
       </div>
       ${res.status === 'pending' ? '<div id="bannerQR" class="qr-center banner-qr"></div>' : ''}
-    </div>`;
+    </div>
+    ${trackingCard}`;
 
   const pageCard = document.getElementById('view-history').querySelector('.page-card');
   pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
@@ -435,6 +450,8 @@ function renderActiveWalkinBanner(ticket) {
     ? '<span class="open">Now Serving — proceed to counter</span>'
     : '<span class="break">Waiting — watch the lobby monitor</span>';
 
+  const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${ticket.department}`;
+
   const banner = document.createElement('div');
   banner.id        = 'activeResBanner';
   banner.className = 'active-res-banner';
@@ -445,6 +462,13 @@ function renderActiveWalkinBanner(ticket) {
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
         <p><strong>Ticket #:</strong> <span style="font-size:1.6em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span></p>
         <p><strong>Status:</strong> ${statusLabel}</p>
+      </div>
+    </div>
+    <div class="tracking-card">
+      <span class="tracking-label">Track your queue live</span>
+      <div class="tracking-actions">
+        <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
+        <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(() => { this.textContent='✓ Copied!'; setTimeout(() => this.textContent='🔗 Copy', 2000); })">🔗 Copy</button>
       </div>
     </div>`;
 

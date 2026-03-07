@@ -808,3 +808,54 @@ body.dark {
 
 .login-field { margin-bottom: 10px; }
 .name-input { letter-spacing: 0 !important; font-weight: 500 !important; font-size: 15px !important; }
+
+.tracking-card {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tracking-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-deep);
+}
+.tracking-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.btn-track {
+  background: linear-gradient(90deg, var(--blue-light), var(--blue-mid));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.btn-track:hover { opacity: 0.88; }
+.btn-copy-link {
+  background: white;
+  border: 1.5px solid #bfdbfe;
+  color: var(--blue-mid);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-copy-link:hover { background: #dbeafe; border-color: var(--blue-light); }
