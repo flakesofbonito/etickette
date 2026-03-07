@@ -26,7 +26,6 @@ let noShowToday    = 0;
 let unsubQueue     = null;
 let unsubDept      = null;
 
-// Expose all functions to window (called from HTML onclick)
 window.selectDept         = selectDept;
 window.staffLogin         = staffLogin;
 window.staffLogout        = staffLogout;
@@ -37,11 +36,11 @@ window.noShowTicket       = noShowTicket;
 window.recallTicket       = recallTicket;
 window.markManualComplete = markManualComplete;
 window.dailyReset         = dailyReset;
+window.setDailyQuota = setDailyQuota;
 
 app = initializeApp(firebaseConfig);
 db  = getFirestore(app);
 
-// Load PIN from Firestore on startup
 (async () => {
   try {
     const snap = await getDoc(doc(db, 'system', 'settings'));
@@ -89,9 +88,75 @@ function staffLogout() {
   currentTicket = null;
 }
 
+async function checkAutoReset() {
+    const now = new Date();
+    const today8am = new Date();
+    today8am.setHours(8, 0, 0, 0);
+
+    const dSnap = await getDoc(doc(db, 'departments', staffDept));
+    const lastReset = dSnap.data()?.lastResetAt?.toDate?.();
+
+    if (now >= today8am && (!lastReset || lastReset < today8am)) {
+        await dailyReset();
+    }
+}
+
 function startDashboard() {
   listenToDept();
   listenToQueue();
+  listenToQuota();
+  checkAutoReset();
+  loadTodayStats();
+}
+
+async function setDailyQuota() {
+    const input = document.getElementById('quotaInput');
+    const msg   = document.getElementById('quotaMsg');
+    const val   = parseInt(input.value);
+
+    if (!val || val < 1 || val > 999) {
+        msg.style.color = '#dc2626';
+        msg.textContent = '⚠️ Enter a valid number between 1 and 999.';
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, 'system', 'settings'), { dailyQuota: val });
+        msg.style.color = '#16a34a';
+        msg.textContent = `✅ Quota set to ${val} tickets.`;
+        input.value = '';
+        setTimeout(() => { msg.textContent = ''; }, 3000);
+    } catch (e) {
+        msg.style.color = '#dc2626';
+        msg.textContent = '❌ Failed to update quota.';
+        console.error('[setQuota]', e);
+    }
+}
+
+function listenToQuota() {
+    onSnapshot(doc(db, 'system', 'settings'), snap => {
+        if (!snap.exists()) return;
+        const data      = snap.data();
+        const quota     = data.dailyQuota    || 100;
+        const issued    = data.ticketsIssued || 0;
+        const remaining = Math.max(0, quota - issued);
+        const pct       = Math.min(100, Math.round((issued / quota) * 100));
+
+        const statIssued = document.getElementById('statIssued');
+        if (statIssued) statIssued.textContent = issued;
+
+        const display = document.getElementById('quotaStatusDisplay');
+        const sub     = document.getElementById('quotaStatusSub');
+
+        if (display) {
+            display.textContent = `${issued}/${quota}`;
+            display.style.color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f97316' : '#2563eb';
+        }
+        if (sub) {
+            sub.textContent = remaining === 0 ? '🔴 Full' : `${remaining} left`;
+            sub.style.color = remaining === 0 ? '#dc2626' : remaining <= 10 ? '#f97316' : '#6b7280';
+        }
+    });
 }
 
 function listenToDept() {
@@ -118,7 +183,6 @@ function listenToQueue() {
 
     renderQueue(waiting);
     updateStats(waiting);
-    document.getElementById('statIssued').textContent = all.length;
 
     if (serving) {
       const isNew = !currentTicket || currentTicket.ticketNumber !== serving.ticketNumber;
@@ -133,6 +197,45 @@ function listenToQueue() {
     document.getElementById('queueCount').textContent = waiting.length + (serving ? 1 : 0);
     document.getElementById('btnCallNext').disabled   = waiting.length === 0;
   });
+}
+
+async function loadTodayStats() {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const deptSnap = await getDoc(doc(db, 'departments', staffDept));
+    const lastReset = deptSnap.data()?.lastResetAt?.toDate?.() || startOfDay;
+    const countFrom = lastReset > startOfDay ? lastReset : startOfDay;
+
+    const [completedSnap, noshowSnap] = await Promise.all([
+      getDocs(query(collection(db, 'tickets'),
+        where('department', '==', staffDept),
+        where('status', '==', 'completed')
+      )),
+      getDocs(query(collection(db, 'tickets'),
+        where('department', '==', staffDept),
+        where('status', '==', 'noshow')
+      ))
+    ]);
+
+    servedToday = completedSnap.docs.filter(d => {
+      const t = d.data().completedAt?.toDate?.();
+      return t && t >= countFrom; 
+    }).length;
+
+    noShowToday = noshowSnap.docs.filter(d => {
+      const t = d.data().completedAt?.toDate?.();
+      return t && t >= countFrom;  
+    }).length;
+
+    document.getElementById('statServed').textContent  = servedToday;
+    document.getElementById('statNoShow').textContent  = noShowToday;
+    const sc = document.getElementById('servedCount');
+    if (sc) sc.textContent = servedToday;
+  } catch (e) {
+    console.warn('[loadTodayStats]', e.message);
+  }
 }
 
 function renderQueue(waiting) {
@@ -200,7 +303,6 @@ function updateStats(waiting) {
   if (scEl)   scEl.textContent = servedToday;
 }
 
-// ── ACTIONS ──────────────────────────────────────────────
 async function callNextTicket() {
   try {
     const snap = await getDocs(query(collection(db,'tickets'),
@@ -283,6 +385,16 @@ async function finishServing(ticket, status) {
     serveStartTime = null; clearInterval(timerInterval);
     await updateDoc(doc(db,'tickets',ticket.id), { status, completedAt:serverTimestamp() });
     await updateDoc(doc(db,'departments',staffDept), { queue:increment(-1), nowServing:'' });
+
+    if (ticket.isReservation && ticket.reservationId) {
+      try {
+        await updateDoc(doc(db, 'reservations', ticket.reservationId), {
+          status: status === 'completed' ? 'completed' : 'noshow',
+          completedAt: serverTimestamp()
+        });
+      } catch (e) { console.warn('[finishServing] reservation update:', e.message); }
+    }
+
   } catch (e) { console.error('[finishServing]', e); }
 }
 
@@ -325,16 +437,17 @@ async function markManualComplete() {
   } catch (e) { alert('Could not update ticket.'); }
 }
 
-// ── DAILY RESET ──────────────────────────────────────────
-async function dailyReset() {
-  const ok1 = await showConfirmDialog(
-    '⚠️ This will reset ALL ticket counters and clear today\'s queue. This cannot be undone.',
-    '🔄 Yes, Reset for Today', 'Cancel');
-  if (!ok1) return;
-  const ok2 = await showConfirmDialog(
-    'Last chance — ALL active and waiting tickets will be cleared. Proceed?',
-    'Reset Now', 'Go Back');
-  if (!ok2) return;
+async function dailyReset(auto = false) {
+  if (!auto) {
+    const ok1 = await showConfirmDialog(
+      '⚠️ This will reset ALL ticket counters and clear today\'s queue. This cannot be undone.',
+      '🔄 Yes, Reset for Today', 'Cancel');
+    if (!ok1) return;
+    const ok2 = await showConfirmDialog(
+      'Last chance — ALL active and waiting tickets will be cleared. Proceed?',
+      'Reset Now', 'Go Back');
+    if (!ok2) return;
+  }
 
   try {
     const ticketSnap = await getDocs(query(collection(db,'tickets'), where('status','in',['waiting','serving'])));
@@ -354,16 +467,21 @@ async function dailyReset() {
     }
 
     for (const dept of ['cashier','registrar'])
-      await updateDoc(doc(db,'departments',dept), { counter:0, queue:0, nowServing:'' });
-    await updateDoc(doc(db,'system','settings'), { ticketsIssued:0 });
+      await updateDoc(doc(db,'departments',dept), {
+        counter: 0, queue: 0, nowServing: '', lastResetAt: serverTimestamp()
+      });
+    await updateDoc(doc(db,'system','settings'), { ticketsIssued: 0 });
 
     servedToday = 0; noShowToday = 0; serveTimes = []; currentTicket = null;
     clearServing();
     ['statIssued','statServed','statNoShow','statWaiting'].forEach(id =>
       document.getElementById(id).textContent = 0);
+    const sc = document.getElementById('servedCount');
+    if (sc) sc.textContent = 0;
     document.getElementById('activityLog').innerHTML = '<div class="activity-empty">No activity yet</div>';
     addActivity('called', '—', 'System reset for new day');
     showToast('✅ System reset! Ready for today\'s queue.', 'success');
+
   } catch (e) {
     console.error('[dailyReset]', e);
     showToast('Reset failed: ' + e.message, 'error');
@@ -371,7 +489,6 @@ async function dailyReset() {
 }
 
 
-// ── ACTIVITY LOG ────────────────────────────────────────
 function addActivity(type, tNum, name) {
   const log   = document.getElementById('activityLog');
   const empty = log.querySelector('.activity-empty');
@@ -386,7 +503,6 @@ function addActivity(type, tNum, name) {
   while (log.children.length > 20) log.removeChild(log.lastChild);
 }
 
-// ── TOAST ────────────────────────────────────────────────
 function showToast(msg, type = 'info') {
   let t = document.getElementById('staffToast');
   if (!t) {

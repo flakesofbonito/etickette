@@ -136,13 +136,13 @@ function loginStudent() {
         userId      = childId;
         displayName = name + ' (Parent)';
 
-    } else if (type === 'guest') {
+    } else if (currentUserType === 'guest') {
         const name = document.getElementById('loginName').value.trim();
         if (name.length < 2) {
             err.textContent = 'Please enter your full name.';
             return;
         }
-        userId      = 'GUEST-' + Date.now();
+        userId = 'GUEST-' + name.trim().toLowerCase().replace(/\s+/g, '-');
         displayName = name;
     }
 
@@ -238,18 +238,48 @@ function listenToDepts() {
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d   = snap.data();
-        const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
-        const el  = document.getElementById('trafficLevel');
-        if (el) {
-            if (pct < 0.5) {
-                el.textContent = 'LOW TRAFFIC'; el.className = 'open';
-            } else if (pct < 0.75) {
-                el.textContent = 'MODERATE'; el.className = 'break';
-            } else {
-                el.textContent = 'HIGH TRAFFIC'; el.className = 'closed';
-            }
+        const d         = snap.data();
+        const quota     = d.dailyQuota    || 100;
+        const issued    = d.ticketsIssued || 0;
+        const remaining = Math.max(0, quota - issued);
+        const pct       = issued / quota;
+        const isFull    = issued >= quota;
+
+        const quotaEl = document.getElementById('quotaText');
+        if (quotaEl) {
+            quotaEl.textContent = remaining + ' / ' + quota;
+            quotaEl.style.color = isFull ? '#dc2626' : remaining <= 10 ? '#f97316' : '';
+            quotaEl.style.fontWeight = isFull ? '800' : '';
         }
+
+        ['cashier', 'registrar'].forEach(dept => {
+            const btn = document.getElementById(dept + 'Btn');
+            if (!btn) return;
+            if (isFull && !hasActiveReservation) {
+                btn.disabled = true;
+                btn.title    = 'Daily quota is full. No more reservations today.';
+                btn.textContent = '🔴 Quota Full — No Slots Available';
+                btn.style.background = 'rgba(220,38,38,.1)';
+                btn.style.color      = '#dc2626';
+                btn.style.border     = '2px solid rgba(220,38,38,.3)';
+            } else if (!hasActiveReservation) {
+                btn.disabled = false;
+                btn.title    = '';
+                btn.textContent = `📅 RESERVE ${dept.toUpperCase()} TICKET`;
+                btn.style.background = '';
+                btn.style.color      = '';
+                btn.style.border     = '';
+            }
+        });
+
+        const el = document.getElementById('congestionText');
+        if (el) {
+            if (isFull)          { el.textContent = 'QUOTA FULL';   el.className = 'closed'; }
+            else if (pct < 0.5)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open'; }
+            else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break'; }
+            else                 { el.textContent = 'HIGH TRAFFIC';  el.className = 'closed'; }
+        }
+
         if (d.statusMessage) {
             const gs = document.getElementById('globalStatus');
             if (gs) gs.textContent = d.statusMessage;
@@ -265,39 +295,39 @@ function listenToActiveReservation() {
                 const s = d.data().status;
                 return s === 'pending' || s === 'active';
             });
-            if (!activeDoc) {
-              
-                const walkinBanner = document.getElementById('activeResBanner');
-                if (!walkinBanner || walkinBanner.dataset.bannerType === 'reservation') {
-                    hasActiveReservation = false;
-                    setReserveButtonsLocked(false);
-                    if (walkinBanner) walkinBanner.remove();
+
+            if (activeDoc) {
+                const existing = document.getElementById('activeResBanner');
+                if (!existing || existing.dataset.bannerType === 'reservation') {
+                    hasActiveReservation = true;
+                    setReserveButtonsLocked(true);
+                    renderActiveResBanner(activeDoc.data(), activeDoc.id);
                 }
             } else {
-                hasActiveReservation = true;
-                setReserveButtonsLocked(true);
-                renderActiveResBanner(activeDoc.data(), activeDoc.id);
+                const banner = document.getElementById('activeResBanner');
+                if (banner && banner.dataset.bannerType === 'reservation') {
+                    banner.remove();
+                    hasActiveReservation = false;
+                    setReserveButtonsLocked(false);
+                    loadHistory();
+                }
             }
         },
-        err => {
-            console.warn('[res snapshot]', err.code);
-            hasActiveReservation = false;
-            setReserveButtonsLocked(false);
-        }
+        err => console.warn('[res snapshot]', err.code)
     );
 
     onSnapshot(
         query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
         snap => {
-            const active = snap.docs.find(d => {
+            const activeTicket = snap.docs.find(d => {
                 const s = d.data().status;
                 return s === 'waiting' || s === 'serving';
             });
 
-            if (active) {
+            if (activeTicket) {
                 hasActiveReservation = true;
                 setReserveButtonsLocked(true);
-                renderActiveWalkinBanner(active.data());
+                renderActiveWalkinBanner(activeTicket.data());
             } else {
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'walkin') {
@@ -439,6 +469,11 @@ async function cancelReservation(rid, status) {
         : 'Are you sure you want to cancel this reservation?')) return;
 
     try {
+        const banner = document.getElementById('activeResBanner');
+        if (banner) banner.remove();
+        hasActiveReservation = false;
+        setReserveButtonsLocked(false);
+
         await updateDoc(doc(db, 'reservations', rid), { status: 'cancelled', cancelledAt: serverTimestamp() });
 
         if (status === 'active') {
@@ -514,11 +549,8 @@ function openReserveModal(dept) {
         list.appendChild(d);
     });
 
-    const today = new Date();
-    const yyyy  = today.getFullYear();
-    const mm    = String(today.getMonth() + 1).padStart(2, '0');
-    const dd    = String(today.getDate()).padStart(2, '0');
-    document.getElementById('reserveDate').min   = `${yyyy}-${mm}-${dd}`;
+    const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    document.getElementById('reserveDate').min = todayPH;
     document.getElementById('reserveDate').value = '';
     rGoStep(1);
     document.getElementById('reserveModal').classList.add('active');
@@ -555,6 +587,14 @@ async function submitReserveDate() {
             return;
         }
     } catch (e) { console.warn('[pre-check ticket]', e.code); }
+
+    
+    const settingsSnap = await getDoc(doc(db, 'system', 'settings'));
+    const settingsData = settingsSnap.data();
+    if ((settingsData.ticketsIssued || 0) >= (settingsData.dailyQuota || 100)) {
+        errEl.textContent = 'Sorry, the daily quota is full. No more reservations can be made today.';
+        return;
+    }
 
     const rid = 'RES-' + currentStudentId + '-' + Date.now();
     try {

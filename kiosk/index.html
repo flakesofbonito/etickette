@@ -24,21 +24,25 @@
     <div id="screen-home" class="screen active">
         <p class="screen-subtitle">Welcome! What would you like to do?</p>
         <div class="big-btn-grid">
-            <div class="big-btn btn-blue" onclick="goScreen('dept')">
-                <div class="big-btn-icon">🎫</div>
-                <div class="big-btn-label">ISSUE A TICKET</div>
-                <div class="big-btn-sub">Walk-in — get your number now</div>
-            </div>
-                <div class="big-btn btn-yellow" onclick="goScreen('scan'); startScanner()">
-                <div class="big-btn-icon">📱</div>
-                <div class="big-btn-label">I HAVE A RESERVATION</div>
-                <div class="big-btn-sub">Scan your QR to activate</div>
-            </div>
+            <div class="big-btn btn-blue" id="btnIssueTicket" onclick="goScreen('dept')">
+            <div class="big-btn-icon">🎫</div>
+            <div class="big-btn-label">ISSUE A TICKET</div>
+            <div class="big-btn-sub">Walk-in — get your number now</div>
+        </div>
+        <div class="big-btn btn-yellow" id="btnHaveReservation" onclick="goScreen('scan'); startScanner()">
+            <div class="big-btn-icon">📱</div>
+            <div class="big-btn-label">I HAVE A RESERVATION</div>
+            <div class="big-btn-sub">Scan your QR to activate</div>
+        </div>
         </div>
         <div class="status-row">
             <div class="status-chip">Cashier: <span id="cashierStatus" class="chip-open">OPEN</span></div>
             <div class="status-chip">Registrar: <span id="registrarStatus" class="chip-open">OPEN</span></div>
         </div>
+        <div id="quotaFullMsg" style="display:none; color:#dc2626; font-weight:700; text-align:center; margin-top:14px; font-size:15px;">
+            🔴 All slots are full for today. Please come back tomorrow.
+        </div>
+    </div> 
     </div>
 
     <div id="screen-dept" class="screen">
@@ -185,7 +189,7 @@
     </div>
 
 </body>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
     import { initKiosk } from './js/kiosk.js'; initKiosk();
