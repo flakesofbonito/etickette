@@ -175,8 +175,10 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  align-items: center;
   min-height: 50px;
   margin-bottom: 24px;
+  width: 100%;
 }
 .next-item {
   background: var(--bg);
@@ -191,9 +193,14 @@ body {
 .next-item:hover { border-color: var(--blue-light); background: #eff6ff; }
 .next-item.empty {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-sub);
-  border-style: dashed;
+  border: none;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .queue-total {

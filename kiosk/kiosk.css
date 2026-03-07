@@ -299,21 +299,30 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.reason-dropdown-item {
-  padding: 14px 20px;
+/* ── REASON DROPDOWN ITEMS (JS uses .reason-btn) ─────── */
+.reason-btn {
+  display: block;
+  width: 100%;
+  padding: 15px 20px;
+  background: var(--white);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-family: inherit;
   font-size: 15px;
   font-weight: 500;
   color: var(--text);
+  text-align: left;
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
-  transition: background .15s;
+  transition: background .15s, color .15s, padding-left .15s;
 }
-.reason-dropdown-item:last-child { border-bottom: none; }
-.reason-dropdown-item:hover {
+.reason-btn:last-child { border-bottom: none; }
+.reason-btn:hover {
   background: #eff6ff;
   color: var(--blue-deep);
   font-weight: 700;
+  padding-left: 26px;
 }
+.reason-btn:active { background: #dbeafe; }
 
 /* ── DOCS SCREEN ─────────────────────────────────────── */
 #screen-docs .screen-subtitle {
@@ -381,4 +390,88 @@ html, body {
   flex-direction: column;
   gap: 0;
   margin-top: 8px;
+}
+
+#screen-ticket {
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-top: 20px;
+}
+
+#screen-ticket .ticket-card {
+  margin-top: 0;
+}
+
+#screen-ticket .ticket-big-num {
+  font-size: 72px;
+  margin-bottom: 14px;
+}
+
+#screen-ticket .ticket-card {
+  padding: 20px 20px;
+}
+
+#screen-ticket .kiosk-submit-btn {
+  position: sticky;
+  bottom: 12px;
+  margin-top: 12px;
+}
+
+#screen-scan-success {
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-top: 20px;
+}
+
+#screen-scan-success .ticket-big-num {
+  font-size: 72px;
+  margin-bottom: 14px;
+}
+
+#screen-scan-success .ticket-card {
+  padding: 20px 20px;
+}
+
+#screen-scan-success .kiosk-submit-btn {
+  position: sticky;
+  bottom: 12px;
+  margin-top: 12px;
+}
+
+#screen-ticket .ticket-big-num {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+#screen-ticket .ticket-details {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+#screen-ticket .ticket-detail-row {
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+#screen-ticket .ticket-card {
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+#screen-ticket .ticket-qr {
+  padding: 8px;
+  margin-bottom: 6px;
+}
+
+#screen-ticket .ticket-qr-hint {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+#screen-ticket .ticket-school {
+  margin-bottom: 6px;
+}
+
+#screen-ticket .ticket-dept-tag {
+  margin-bottom: 8px;
 }
