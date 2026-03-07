@@ -1,20 +1,8 @@
 import {
-    getFirestore,
-    doc,
-    collection,
-    setDoc,
-    getDoc,
-    onSnapshot,
-    updateDoc,
-    query,
-    where,
-    serverTimestamp,
-    getDocs,
-    increment
+    getFirestore, doc, collection, setDoc, getDoc, onSnapshot,
+    updateDoc, query, where, serverTimestamp, getDocs, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
@@ -27,67 +15,47 @@ const firebaseConfig = {
 };
 
 const REASONS = {
-    cashier: [{
-        label: "Pay Tuition / Fees",
-        docs: ["Valid ID", "Statement of Account"]
-    }, {
-        label: "Pay Miscellaneous Fees",
-        docs: ["Valid ID", "Fee Slip"]
-    }, {
-        label: "Request Official Receipt",
-        docs: ["Valid ID", "Proof of Payment"]
-    }, {
-        label: "Scholarship Clearance",
-        docs: ["Valid ID", "Grant Letter"]
-    }, {
-        label: "Other",
-        docs: []
-    }],
-    registrar: [{
-        label: "Request Transcript (TOR)",
-        docs: ["Valid ID", "Request Form", "Clearance"]
-    }, {
-        label: "Certificate of Enrollment",
-        docs: ["Valid ID", "Request Form"]
-    }, {
-        label: "Certificate of Graduation",
-        docs: ["Valid ID", "Request Form", "Clearance"]
-    }, {
-        label: "Form 137 / 138",
-        docs: ["Valid ID", "Request Form"]
-    }, {
-        label: "Diploma / Authentication",
-        docs: ["Valid ID", "Claim Stub"]
-    }, {
-        label: "Other",
-        docs: []
-    }]
+    cashier: [
+        { label: "Pay Tuition / Fees",       docs: ["Valid ID", "Statement of Account"] },
+        { label: "Pay Miscellaneous Fees",    docs: ["Valid ID", "Fee Slip"] },
+        { label: "Request Official Receipt",  docs: ["Valid ID", "Proof of Payment"] },
+        { label: "Scholarship Clearance",     docs: ["Valid ID", "Grant Letter"] },
+        { label: "Other",                     docs: [] }
+    ],
+    registrar: [
+        { label: "Request Transcript (TOR)",      docs: ["Valid ID", "Request Form", "Clearance"] },
+        { label: "Certificate of Enrollment",     docs: ["Valid ID", "Request Form"] },
+        { label: "Certificate of Graduation",     docs: ["Valid ID", "Request Form", "Clearance"] },
+        { label: "Form 137 / 138",                docs: ["Valid ID", "Request Form"] },
+        { label: "Diploma / Authentication",      docs: ["Valid ID", "Claim Stub"] },
+        { label: "Other",                         docs: [] }
+    ]
 };
 
 let app, db;
-let currentStudentId = null;
-let reserveDept = null;
-let reserveReason = null;
-let currentStep = 1;
+let currentStudentId   = null;
+let reserveDept        = null;
+let reserveReason      = null;
+let currentStep        = 1;
 let hasActiveReservation = false;
-let currentUserType = 'student';
+let currentUserType    = 'student';
 let currentDisplayName = null;
 
 export function initWebsite() {
     app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
+    db  = getFirestore(app);
 
-    window.loginStudent = loginStudent;
-    window.logout = logout;
-    window.navigate = navigate;
-    window.toggleMenu = toggleMenu;
-    window.openReserveModal = openReserveModal;
-    window.closeModal = closeModal;
-    window.handleOverlay = handleOverlay;
-    window.rGoStep = rGoStep;
+    window.loginStudent      = loginStudent;
+    window.logout            = logout;
+    window.navigate          = navigate;
+    window.toggleMenu        = toggleMenu;
+    window.openReserveModal  = openReserveModal;
+    window.closeModal        = closeModal;
+    window.handleOverlay     = handleOverlay;
+    window.rGoStep           = rGoStep;
     window.submitReserveDate = submitReserveDate;
     window.cancelReservation = cancelReservation;
-    window.selectUserType = selectUserType;
+    window.selectUserType    = selectUserType;
 
     const saved = sessionStorage.getItem('studentId');
     if (saved) {
@@ -97,130 +65,135 @@ export function initWebsite() {
 }
 
 function selectUserType(type) {
-  currentUserType = type;
-  document.querySelectorAll('.user-type-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.type === type));
+    currentUserType = type;
+    document.querySelectorAll('.user-type-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.type === type));
 
-  const inputId       = document.getElementById('inputId');
-  const inputChildId  = document.getElementById('inputParentChildId');
-  const inputName     = document.getElementById('inputName');
-  const idLabel       = document.getElementById('idLabel');
-  const nameLabel     = document.getElementById('nameLabel');
-  const loginHint     = document.getElementById('loginHint');
-  const loginId       = document.getElementById('loginId');
+    const inputId      = document.getElementById('inputId');
+    const inputChildId = document.getElementById('inputParentChildId');
+    const inputName    = document.getElementById('inputName');
+    const idLabel      = document.getElementById('idLabel');
+    const nameLabel    = document.getElementById('nameLabel');
+    const loginHint    = document.getElementById('loginHint');
+    const loginId      = document.getElementById('loginId');
 
-  // Reset visibility
-  inputId.style.display      = 'none';
-  inputChildId.style.display = 'none';
-  inputName.style.display    = 'none';
+    inputId.style.display      = 'none';
+    inputChildId.style.display = 'none';
+    inputName.style.display    = 'none';
 
-  if (type === 'student') {
-    inputId.style.display = 'block';
-    idLabel.textContent   = 'Student ID Number';
-    loginId.placeholder   = 'e.g. 02000385394';
-    loginHint.textContent = '11-digit Student ID required';
-  } else if (type === 'teacher') {
-    inputId.style.display = 'block';
-    idLabel.textContent   = 'Employee ID Number';
-    loginId.placeholder   = 'e.g. 02000385394';
-    loginHint.textContent = '11-digit Employee ID required';
-  } else if (type === 'parent') {
-    inputChildId.style.display = 'block';
-    inputName.style.display    = 'block';
-    nameLabel.textContent      = 'Your Full Name';
-    loginHint.textContent      = 'Enter your child\'s Student ID and your name';
-  } else if (type === 'guest') {
-    inputName.style.display = 'block';
-    nameLabel.textContent   = 'Your Full Name';
-    loginHint.textContent   = 'Enter your full name to continue';
-  }
+    if (type === 'student') {
+        inputId.style.display = 'block';
+        idLabel.textContent   = 'Student ID Number';
+        loginId.placeholder   = 'e.g. 02000385394';
+        loginHint.textContent = '11-digit Student ID required';
+    } else if (type === 'teacher') {
+        inputId.style.display = 'block';
+        idLabel.textContent   = 'Employee ID Number';
+        loginId.placeholder   = 'e.g. 02000385394';
+        loginHint.textContent = '11-digit Employee ID required';
+    } else if (type === 'parent') {
+        inputChildId.style.display = 'block';
+        inputName.style.display    = 'block';
+        nameLabel.textContent      = 'Your Full Name';
+        loginHint.textContent      = "Enter your child's Student ID and your name";
+    } else if (type === 'guest') {
+        inputName.style.display = 'block';
+        nameLabel.textContent   = 'Your Full Name';
+        loginHint.textContent   = 'Enter your full name to continue';
+    }
 }
 
 function loginStudent() {
-  const err = document.getElementById('loginError');
-  err.textContent = '';
+    const err = document.getElementById('loginError');
+    err.textContent = '';
 
-  let userId = null;
-  let displayName = null;
+    let userId      = null;
+    let displayName = null;
 
-  if (currentUserType === 'student' || currentUserType === 'teacher') {
-    const val = document.getElementById('loginId').value.trim();
-    const inp = document.getElementById('loginId');
-    if (!/^\d{11}$/.test(val)) {
-      err.textContent = 'ID must be exactly 11 digits.';
-      inp.classList.add('error');
-      return;
+    if (currentUserType === 'student' || currentUserType === 'teacher') {
+        const val = document.getElementById('loginId').value.trim();
+        const inp = document.getElementById('loginId');
+        if (!/^\d{11}$/.test(val)) {
+            err.textContent = 'ID must be exactly 11 digits.';
+            inp.classList.add('error');
+            return;
+        }
+        inp.classList.remove('error');
+        userId      = val;
+        displayName = val;
+
+    } else if (currentUserType === 'parent') {
+        const childId = document.getElementById('loginChildId').value.trim();
+        const name    = document.getElementById('loginName').value.trim();
+        if (!/^\d{11}$/.test(childId)) {
+            err.textContent = "Child's Student ID must be exactly 11 digits.";
+            return;
+        }
+        if (name.length < 2) {
+            err.textContent = 'Please enter your full name.';
+            return;
+        }
+        userId      = childId;
+        displayName = name + ' (Parent)';
+
+    } else if (type === 'guest') {
+        const name = document.getElementById('loginName').value.trim();
+        if (name.length < 2) {
+            err.textContent = 'Please enter your full name.';
+            return;
+        }
+        userId      = 'GUEST-' + Date.now();
+        displayName = name;
     }
-    inp.classList.remove('error');
-    userId      = val;
-    displayName = val;
 
-  } else if (currentUserType === 'parent') {
-    const childId   = document.getElementById('loginChildId').value.trim();
-    const name      = document.getElementById('loginName').value.trim();
-    if (!/^\d{11}$/.test(childId)) {
-      err.textContent = "Child's Student ID must be exactly 11 digits.";
-      return;
-    }
-    if (name.length < 2) {
-      err.textContent = 'Please enter your full name.';
-      return;
-    }
-    userId      = childId;
-    displayName = name + ' (Parent)';
+    currentStudentId   = userId;
+    currentDisplayName = displayName;
+    sessionStorage.setItem('studentId',   userId);
+    sessionStorage.setItem('displayName', displayName);
+    sessionStorage.setItem('userType',    currentUserType);
 
-  } else if (currentUserType === 'guest') {
-    const name = document.getElementById('loginName').value.trim();
-    if (name.length < 2) {
-      err.textContent = 'Please enter your full name.';
-      return;
-    }
-    userId      = 'GUEST-' + Date.now();
-    displayName = name;
-  }
-
-  currentStudentId   = userId;
-  currentDisplayName = displayName;
-  sessionStorage.setItem('studentId',    userId);
-  sessionStorage.setItem('displayName',  displayName);
-  sessionStorage.setItem('userType',     currentUserType);
-
-  document.getElementById('loginOverlay').classList.add('dismissed');
-  document.getElementById('appShell').classList.remove('locked');
-  document.getElementById('appShell').classList.add('unlocked');
-  setTimeout(() => { document.getElementById('loginOverlay').style.display = 'none'; }, 520);
-  afterLogin();
+    document.getElementById('loginOverlay').classList.add('dismissed');
+    document.getElementById('appShell').classList.remove('locked');
+    document.getElementById('appShell').classList.add('unlocked');
+    setTimeout(() => { document.getElementById('loginOverlay').style.display = 'none'; }, 520);
+    afterLogin();
 }
 
 function afterLogin() {
-  currentDisplayName = sessionStorage.getItem('displayName') || currentStudentId;
-  currentUserType    = sessionStorage.getItem('userType') || 'student';
+    currentDisplayName = sessionStorage.getItem('displayName') || currentStudentId;
+    currentUserType    = sessionStorage.getItem('userType')    || 'student';
 
-  document.getElementById('userDisplay').style.display = 'flex';
-  document.getElementById('userLabel').textContent = currentDisplayName;
-  document.getElementById('profileInfo').innerHTML = `
-    <div class="info"><span>Type</span><b>${currentUserType.charAt(0).toUpperCase()+currentUserType.slice(1)}</b></div>
-    <div class="info"><span>ID / Name</span><b>${currentDisplayName}</b></div>
-    <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
-  `;
-  navigate('home');
-  listenToDepts();
-  listenToSettings();
-  listenToActiveReservation();
+    document.getElementById('userDisplay').style.display = 'flex';
+    document.getElementById('userLabel').textContent = currentDisplayName;
+    document.getElementById('profileInfo').innerHTML = `
+        <div class="info"><span>Type</span><b>${currentUserType.charAt(0).toUpperCase()+currentUserType.slice(1)}</b></div>
+        <div class="info"><span>ID / Name</span><b>${currentDisplayName}</b></div>
+        <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
+    `;
+
+    // ✅ FIX #25 — Lock reserve buttons immediately on login to prevent race window.
+    // The snapshot listener will unlock them if no active reservation is found.
+    setReserveButtonsLocked(true);
+
+    navigate('home');
+    listenToDepts();
+    listenToSettings();
+    listenToActiveReservation();
 }
 
 function logout() {
+    sessionStorage.removeItem('studentId');
     sessionStorage.removeItem('displayName');
     sessionStorage.removeItem('userType');
-    currentDisplayName = null;
-    currentUserType = 'student';
-    currentStudentId = null;
+    currentDisplayName   = null;
+    currentUserType      = 'student';
+    currentStudentId     = null;
     hasActiveReservation = false;
     document.getElementById('userDisplay').style.display = 'none';
     const ov = document.getElementById('loginOverlay');
     ov.style.display = 'flex';
     ov.classList.remove('dismissed');
-    document.getElementById('loginId').value = '';
+    document.getElementById('loginId').value      = '';
     document.getElementById('loginError').textContent = '';
     document.getElementById('appShell').classList.add('locked');
     document.getElementById('appShell').classList.remove('unlocked');
@@ -228,16 +201,12 @@ function logout() {
 
 function navigate(view) {
     if (view === 'history') loadHistory();
-
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + view).classList.add('active');
-
     document.querySelectorAll('.nav-link').forEach(a =>
         a.classList.toggle('active', a.dataset.view === view));
-
     document.querySelectorAll('.bottom-nav-item').forEach(b =>
         b.classList.toggle('active', b.dataset.view === view));
-
     if (window.innerWidth <= 600) {
         document.getElementById('sidebar').classList.remove('open');
     }
@@ -257,31 +226,12 @@ function listenToDepts() {
     ['cashier', 'registrar'].forEach(dept => {
         onSnapshot(doc(db, 'departments', dept), snap => {
             if (!snap.exists()) return;
-            const d = snap.data();
-            const status = (d.status || 'open').toLowerCase();
-            const map = {
-                open: {
-                    t: 'OPEN',
-                    c: 'open',
-                    dis: false
-                },
-                break: {
-                    t: 'ON BREAK',
-                    c: 'break',
-                    dis: true
-                },
-                closed: {
-                    t: 'CLOSED',
-                    c: 'closed',
-                    dis: true
-                }
-            };
-            const m = map[status] || map.open;
-            document.getElementById(dept + 'Status').textContent = m.t;
-            document.getElementById(dept + 'Status').className = m.c;
-            document.getElementById(dept + 'Queue').textContent = d.queue || 0;
-            const btn = document.getElementById(dept + 'Btn');
-            if (btn) btn.disabled = m.dis || hasActiveReservation;
+            const d   = snap.data();
+            const st  = (d.status || 'open').toLowerCase();
+            const el  = document.getElementById(dept + 'Status');
+            const map = { open: { t: 'OPEN', c: 'open' }, break: { t: 'ON BREAK', c: 'break' }, closed: { t: 'CLOSED', c: 'closed' } };
+            const m   = map[st] || map.open;
+            if (el) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
         });
     });
 }
@@ -289,26 +239,27 @@ function listenToDepts() {
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d = snap.data();
-        const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
-        document.getElementById('quotaText').textContent = rem + ' / ' + (d.dailyQuota || 100) + ' Slots';
+        const d   = snap.data();
         const pct = (d.ticketsIssued || 0) / (d.dailyQuota || 100);
-        const el = document.getElementById('congestionText');
-        if (pct < 0.4) {
-            el.textContent = 'LOW TRAFFIC';
-            el.className = 'open';
-        } else if (pct < 0.75) {
-            el.textContent = 'MODERATE';
-            el.className = 'break';
-        } else {
-            el.textContent = 'HIGH TRAFFIC';
-            el.className = 'closed';
+        const el  = document.getElementById('trafficLevel');
+        if (el) {
+            if (pct < 0.5) {
+                el.textContent = 'LOW TRAFFIC'; el.className = 'open';
+            } else if (pct < 0.75) {
+                el.textContent = 'MODERATE'; el.className = 'break';
+            } else {
+                el.textContent = 'HIGH TRAFFIC'; el.className = 'closed';
+            }
         }
-        if (d.statusMessage) document.getElementById('globalStatus').textContent = d.statusMessage;
+        if (d.statusMessage) {
+            const gs = document.getElementById('globalStatus');
+            if (gs) gs.textContent = d.statusMessage;
+        }
     });
 }
 
 function listenToActiveReservation() {
+    // Reservation listener
     onSnapshot(
         query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
         snap => {
@@ -317,10 +268,15 @@ function listenToActiveReservation() {
                 return s === 'pending' || s === 'active';
             });
             if (!activeDoc) {
-                hasActiveReservation = false;
-                setReserveButtonsLocked(false);
-                const b = document.getElementById('activeResBanner');
-                if (b) b.remove();
+                // Only unlock if there's also no active walk-in ticket
+                // (the ticket listener handles that case)
+                const walkinBanner = document.getElementById('activeResBanner');
+                // ✅ FIX #24 — Use data-banner-type attribute instead of fragile emoji text match
+                if (!walkinBanner || walkinBanner.dataset.bannerType === 'reservation') {
+                    hasActiveReservation = false;
+                    setReserveButtonsLocked(false);
+                    if (walkinBanner) walkinBanner.remove();
+                }
             } else {
                 hasActiveReservation = true;
                 setReserveButtonsLocked(true);
@@ -334,12 +290,7 @@ function listenToActiveReservation() {
         }
     );
 
-    // ─────────────────────────────────────────────────────────────────────────────
-// PATCH for website/js/app.js
-// Inside listenToActiveReservation(), replace the SECOND onSnapshot
-// (the one listening to 'tickets') with this fixed version.
-// ─────────────────────────────────────────────────────────────────────────────
-
+    // Walk-in ticket listener
     onSnapshot(
         query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
         snap => {
@@ -349,19 +300,17 @@ function listenToActiveReservation() {
             });
 
             if (active) {
-                // Show or update the banner
                 hasActiveReservation = true;
                 setReserveButtonsLocked(true);
                 renderActiveWalkinBanner(active.data());
             } else {
-                // ✅ FIX: No active ticket — remove the banner and unlock buttons
-                // But only if it's a walk-in banner (not a reservation banner)
+                // ✅ FIX #24 — Use data-banner-type attribute instead of fragile emoji text match
                 const banner = document.getElementById('activeResBanner');
-                if (banner && banner.querySelector('.active-res-header span')?.textContent?.includes('🎫')) {
+                if (banner && banner.dataset.bannerType === 'walkin') {
                     banner.remove();
                     hasActiveReservation = false;
                     setReserveButtonsLocked(false);
-                    loadHistory(); // Refresh history list to show completed ticket
+                    loadHistory();
                 }
             }
         },
@@ -374,32 +323,28 @@ function setReserveButtonsLocked(locked) {
         const btn = document.getElementById(dept + 'Btn');
         if (btn) {
             btn.disabled = locked;
-            btn.title = locked ? 'Cancel your current reservation first.' : '';
+            btn.title    = locked ? 'Cancel your current reservation first.' : '';
         }
     });
 }
 
 // ── QR HELPER ─────────────────────────────────────────────────────────────────
 function renderQR(el, text, size) {
-  el.innerHTML = '';
-  new QRCode(el, {
-    text: text,
-    width: size,
-    height: size,
-    colorDark: '#1f3c88',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
-  });
-  setTimeout(() => {
-    el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
-    el.querySelectorAll('img').forEach(img => {
-      img.style.cssText = 'display:block!important; margin:0 auto!important; max-width:100%!important;';
+    el.innerHTML = '';
+    new QRCode(el, {
+        text: text, width: size, height: size,
+        colorDark: '#1f3c88', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
     });
-    // Force the inner wrapper div to center too
-    el.querySelectorAll('div').forEach(d => {
-      d.style.cssText = 'display:flex!important; justify-content:center!important; align-items:center!important;';
-    });
-  }, 80);
+    setTimeout(() => {
+        el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
+        el.querySelectorAll('img').forEach(img => {
+            img.style.cssText = 'display:block!important; margin:0 auto!important; max-width:100%!important;';
+        });
+        el.querySelectorAll('div').forEach(d => {
+            d.style.cssText = 'display:flex!important; justify-content:center!important; align-items:center!important;';
+        });
+    }, 80);
 }
 
 // ── BANNERS ───────────────────────────────────────────────────────────────────
@@ -407,17 +352,15 @@ function renderActiveResBanner(res, rid) {
     const old = document.getElementById('activeResBanner');
     if (old) old.remove();
 
-    const canCancel = res.status === 'pending' || res.status === 'active';
+    const canCancel  = res.status === 'pending' || res.status === 'active';
     const statusLabel = res.status === 'pending'
         ? '<span class="break">Pending — not yet activated at Kiosk</span>'
         : '<span class="open">Active — ticket assigned</span>';
-    const ticketLine = res.ticketNumber
-        ? `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
+    const ticketLine  = res.ticketNumber ? `<p><strong>Ticket #:</strong> ${res.ticketNumber}</p>` : '';
 
-    // Tracking card — only shown once ticket is assigned (after kiosk activation)
     let trackingCard = '';
     if (res.ticketNumber) {
-        const trackingUrl = `${window.location.origin}/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
+        const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
         trackingCard = `
         <div class="tracking-card">
           <span class="tracking-label">🔴 Live Queue Tracker</span>
@@ -429,8 +372,10 @@ function renderActiveResBanner(res, rid) {
     }
 
     const banner = document.createElement('div');
-    banner.id = 'activeResBanner';
-    banner.className = 'active-res-banner';
+    banner.id                    = 'activeResBanner';
+    banner.className             = 'active-res-banner';
+    // ✅ FIX #24 — Use data attribute instead of emoji text for banner type detection
+    banner.dataset.bannerType    = 'reservation';
     banner.innerHTML = `
     <div class="active-res-header">
       <span>📋 Active Reservation</span>
@@ -468,8 +413,7 @@ function renderActiveWalkinBanner(ticket) {
         ? '<span class="open">Now Serving — proceed to counter</span>'
         : '<span class="break">Waiting — watch the lobby monitor</span>';
 
-    // Always has a ticket number for walk-ins
-    const trackingUrl = `${window.location.origin}/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
+    const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
     const trackingCard = `
     <div class="tracking-card">
       <span class="tracking-label">🔴 Live Queue Tracker</span>
@@ -480,8 +424,10 @@ function renderActiveWalkinBanner(ticket) {
     </div>`;
 
     const banner = document.createElement('div');
-    banner.id        = 'activeResBanner';
-    banner.className = 'active-res-banner';
+    banner.id                 = 'activeResBanner';
+    banner.className          = 'active-res-banner';
+    // ✅ FIX #24 — data attribute marks this as a walkin banner, no emoji text needed
+    banner.dataset.bannerType = 'walkin';
     banner.innerHTML = `
     <div class="active-res-header"><span>🎫 Active Ticket</span></div>
     <div class="active-res-body">
@@ -497,225 +443,237 @@ function renderActiveWalkinBanner(ticket) {
     pageCard.insertBefore(banner, pageCard.querySelector('h2').nextSibling);
 }
 
-
 // ── CANCEL ────────────────────────────────────────────────────────────────────
 async function cancelReservation(rid, status) {
-  if (!confirm(status === 'active'
-    ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
-    : 'Are you sure you want to cancel this reservation?')) return;
+    if (!confirm(status === 'active'
+        ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
+        : 'Are you sure you want to cancel this reservation?')) return;
 
-  try {
-    await updateDoc(doc(db, 'reservations', rid), { status: 'cancelled', cancelledAt: serverTimestamp() });
-    if (status === 'active') {
-      const snap = await getDoc(doc(db, 'reservations', rid));
-      const tNum = snap.data().ticketNumber;
-      if (tNum) {
-        await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
-        const dept  = snap.data().department;
-        const dSnap = await getDoc(doc(db, 'departments', dept));
-        if (dSnap.exists()) {
-          await updateDoc(doc(db, 'departments', dept), { queue: Math.max(0, (dSnap.data().queue || 1) - 1) });
+    try {
+        await updateDoc(doc(db, 'reservations', rid), { status: 'cancelled', cancelledAt: serverTimestamp() });
+
+        if (status === 'active') {
+            const snap = await getDoc(doc(db, 'reservations', rid));
+            const tNum = snap.data().ticketNumber;
+            if (tNum) {
+                const ticketSnap = await getDoc(doc(db, 'tickets', tNum));
+                if (ticketSnap.exists()) {
+                    const tStatus = ticketSnap.data().status;
+                    await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
+                    // ✅ FIX #6 — Only decrement queue if ticket was actually in queue
+                    if (tStatus === 'waiting' || tStatus === 'serving') {
+                        const dept  = snap.data().department;
+                        const dSnap = await getDoc(doc(db, 'departments', dept));
+                        if (dSnap.exists()) {
+                            await updateDoc(doc(db, 'departments', dept), {
+                                queue: Math.max(0, (dSnap.data().queue || 1) - 1)
+                            });
+                        }
+                    }
+                }
+            }
         }
-      }
+
+        // ✅ FIX #12 — Restore ticketsIssued on cancellation (was never decremented before)
+        try {
+            await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(-1) });
+        } catch (e) {
+            console.warn('[quota restore]', e.message);
+        }
+
+        showToast('Reservation cancelled.', 'warning');
+    } catch (e) {
+        console.error('[cancelReservation]', e);
+        showToast('Could not cancel. Try again.', 'error');
     }
-    showToast('Reservation cancelled.', 'warning');
-  } catch (e) {
-    console.error('[cancelReservation]', e);
-    showToast('Could not cancel. Try again.', 'error');
-  }
 }
 
 // ── RESERVE MODAL ─────────────────────────────────────────────────────────────
 function openReserveModal(dept) {
-  if (!currentStudentId) { showToast('Please log in first.', 'error'); return; }
-  if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
+    if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
+    if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
 
-  reserveDept = dept;
-  document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
-  document.getElementById('reserveTitle').textContent   = 'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
+    reserveDept = dept;
+    document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
+    document.getElementById('reserveTitle').textContent   = 'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
 
-  const list = document.getElementById('reserveReasonList');
-  list.innerHTML = '';
-  REASONS[dept].forEach(r => {
-    const d = document.createElement('div');
-    d.className   = 'reason-item';
-    d.textContent = r.label;
-    d.onclick = () => {
-      reserveReason = r;
-      document.querySelectorAll('.reason-item').forEach(x => x.classList.remove('selected'));
-      d.classList.add('selected');
+    const list = document.getElementById('reserveReasonList');
+    list.innerHTML = '';
+    REASONS[dept].forEach(r => {
+        const d        = document.createElement('div');
+        d.className    = 'reason-item';
+        d.textContent  = r.label;
+        d.onclick = () => {
+            reserveReason = r;
+            document.querySelectorAll('.reason-item').forEach(x => x.classList.remove('selected'));
+            d.classList.add('selected');
 
-      const docsDept = document.getElementById('docsForDept');
-      if (docsDept) docsDept.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
+            const docsDept = document.getElementById('docsForDept');
+            if (docsDept) docsDept.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
 
-      const docsList = document.getElementById('requiredDocsList');
-      docsList.innerHTML = '';
-      if (r.docs && r.docs.length > 0) {
-        r.docs.forEach(docName => {
-          const item = document.createElement('div');
-          item.className = 'docs-item';
-          item.innerHTML = `<span class="docs-item-icon">📄</span><span>${docName}</span>`;
-          docsList.appendChild(item);
-        });
-      } else {
-        docsList.innerHTML = '<p class="subtle">No specific documents required. Bring your Valid ID.</p>';
-      }
+            const docsList = document.getElementById('requiredDocsList');
+            docsList.innerHTML = '';
+            if (r.docs && r.docs.length > 0) {
+                r.docs.forEach(docName => {
+                    const item = document.createElement('div');
+                    item.className = 'docs-item';
+                    item.innerHTML = `<span class="docs-item-icon">📄</span><span>${docName}</span>`;
+                    docsList.appendChild(item);
+                });
+            } else {
+                docsList.innerHTML = '<p class="subtle">No specific documents required. Bring your Valid ID.</p>';
+            }
+            rGoStep(2);
+        };
+        list.appendChild(d);
+    });
 
-      rGoStep(2);
-    };
-    list.appendChild(d);  // ← THIS was missing
-  });
-
-  const today = new Date();
-const yyyy = today.getFullYear();
-const mm = String(today.getMonth() + 1).padStart(2, '0');
-const dd = String(today.getDate()).padStart(2, '0');
-document.getElementById('reserveDate').min = `${yyyy}-${mm}-${dd}`;
-document.getElementById('reserveDate').value = '';
-  document.getElementById('reserveDate').value = '';
-  rGoStep(1);
-  document.getElementById('reserveModal').classList.add('active');
+    const today = new Date();
+    const yyyy  = today.getFullYear();
+    const mm    = String(today.getMonth() + 1).padStart(2, '0');
+    const dd    = String(today.getDate()).padStart(2, '0');
+    document.getElementById('reserveDate').min   = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('reserveDate').value = '';
+    rGoStep(1);
+    document.getElementById('reserveModal').classList.add('active');
 }
 
 function rGoStep(n) {
-  document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('rstep' + n).classList.add('active');
-  currentStep = n;
-  for (let i = 1; i <= 4; i++) {
-    const dot = document.getElementById('rdot' + i);
-    if (dot) dot.classList.toggle('active', i <= n);
-  }
+    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('rstep' + n).classList.add('active');
+    currentStep = n;
+    for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById('rdot' + i);
+        if (dot) dot.classList.toggle('active', i <= n);
+    }
 }
 
 async function submitReserveDate() {
-  const dateVal = document.getElementById('reserveDate').value;
-  const errEl   = document.getElementById('dateError');
-  if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
-  errEl.textContent = '';
+    const dateVal = document.getElementById('reserveDate').value;
+    const errEl   = document.getElementById('dateError');
+    if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
+    errEl.textContent = '';
 
-  try {
-    const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
-    const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
-    if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
-  } catch (e) { console.warn('[pre-check res]', e.code); }
+    // Pre-check: already has reservation?
+    try {
+        const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
+        const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
+        if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
+    } catch (e) { console.warn('[pre-check res]', e.code); }
 
-  try {
-    const snap = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
-    const waiting = snap.docs.find(d => d.data().status === 'waiting');
-    if (waiting) {
-      const t = waiting.data();
-      errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
-      return;
+    // Pre-check: already has active ticket?
+    try {
+        const snap = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
+        const waiting = snap.docs.find(d => d.data().status === 'waiting');
+        if (waiting) {
+            const t = waiting.data();
+            errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
+            return;
+        }
+    } catch (e) { console.warn('[pre-check ticket]', e.code); }
+
+    const rid = 'RES-' + currentStudentId + '-' + Date.now();
+    try {
+        await setDoc(doc(db, 'reservations', rid), {
+            userType:        currentUserType,
+            displayName:     currentDisplayName,
+            studentId:       currentStudentId,
+            department:      reserveDept,
+            reason:          reserveReason.label,
+            requiredDocs:    reserveReason.docs,
+            reservationDate: dateVal,
+            status:          'pending',
+            ticketNumber:    null,
+            createdAt:       serverTimestamp()
+        });
+    } catch (e) {
+        console.error('[setDoc]', e);
+        errEl.textContent = 'Error saving reservation: ' + e.message;
+        return;
     }
-  } catch (e) { console.warn('[pre-check ticket]', e.code); }
 
-  const rid = 'RES-' + currentStudentId + '-' + Date.now();
-  try {
-    await setDoc(doc(db, 'reservations', rid), {
-      userType:    currentUserType,
-      displayName: currentDisplayName,
-      studentId:       currentStudentId,
-      department:      reserveDept,
-      reason:          reserveReason.label,
-      requiredDocs:    reserveReason.docs,
-      reservationDate: dateVal,
-      status:          'pending',
-      ticketNumber:    null,
-      createdAt:       serverTimestamp()
-    });
-  } catch (e) {
-    console.error('[setDoc]', e);
-    errEl.textContent = 'Error saving reservation: ' + e.message;
-    return;
-  }
+    // ✅ FIX #4 — REMOVED ticketsIssued increment here.
+    // ticketsIssued must only be incremented at the Kiosk when an actual queue ticket
+    // is physically issued (in kiosk.js issueTicket). Counting at reservation creation
+    // caused every reservation to burn TWO quota slots.
 
-  try {
-    await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
-  } catch (e) {
-    console.warn('[increment counter]', e.code || e.message);
-  }
-
-  const qrEl = document.getElementById('reserveQR');
-  qrEl.innerHTML = '';
-  document.getElementById('reserveSummary').textContent =
-    reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
-  renderQR(qrEl, rid, 160);
-  rGoStep(4);   // ← was rGoStep(3)
-  showToast('Reservation saved!', 'success');
+    const qrEl = document.getElementById('reserveQR');
+    qrEl.innerHTML = '';
+    document.getElementById('reserveSummary').textContent =
+        reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
+    renderQR(qrEl, rid, 160);
+    rGoStep(4);
+    showToast('Reservation saved!', 'success');
 }
 
 // ── HISTORY ───────────────────────────────────────────────────────────────────
 async function loadHistory() {
-  const el = document.getElementById('historyList');
-  el.innerHTML = '<p class="subtle">Loading...</p>';
+    const el = document.getElementById('historyList');
+    el.innerHTML = '<p class="subtle">Loading...</p>';
 
-  let ticketDocs = [], resDocs = [];
+    let ticketDocs = [], resDocs = [];
 
-  try {
-    const s = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
-    ticketDocs = s.docs;
-  } catch (e) { console.warn('[history tickets]', e.code); }
+    try {
+        const s = await getDocs(query(collection(db, 'tickets'), where('userId', '==', currentStudentId)));
+        ticketDocs = s.docs;
+    } catch (e) { console.warn('[history tickets]', e.code); }
 
-  try {
-    const s = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
-    resDocs = s.docs;
-  } catch (e) { console.warn('[history reservations]', e.message); }
+    try {
+        const s = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
+        resDocs = s.docs;
+    } catch (e) { console.warn('[history reservations]', e.message); }
 
-  el.innerHTML = '';
+    el.innerHTML = '';
 
-  // Check if user has any active/pending reservation or ticket (shown in banner)
-  const hasActiveBanner = 
-    resDocs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; }) ||
-    ticketDocs.some(d => { const s = d.data().status; return s === 'waiting' || s === 'serving'; });
+    const hasActiveBanner =
+        resDocs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; }) ||
+        ticketDocs.some(d => { const s = d.data().status; return s === 'waiting' || s === 'serving'; });
 
-  let hasHistory = false;
+    let hasHistory = false;
 
-  ticketDocs.forEach(d => {
-    const t = d.data();
-    if (t.isReservation) return;
-    if (t.status === 'waiting' || t.status === 'serving') return;
-    const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
-    const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
-    el.innerHTML += `<div class="history-item">
-      <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
-      <span class="subtle">Walk-in · ${date}</span></div>
-      <span class="${cls}">${t.status.toUpperCase()}</span>
-    </div>`;
-    hasHistory = true;
-  });
+    ticketDocs.forEach(d => {
+        const t = d.data();
+        if (t.isReservation) return;
+        if (t.status === 'waiting' || t.status === 'serving') return;
+        const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
+        const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
+        el.innerHTML += `<div class="history-item">
+          <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
+          <span class="subtle">Walk-in · ${date}</span></div>
+          <span class="${cls}">${t.status.toUpperCase()}</span>
+        </div>`;
+        hasHistory = true;
+    });
 
-  resDocs.forEach(d => {
-    const r = d.data();
-    if (r.status === 'pending' || r.status === 'active') return;
-    const cls = r.status === 'cancelled' ? 'closed' : 'open';
-    el.innerHTML += `<div class="history-item">
-      <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
-      <span class="subtle">Reservation · ${r.reservationDate}</span></div>
-      <span class="${cls}">${r.status.toUpperCase()}</span>
-    </div>`;
-    hasHistory = true;
-  });
+    resDocs.forEach(d => {
+        const r = d.data();
+        if (r.status === 'pending' || r.status === 'active') return;
+        const cls = r.status === 'cancelled' ? 'closed' : 'open';
+        el.innerHTML += `<div class="history-item">
+          <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
+          <span class="subtle">Reservation · ${r.reservationDate}</span></div>
+          <span class="${cls}">${r.status.toUpperCase()}</span>
+        </div>`;
+        hasHistory = true;
+    });
 
-  if (!hasHistory) {
-    if (hasActiveBanner) {
-      // They have an active ticket/reservation shown in the banner — don't show "no tickets"
-      el.innerHTML = '<p class="subtle">Your active reservation is shown above.</p>';
-    } else {
-      el.innerHTML = '<p class="subtle">No tickets or reservations yet.</p>';
+    if (!hasHistory) {
+        el.innerHTML = hasActiveBanner
+            ? '<p class="subtle">Your active reservation is shown above.</p>'
+            : '<p class="subtle">No tickets or reservations yet.</p>';
     }
-  }
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-function handleOverlay(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+function closeModal(id)         { document.getElementById(id).classList.remove('active'); }
+function handleOverlay(e, id)   { if (e.target === document.getElementById(id)) closeModal(id); }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'info') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className   = 'toast ' + type + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'toast ' + type + ' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
