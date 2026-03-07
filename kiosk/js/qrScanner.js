@@ -64,7 +64,7 @@ function startScanner() {
         });
 }
 
-export function stopScanner() {
+function stopScanner() {
     if (html5QrCode && scannerActive) {
         html5QrCode.stop()
             .then(() => { scannerActive = false; html5QrCode = null; })
@@ -171,4 +171,68 @@ async function onScanSuccess(decodedText) {
 function setQrStatus(msg) {
     const el = document.getElementById('qrStatus');
     if (el) el.textContent = msg;
+}
+
+async function submitId() {
+    const errEl = document.getElementById('idError');
+    if (errEl) errEl.textContent = '';
+
+    let userId = null, displayName = null;
+
+    if (selectedUserType === 'student' || selectedUserType === 'teacher') {
+        const val = (document.getElementById('idInput')?.value || '').trim();
+        if (!/^\d{11}$/.test(val)) {
+            if (errEl) errEl.textContent = 'Please enter a valid 11-digit ID.';
+            return;
+        }
+        userId = val; displayName = val;
+
+    } else if (selectedUserType === 'parent') {
+        const childId = (document.getElementById('idInput')?.value || '').trim();
+        const name    = (document.getElementById('nameInput')?.value || '').trim();
+        if (!/^\d{11}$/.test(childId)) { if (errEl) errEl.textContent = "Enter a valid 11-digit Student ID."; return; }
+        if (name.length < 2)           { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+        userId = childId; displayName = name + ' (Parent)';
+
+    } else {
+        const name = (document.getElementById('nameInput')?.value || '').trim();
+        if (name.length < 2) { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+        userId      = 'GUEST-' + Date.now();
+        displayName = name;
+    }
+
+    // ── Early duplicate check ──────────────────────────────
+    const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
+
+    try {
+        const [resSnap, ticketSnap] = await Promise.all([
+            getDocs(query(collection(db, 'reservations'),
+                where('studentId', '==', userId), where('status', '==', 'pending'))),
+            getDocs(query(collection(db, 'tickets'),
+                where('userId', '==', userId), where('status', '==', 'waiting')))
+        ]);
+
+        if (!resSnap.empty) {
+            if (errEl) errEl.textContent = 'You have a pending reservation. Please scan your QR code instead.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+            return;
+        }
+        if (!ticketSnap.empty) {
+            const t = ticketSnap.docs[0].data();
+            if (errEl) errEl.textContent = 'You already have ticket ' + t.ticketNumber + ' in the ' + t.department.toUpperCase() + ' queue.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+            return;
+        }
+    } catch (e) {
+        console.warn('[ID check]', e.message);
+    }
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+    // ── End check ──────────────────────────────────────────
+
+    pendingUserId       = userId;
+    selectedDisplayName = displayName;
+    buildReasonList();
+    goScreen('reason');
 }

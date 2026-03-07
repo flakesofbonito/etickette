@@ -15,11 +15,9 @@ const firebaseConfig = {
     measurementId: "G-QHMMWXW7F3"
 };
 
-// ✅ FIX #22 — Use the public deployment URL so printed QR codes work from any device
-const PUBLIC_URL = 'https://etickette-78f74.web.app';
+const PUBLIC_URL  = 'https://etickette-78f74.web.app';
 const PRINTER_URL = 'http://localhost:8000/print';
 
-// ── REASONS + REQUIRED DOCS ───────────────────────────────────────────────────
 const REASONS = {
     cashier: [
         { label: "Pay Tuition / Fees",       docs: ["Valid ID", "Statement of Account"] },
@@ -29,50 +27,60 @@ const REASONS = {
         { label: "Other",                     docs: [] }
     ],
     registrar: [
-        { label: "Request Transcript (TOR)",      docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Certificate of Enrollment",     docs: ["Valid ID", "Request Form"] },
-        { label: "Certificate of Graduation",     docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Form 137 / 138",                docs: ["Valid ID", "Request Form"] },
-        { label: "Diploma / Authentication",      docs: ["Valid ID", "Claim Stub"] },
-        { label: "Other",                         docs: [] }
+        { label: "Request Transcript (TOR)",   docs: ["Valid ID", "Request Form", "Clearance"] },
+        { label: "Certificate of Enrollment",  docs: ["Valid ID", "Request Form"] },
+        { label: "Certificate of Graduation",  docs: ["Valid ID", "Request Form", "Clearance"] },
+        { label: "Form 137 / 138",             docs: ["Valid ID", "Request Form"] },
+        { label: "Diploma / Authentication",   docs: ["Valid ID", "Claim Stub"] },
+        { label: "Other",                      docs: [] }
     ]
 };
 
 let app, db;
-let selectedDept = 'cashier';
-let selectedUserType = 'student';
+let selectedDept        = 'cashier';
+let selectedUserType    = 'student';
 let selectedDisplayName = null;
-let selectedReason = null;
-let pendingUserId = null;
-let html5QrCode = null;
-let scannerActive = false;
+let selectedReason      = null;
+let pendingUserId       = null;
+let html5QrCode         = null;
+let scannerActive       = false;
+let deptStatus      = { cashier: true, registrar: true };
+let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
 
-    window.selectDept       = selectDept;
-    window.selectUserType   = selectUserType;
-    window.goScreen         = goScreen;
-    window.selectReason     = selectReason;
-    window.proceedIssue     = proceedIssue;
-    window.openQRScanner    = openQRScanner;
-    window.stopScanner      = stopScanner;
-    window.cancelScan       = cancelScan;
+    // ✅ FIX: Expose ALL functions the HTML calls via onclick=
+    window.goScreen            = goScreen;
+    window.pickDept            = pickDept;       // HTML uses pickDept(), not selectDept()
+    window.pickUserType        = pickUserType;   // HTML uses pickUserType(), not selectUserType()
+    window.submitId            = submitId;
+    window.submitReason        = submitReason;   // ✅ FIX: was missing — "Next — Check Documents" button
+    window.toggleReasonDropdown = toggleReasonDropdown; // ✅ FIX: was missing
+    window.proceedIssue        = proceedIssue;
+    window.startScanner = startScanner;
+    window.stopScanner         = stopScanner;
 
     updateClock();
     setInterval(updateClock, 1000);
     listenToSettings();
-    recoverSystemState();
+    listenToQueueCounts();   // ✅ FIX: keep queue counts live on dept screen
+    initIdleTimeout();
+
     goScreen('home');
 }
 
+// ── CLOCK ──────────────────────────────────────────────────────────────────────
 function updateClock() {
     const el = document.getElementById('kioskTime');
-    if (el) el.textContent = new Date().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (el) el.textContent = new Date().toLocaleTimeString('en-PH', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
 }
 
+// ── SETTINGS LISTENER ─────────────────────────────────────────────────────────
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
@@ -83,93 +91,250 @@ function listenToSettings() {
     });
 }
 
+// ── LIVE QUEUE COUNTS ─────────────────────────────────────────────────────────
+// ✅ FIX: keep the "N in queue" sub-labels on the dept pick screen accurate
+function listenToQueueCounts() {
+    for (const dept of ['cashier', 'registrar']) {
+        onSnapshot(
+            doc(db, 'departments', dept),
+            snap => {
+                if (!snap.exists()) return;
+                const data = snap.data();
+                const st   = (data.status || 'open').toLowerCase();
+                const open = st === 'open';
+                deptStatus[dept]      = open;
+                deptStatusLabel[dept] = st;
+
+                const key = dept === 'cashier' ? 'cashierQueueText' : 'registrarQueueText';
+                const qEl = document.getElementById(key);
+                if (qEl) qEl.textContent = open
+                    ? (data.queue || 0) + ' in queue'
+                    : st === 'break' ? '🟡 On Break' : '🔴 Closed';
+
+                const btnId = dept === 'cashier' ? 'deptCashier' : 'deptRegistrar';
+                const btn   = document.getElementById(btnId);
+                if (btn) btn.classList.toggle('disabled', !open);
+
+                const chipId = dept === 'cashier' ? 'cashierStatus' : 'registrarStatus';
+                const chip   = document.getElementById(chipId);
+                if (chip) {
+                    const map = {
+                        open:   ['OPEN',     'chip-open'],
+                        break:  ['ON BREAK', 'chip-break'],
+                        closed: ['CLOSED',   'chip-closed']
+                    };
+                    const [label, cls] = map[st] || map.open;
+                    chip.textContent = label;
+                    chip.className   = cls;
+                }
+            },
+            err => console.error('[listenToQueueCounts] ' + dept + ':', err.code, err.message)
+        );
+    }
+}
+
 // ── SCREEN NAVIGATION ─────────────────────────────────────────────────────────
 function goScreen(name) {
-    document.querySelectorAll('.kiosk-screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
     if (el) el.classList.add('active');
+    else console.warn('[goScreen] Screen not found: screen-' + name);
 }
 
 // ── DEPT SELECTION ────────────────────────────────────────────────────────────
-function selectDept(dept) {
+// ✅ FIX: HTML calls pickDept() — alias that sets selectedDept then routes to usertype
+function pickDept(dept) {
+    if (!deptStatus[dept]) {
+        const st  = deptStatusLabel[dept];
+        const msg = st === 'break' ? 'currently on break' : 'currently closed';
+        alert('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window is ' + msg + '. Please try again later.');
+        return;
+    }
     selectedDept = dept;
-    document.querySelectorAll('.dept-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.dept === dept));
+    goScreen('usertype');
 }
+
 
 // ── USER TYPE SELECTION ───────────────────────────────────────────────────────
-function selectUserType(type) {
+// ✅ FIX: HTML calls pickUserType() — alias that configures the ID screen correctly
+function pickUserType(type) {
     selectedUserType = type;
 
-    const studentFields = document.getElementById('kiosk-student-fields');
-    const guestFields   = document.getElementById('kiosk-guest-fields');
+    const idField   = document.getElementById('kioskIdField');
+    const nameField = document.getElementById('kioskNameField');
+    const inp       = document.getElementById('idInput');
+    const title     = document.getElementById('idScreenTitle');
+    const deptChosen = document.getElementById('deptChosen');
+
+    if (deptChosen) deptChosen.textContent = selectedDept.toUpperCase();
 
     if (type === 'student') {
-        if (studentFields) studentFields.style.display = 'block';
-        if (guestFields)   guestFields.style.display   = 'none';
-    } else {
-        if (studentFields) studentFields.style.display = 'none';
-        if (guestFields)   guestFields.style.display   = 'block';
+        if (idField)   idField.style.display   = 'block';
+        if (nameField) nameField.style.display = 'none';
+        if (inp) { inp.placeholder = 'e.g. 02000385394'; inp.inputMode = 'numeric'; }
+        if (title) title.textContent = 'Enter Your Student ID';
+
+    } else if (type === 'teacher') {
+        if (idField)   idField.style.display   = 'block';
+        if (nameField) nameField.style.display = 'none';
+        if (inp) { inp.placeholder = 'Employee ID (11 digits)'; inp.inputMode = 'numeric'; }
+        if (title) title.textContent = 'Enter Your Employee ID';
+
+    } else if (type === 'parent') {
+        if (idField)   idField.style.display   = 'block';
+        if (nameField) nameField.style.display = 'block';
+        if (inp) { inp.placeholder = "Child's Student ID (11 digits)"; inp.inputMode = 'numeric'; }
+        if (title) title.textContent = "Enter Your Child's Student ID";
+
+    } else { // guest
+        if (idField)   idField.style.display   = 'none';
+        if (nameField) nameField.style.display = 'block';
+        if (title) title.textContent = 'Enter Your Full Name';
     }
 
-    document.querySelectorAll('.user-type-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.type === type));
+    // Clear previous inputs
+    const idInp = document.getElementById('idInput');
+    const nameInp = document.getElementById('nameInput');
+    const errEl = document.getElementById('idError');
+    if (idInp)   idInp.value   = '';
+    if (nameInp) nameInp.value = '';
+    if (errEl)   errEl.textContent = '';
+
+    goScreen('id');
 }
 
-// ── ID ENTRY ─────────────────────────────────────────────────────────────────
-export async function submitId() {
-    const errEl = document.getElementById('kioskIdError');
-    errEl.textContent = '';
 
-    let userId      = null;
-    let displayName = null;
+// ── REASON DROPDOWN ──────────────────────────────────────────────────────────
+// ✅ FIX: toggleReasonDropdown was called from HTML but never defined
+function toggleReasonDropdown() {
+    const list  = document.getElementById('reasonDropdownList');
+    const arrow = document.getElementById('reasonArrow');
+    if (!list) return;
+    const isHidden = list.classList.contains('hidden');
+    list.classList.toggle('hidden', !isHidden);
+    if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+}
 
-    if (selectedUserType === 'student') {
-        const val = (document.getElementById('kioskStudentId')?.value || '').trim();
-        if (!/^\d{11}$/.test(val)) { errEl.textContent = 'Student ID must be exactly 11 digits.'; return; }
-        userId      = val;
-        displayName = val;
+function buildReasonList() {
+    selectedReason = null; // reset previous selection
+
+    // Reset trigger text
+    const trigger = document.getElementById('reasonTriggerText');
+    if (trigger) trigger.textContent = '— Please Select a Reason —';
+    const arrow = document.getElementById('reasonArrow');
+    if (arrow) arrow.textContent = '▼';
+
+    const list = document.getElementById('reasonDropdownList');
+    if (!list) return;
+    list.innerHTML = '';
+    list.classList.add('hidden');
+
+    const deptLbl = document.getElementById('reasonDeptLabel');
+    if (deptLbl) deptLbl.textContent = selectedDept.toUpperCase();
+
+    (REASONS[selectedDept] || []).forEach((r, i) => {
+        const btn = document.createElement('button');
+        btn.className   = 'reason-btn';
+        btn.textContent = r.label;
+        btn.onclick     = () => {
+            selectReason(i);
+            list.classList.add('hidden');
+            if (arrow) arrow.textContent = '▼';
+        };
+        list.appendChild(btn);
+    });
+
+    const errEl = document.getElementById('reasonError');
+    if (errEl) errEl.textContent = '';
+}
+
+async function submitId() {
+    const errEl = document.getElementById('idError');
+    if (errEl) errEl.textContent = '';
+
+    let userId = null, displayName = null;
+
+    if (selectedUserType === 'student' || selectedUserType === 'teacher') {
+        const val = (document.getElementById('idInput')?.value || '').trim();
+        if (!/^\d{11}$/.test(val)) {
+            if (errEl) errEl.textContent = 'Please enter a valid 11-digit ID.';
+            return;
+        }
+        userId = val; displayName = val;
+
+    } else if (selectedUserType === 'parent') {
+        const childId = (document.getElementById('idInput')?.value || '').trim();
+        const name    = (document.getElementById('nameInput')?.value || '').trim();
+        if (!/^\d{11}$/.test(childId)) { if (errEl) errEl.textContent = "Enter a valid 11-digit Student ID."; return; }
+        if (name.length < 2)           { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+        userId = childId; displayName = name + ' (Parent)';
+
     } else {
-        const nameVal   = (document.getElementById('kioskGuestName')?.value   || '').trim();
-        const mobileVal = (document.getElementById('kioskGuestMobile')?.value || '').trim();
-        if (nameVal.length < 2)        { errEl.textContent = 'Please enter your full name.'; return; }
-        if (!/^\d{10,11}$/.test(mobileVal)) { errEl.textContent = 'Please enter a valid mobile number (10-11 digits).'; return; }
-        userId      = 'GUEST-' + mobileVal;   // ✅ FIX #18 — use mobile number as session key
-        displayName = nameVal;
+        const name = (document.getElementById('nameInput')?.value || '').trim();
+        if (name.length < 2) { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+        userId      = 'GUEST-' + Date.now();
+        displayName = name;
     }
 
-    pendingUserId     = userId;
+    // ── Early duplicate check ──────────────────────────────
+    const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking...'; }
+
+    try {
+        const [resSnap, ticketSnap] = await Promise.all([
+            getDocs(query(collection(db, 'reservations'),
+                where('studentId', '==', userId), where('status', '==', 'pending'))),
+            getDocs(query(collection(db, 'tickets'),
+                where('userId', '==', userId), where('status', '==', 'waiting')))
+        ]);
+
+        if (!resSnap.empty) {
+            if (errEl) errEl.textContent = 'You have a pending reservation. Please scan your QR code instead.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+            return;
+        }
+        if (!ticketSnap.empty) {
+            const t = ticketSnap.docs[0].data();
+            if (errEl) errEl.textContent = 'You already have ticket ' + t.ticketNumber + ' in the ' + t.department.toUpperCase() + ' queue.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+            return;
+        }
+    } catch (e) {
+        console.warn('[ID check]', e.message);
+    }
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
+    // ── End check ──────────────────────────────────────────
+
+    pendingUserId       = userId;
     selectedDisplayName = displayName;
     buildReasonList();
     goScreen('reason');
 }
 
-// ── REASON SELECTION ─────────────────────────────────────────────────────────
-function buildReasonList() {
-    const list = document.getElementById('reasonList');
-    if (!list) return;
-    list.innerHTML = '';
-    (REASONS[selectedDept] || []).forEach((r, i) => {
-        const btn = document.createElement('button');
-        btn.className   = 'reason-btn';
-        btn.textContent = r.label;
-        btn.onclick     = () => selectReason(i);
-        list.appendChild(btn);
-    });
-    document.getElementById('reasonDeptLabel').textContent = selectedDept.toUpperCase();
-}
-
 function selectReason(idx) {
     selectedReason = REASONS[selectedDept][idx];
-    if (!selectedReason) { goScreen('home'); return; }
+    const trigger  = document.getElementById('reasonTriggerText');
+    if (trigger && selectedReason) trigger.textContent = selectedReason.label;
+}
+
+// ✅ FIX: submitReason was called from "Next — Check Documents" button but never defined
+function submitReason() {
+    const errEl = document.getElementById('reasonError');
+    if (!selectedReason) {
+        if (errEl) errEl.textContent = 'Please select a reason before continuing.';
+        return;
+    }
+    if (errEl) errEl.textContent = '';
     showDocsScreen(selectedReason);
 }
 
 function showDocsScreen(reason) {
-    document.getElementById('docsReasonLabel').textContent =
-        selectedDept.toUpperCase() + ' — ' + reason.label;
+    const lbl = document.getElementById('docsReasonLabel');
+    if (lbl) lbl.textContent = selectedDept.toUpperCase() + ' — ' + reason.label;
 
     const list = document.getElementById('kioskDocsList');
+    if (!list) { goScreen('docs'); return; }
     list.innerHTML = '';
 
     if (reason.docs && reason.docs.length > 0) {
@@ -180,82 +345,65 @@ function showDocsScreen(reason) {
             list.appendChild(item);
         });
     } else {
-        list.innerHTML = '<p class="no-docs-msg">✅ No specific documents required for this transaction.</p>';
+        list.innerHTML = '<p class="no-docs-msg">✅ No specific documents required.</p>';
     }
-
     goScreen('docs');
 }
 
-// ── PROCEED TO ISSUE (after docs confirmed) ───────────────────────────────────
+// ── PROCEED TO ISSUE ─────────────────────────────────────────────────────────
 async function proceedIssue() {
     if (!pendingUserId) { goScreen('home'); return; }
     await issueTicket(pendingUserId);
 }
 
-// ── ISSUE TICKET — FIXED RACE CONDITION WITH TRANSACTION ─────────────────────
+// ── ISSUE TICKET ─────────────────────────────────────────────────────────────
 async function issueTicket(userId) {
     const btn = document.querySelector('#screen-docs .kiosk-submit-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Issuing...'; }
 
     try {
-        // Check for pending reservation
         const resCheck = await getDocs(query(
             collection(db, 'reservations'),
-            where('studentId', '==', userId),
-            where('status', '==', 'pending')
+            where('studentId', '==', userId), where('status', '==', 'pending')
         ));
         if (!resCheck.empty) {
-            const r = resCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
-            alert('You have a pending reservation for ' + r.department.toUpperCase() +
-                  ' on ' + r.reservationDate + '. Please scan your QR code instead.');
-            goScreen('home');
-            return;
+            alert('You have a pending reservation. Please scan your QR code instead.');
+            goScreen('home'); return;
         }
 
-        // Check for already-active ticket
         const activeCheck = await getDocs(query(
             collection(db, 'tickets'),
-            where('userId', '==', userId),
-            where('status', '==', 'waiting')
+            where('userId', '==', userId), where('status', '==', 'waiting')
         ));
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
-            alert('You already have ticket ' + t.ticketNumber + ' in the queue. Please wait for your number.');
-            goScreen('home');
-            return;
+            alert('You already have ticket ' + t.ticketNumber + ' in the queue.');
+            goScreen('home'); return;
         }
 
         const prefix = selectedDept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', selectedDept);
         const sRef   = doc(db, 'system', 'settings');
 
-        // ✅ FIX #3 — Use Firestore Transaction to eliminate race condition
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
-            const dSnap = await transaction.get(dRef);
+            const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
             ahead = Math.max(0, newQueue - 1);
-
-            const ticketRef = doc(collection(db, 'tickets'), tNum);
+            const ticketRef  = doc(collection(db, 'tickets'), tNum);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.update(sRef, { ticketsIssued: increment(1) });
             transaction.set(ticketRef, {
-                ticketNumber:  tNum,
-                department:    selectedDept,
-                userId:        userId,
-                userType:      selectedUserType,
-                displayName:   selectedDisplayName,
-                reason:        selectedReason ? selectedReason.label : '—',
-                status:        'waiting',
-                issuedAt:      serverTimestamp(),
-                printed:       false,
-                called:        false,
-                isReservation: false
+                ticketNumber: tNum, department: selectedDept,
+                userId, userType: selectedUserType, displayName: selectedDisplayName,
+                reason: selectedReason ? selectedReason.label : '—',
+                status: 'waiting', issuedAt: serverTimestamp(),
+                printed: false, called: false, isReservation: false
             });
         });
 
@@ -272,35 +420,25 @@ async function issueTicket(userId) {
 
 // ── TICKET SCREEN ─────────────────────────────────────────────────────────────
 function showTicketScreen(tNum, userId, ahead) {
-    document.getElementById('issuedDept').textContent   = selectedDept.toUpperCase();
-    document.getElementById('issuedNumber').textContent = tNum;
-    document.getElementById('issuedId').textContent     = userId;
-    document.getElementById('issuedReason').textContent = selectedReason ? selectedReason.label : '—';
-    document.getElementById('issuedAhead').textContent  = ahead + ' people';
-    document.getElementById('issuedWait').textContent   = '~' + (ahead * 5) + ' min';
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('issuedDept',   selectedDept.toUpperCase());
+    set('issuedNumber', tNum);
+    set('issuedId',     userId);
+    set('issuedReason', selectedReason ? selectedReason.label : '—');
+    set('issuedAhead',  ahead + ' people');
+    set('issuedWait',   '~' + (ahead * 5) + ' min');
 
     const qrEl = document.getElementById('ticketQR');
-    qrEl.innerHTML = '';
-    // ✅ FIX #22 — Use PUBLIC_URL not window.location.origin (which would be localhost on kiosk)
-    new QRCode(qrEl, {
-        text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + selectedDept,
-        width: 110, height: 110,
-        colorDark: '#1f3c88', colorLight: '#ffffff'
-    });
+    if (qrEl) {
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, {
+            text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + selectedDept,
+            width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
+        });
+    }
     goScreen('ticket');
 }
 
-// ── QR SCANNER ────────────────────────────────────────────────────────────────
-function openQRScanner() {
-    document.getElementById('scanStatus').textContent = 'Starting camera…';
-    goScreen('scan');
-    startScanner();
-}
-
-function cancelScan() {
-    stopScanner();
-    goScreen('home');
-}
 
 function startScanner() {
     if (scannerActive) return;
@@ -313,17 +451,25 @@ function startScanner() {
     }).then(() => {
         scannerActive = true;
         setScanStatus('Ready — point at QR code');
-    }).catch(e => setScanStatus('Camera error: ' + e));
+    }).catch(e => {
+    if (String(e).includes('NotReadableError')) {
+        setScanStatus('❌ Camera is in use by another app. Close it and try again.');
+    } else if (String(e).includes('NotAllowedError')) {
+        setScanStatus('❌ Camera permission denied. Please allow camera access.');
+    } else {
+        setScanStatus('❌ Camera error. Please try again.');
+    }
+});
 }
 
-export function stopScanner() {
+function stopScanner() {
     if (html5QrCode && scannerActive) {
-        html5QrCode.stop().then(() => { scannerActive = false; html5QrCode = null; })
-                         .catch(() => { scannerActive = false; html5QrCode = null; });
+        html5QrCode.stop()
+            .then(() => { scannerActive = false; html5QrCode = null; })
+            .catch(() => { scannerActive = false; html5QrCode = null; });
     }
 }
 
-// ── QR SCAN SUCCESS — RESERVATION CHECK-IN WITH TRANSACTION ──────────────────
 async function onScanSuccess(decoded) {
     stopScanner();
     setScanStatus('QR scanned! Verifying…');
@@ -349,60 +495,48 @@ async function onScanSuccess(decoded) {
         const dept   = res.department;
         const prefix = dept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', dept);
-        const sRef   = doc(db, 'system', 'settings');
         const resRef = doc(db, 'reservations', reservationId);
 
-        // ✅ FIX #3 + #7 — Transaction for reservation check-in, unified status to 'active'
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
-            const dSnap = await transaction.get(dRef);
+            const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
             ahead = Math.max(0, newQueue - 1);
-
-            const ticketRef = doc(collection(db, 'tickets'), tNum);
+            const ticketRef  = doc(collection(db, 'tickets'), tNum);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
-            // ✅ FIX #4 — Only kiosk increments ticketsIssued (reservation was already counted by website)
-            // For reservations, we do NOT increment ticketsIssued again here
             transaction.set(ticketRef, {
-                ticketNumber:  tNum,
-                department:    dept,
-                userId:        res.studentId || res.userId || 'N/A',
-                userType:      res.userType || 'student',
-                displayName:   res.displayName || res.studentId || 'N/A',
-                reason:        res.reason || 'Reservation Check-In',
-                status:        'waiting',
-                issuedAt:      serverTimestamp(),
-                printed:       false,
-                called:        false,
-                isReservation: true,
-                reservationId: reservationId
+                ticketNumber: tNum, department: dept,
+                userId: res.studentId || res.userId || 'N/A',
+                userType: res.userType || 'student',
+                displayName: res.displayName || res.studentId || 'N/A',
+                reason: res.reason || 'Reservation Check-In',
+                status: 'waiting', issuedAt: serverTimestamp(),
+                printed: false, called: false,
+                isReservation: true, reservationId
             });
-            // ✅ FIX #7 — Unified reservation activation status to 'active' (matches app.js listener)
-            transaction.update(resRef, {
-                status:      'active',
-                ticketNumber: tNum,
-                activatedAt: serverTimestamp()
-            });
+            transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
         });
 
         await printTicket(tNum, dept);
 
-        document.getElementById('scanDept').textContent   = dept.toUpperCase();
-        document.getElementById('scanNumber').textContent = tNum;
-        document.getElementById('scanId').textContent     = res.studentId || res.userId;
-        document.getElementById('scanReason').textContent = res.reason;
-        document.getElementById('scanAhead').textContent  = ahead + ' people';
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        set('scanDept',   dept.toUpperCase());
+        set('scanNumber', tNum);
+        set('scanId',     res.studentId || res.userId);
+        set('scanReason', res.reason);
+        set('scanAhead',  ahead + ' people');
 
         const scanQREl = document.getElementById('scanTicketQR');
-        scanQREl.innerHTML = '';
-        // ✅ FIX #22 — Use PUBLIC_URL for scan success QR too
-        new QRCode(scanQREl, {
-            text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept,
-            width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
-        });
+        if (scanQREl) {
+            scanQREl.innerHTML = '';
+            new QRCode(scanQREl, {
+                text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept,
+                width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
+            });
+        }
         goScreen('scan-success');
         playBeep();
     } catch (e) {
@@ -418,7 +552,6 @@ function setScanStatus(msg) {
 
 // ── PRINT ─────────────────────────────────────────────────────────────────────
 async function printTicket(tNum, dept) {
-    // ✅ FIX #22 — Use PUBLIC_URL for printed QR link
     const qr_link = PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
     try {
         const res = await fetch(PRINTER_URL, {
@@ -428,7 +561,6 @@ async function printTicket(tNum, dept) {
         });
         const json = await res.json();
         if (json.status !== 'Success') console.warn('[Printer]', json.message);
-        else console.log('[Printer] OK:', tNum);
     } catch (e) {
         console.warn('[Printer] Unreachable — is printer_server.py running?', e.message);
     }
@@ -438,8 +570,7 @@ async function printTicket(tNum, dept) {
 function playBeep() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
+        const o = ctx.createOscillator(), g = ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
         o.type = 'sine'; o.frequency.value = 880;
         g.gain.setValueAtTime(0.4, ctx.currentTime);
@@ -448,38 +579,72 @@ function playBeep() {
     } catch (_) {}
 }
 
-// ── SYSTEM STATE RECOVERY ─────────────────────────────────────────────────────
-// ✅ FIX #8 — Include 'serving' tickets in queue count during recovery
-async function recoverSystemState() {
-    try {
-        for (const dept of ['cashier', 'registrar']) {
-            const prefix = dept === 'cashier' ? 'C' : 'R';
+// ── IDLE TIMEOUT ──────────────────────────────────────────────────────────────
+function initIdleTimeout() {
+    const IDLE_MS = 45000;
+    let idleTimer = null;
+    let countdownInterval = null;
+    let idleWarningShown = false;
 
-            // Count waiting AND serving (both occupy a queue slot)
-            const activeSnap = await getDocs(query(
-                collection(db, 'tickets'),
-                where('department', '==', dept),
-                where('status', 'in', ['waiting', 'serving'])
-            ));
-            const realQueue = activeSnap.size;
-
-            const allSnap = await getDocs(query(
-                collection(db, 'tickets'),
-                where('department', '==', dept)
-            ));
-            let maxCounter = 0;
-            allSnap.forEach(d => {
-                const n = parseInt((d.data().ticketNumber || '').replace(prefix + '-', ''), 10);
-                if (!isNaN(n) && n > maxCounter) maxCounter = n;
-            });
-
-            const dRef   = doc(db, 'departments', dept);
-            const dSnap  = await getDoc(dRef);
-            const current = dSnap.exists() ? (dSnap.data().counter || 0) : 0;
-            await updateDoc(dRef, { queue: realQueue, counter: Math.max(current, maxCounter) });
-        }
-        console.log('[Recovery] System state verified.');
-    } catch (e) {
-        console.warn('[Recovery]', e.message);
+    if (!document.getElementById('idleStyle')) {
+        const style = document.createElement('style');
+        style.id = 'idleStyle';
+        style.textContent = `@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }`;
+        document.head.appendChild(style);
     }
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        clearInterval(countdownInterval);
+        if (idleWarningShown) {
+            const banner = document.getElementById('idleWarningBanner');
+            if (banner) banner.remove();
+            idleWarningShown = false;
+        }
+        const active = document.querySelector('.screen.active');
+        if (!active) return;
+        const id = active.id;
+        if (id === 'screen-home' || id === 'screen-ticket' || id === 'screen-scan-success') return;
+        idleTimer = setTimeout(showIdleWarning, IDLE_MS - 10000);
+    }
+
+    function showIdleWarning() {
+        idleWarningShown = true;
+        let secondsLeft = 10;
+        const banner = document.createElement('div');
+        banner.id = 'idleWarningBanner';
+        banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1f3c88;color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;z-index:9999;border-top:4px solid #e3cf57;animation:slideUp .3s ease;font-family:\'Plus Jakarta Sans\',sans-serif;';
+        banner.innerHTML = `
+            <div>
+                <div style="font-size:16px;font-weight:700;">⏱ Still there?</div>
+                <div style="font-size:13px;opacity:.8;margin-top:2px;">Returning to home in <span id="idleCountdown">10</span> seconds...</div>
+            </div>
+            <button onclick="window.resetIdleTimer()" style="background:#e3cf57;color:#1f3c88;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
+                I'm Still Here
+            </button>`;
+        document.body.appendChild(banner);
+        countdownInterval = setInterval(() => {
+            secondsLeft--;
+            const el = document.getElementById('idleCountdown');
+            if (el) el.textContent = secondsLeft;
+            if (secondsLeft <= 0) { clearInterval(countdownInterval); performIdleReset(); }
+        }, 1000);
+    }
+
+    function performIdleReset() {
+        const banner = document.getElementById('idleWarningBanner');
+        if (banner) banner.remove();
+        idleWarningShown = false;
+        stopScanner();
+        document.querySelectorAll('.kiosk-input, input[type="text"], input[type="number"]').forEach(el => { el.value = ''; });
+        document.querySelectorAll('.kiosk-error').forEach(el => { el.textContent = ''; });
+        goScreen('home');
+    }
+
+    window.resetIdleTimer = resetIdleTimer;
+
+    ['touchstart', 'touchmove', 'click', 'keydown', 'mousemove', 'mousedown'].forEach(evt =>
+        document.addEventListener(evt, resetIdleTimer, { passive: true }));
+
+    resetIdleTimer();
 }

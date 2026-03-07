@@ -5,120 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>eTickette – Track Your Queue</title>
   <link rel="icon" href="assets/logo.png" type="image/png" />
+  <!-- ✅ FIX #13 + #19 — Removed ALL duplicate inline <style> block.
+       Now uses the single external tracker/tracker.css source of truth. -->
+  <link rel="stylesheet" href="tracker/tracker.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --yellow-dark:  #c9a800;
-      --yellow-mid:   #e3cf57;
-      --yellow-pale:  #fffde7;
-      --blue-deep:    #1f3c88;
-      --blue-mid:     #2563eb;
-      --blue-light:   #3b82f6;
-      --green:        #16a34a;
-      --white:        #ffffff;
-      --bg:           #f0f2f8;
-      --text:         #1a1a2e;
-      --text-sub:     #6b7280;
-      --border:       #e5e7eb;
-      --shadow-sm:    0 2px 8px rgba(0,0,0,.06);
-      --shadow-md:    0 6px 20px rgba(0,0,0,.10);
-      --radius-sm:    10px;
-      --radius-md:    16px;
-      --radius-lg:    22px;
-    }
-    html, body { min-height: 100%; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
-    .tracker-wrap { max-width: 480px; margin: 0 auto; padding: 0 0 40px; min-height: 100vh; display: flex; flex-direction: column; }
-
-    /* HEADER */
-    .tracker-header { background: var(--blue-deep); border-bottom: 4px solid var(--yellow-mid); padding: 16px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
-    .t-logo { width: 36px; }
-    .tracker-header h1 { font-size: 18px; font-weight: 800; color: var(--yellow-mid); }
-    .tracker-header p  { font-size: 11px; color: rgba(255,255,255,.55); }
-
-    /* STATE PANELS */
-    .state-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px; gap: 12px; }
-    .state-panel.hidden { display: none; }
-    .state-icon { font-size: 64px; margin-bottom: 4px; }
-    .state-panel h2 { font-size: 22px; font-weight: 800; color: var(--blue-deep); }
-    .state-panel p  { font-size: 14px; color: var(--text-sub); line-height: 1.7; }
-    .done-ticket { font-size: 56px; font-weight: 900; color: var(--blue-deep); margin-top: 12px; }
-
-    /* SPINNER */
-    .spinner { width: 44px; height: 44px; border: 4px solid var(--border); border-top-color: var(--blue-mid); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 8px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .hidden { display: none !important; }
-
-    /* TICKET CARD */
-    .ticket-card { margin: 16px 16px 0; background: var(--white); border-radius: var(--radius-lg); padding: 20px 18px; border: 2px solid var(--border); box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden; }
-    .ticket-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--blue-deep), var(--yellow-mid)); }
-    .tc-school { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-top: 4px; }
-    .tc-dept-tag { display: inline-block; background: var(--yellow-mid); color: var(--blue-deep); font-size: 11px; font-weight: 800; letter-spacing: 1.5px; padding: 4px 16px; border-radius: 20px; margin-bottom: 8px; }
-    .tc-number { font-size: 72px; font-weight: 900; color: var(--blue-deep); line-height: 1; margin-bottom: 16px; text-shadow: 0 4px 16px rgba(31,60,136,.12); }
-    .tc-details { background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 10px 14px; }
-    .tc-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
-    .tc-row:last-child { border-bottom: none; }
-    .tc-row span { color: var(--text-sub); }
-    .tc-row strong { color: var(--blue-deep); text-align: right; max-width: 60%; }
-
-    /* STATUS CARD */
-    .status-card { margin: 12px 16px 0; background: var(--white); border-radius: var(--radius-md); padding: 20px 18px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: background .4s, border-color .4s; }
-    .status-card.serving { background: linear-gradient(135deg, #f0fdf4, #fffde7); border-color: var(--yellow-mid); box-shadow: 0 4px 20px rgba(22,163,74,.15); }
-    .status-icon-wrap { font-size: 44px; margin-bottom: 8px; animation: statusPulse 2s ease-in-out infinite; }
-    @keyframes statusPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-    .status-icon-wrap.ping { animation: statusPing .5s ease; }
-    @keyframes statusPing { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
-    .status-label { font-size: 18px; font-weight: 800; color: var(--blue-deep); margin-bottom: 4px; }
-    .status-card.serving .status-label { color: var(--green); }
-    .status-sub { font-size: 13px; color: var(--text-sub); }
-
-    /* LIVE CARD */
-    .live-card { margin: 12px 16px 0; background: var(--blue-deep); border-radius: var(--radius-md); padding: 16px 18px; text-align: center; box-shadow: var(--shadow-md); }
-    .live-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 4px; }
-    .live-number { font-size: 52px; font-weight: 900; color: var(--yellow-mid); line-height: 1; text-shadow: 0 4px 16px rgba(0,0,0,.3); }
-    .live-dept { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: 1.5px; margin-top: 4px; }
-
-    /* POSITION CARD */
-    .position-card { margin: 12px 16px 0; background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--border); padding: 18px; display: flex; align-items: center; box-shadow: var(--shadow-sm); }
-    .pos-left, .pos-right { flex: 1; text-align: center; }
-    .pos-divider { width: 1px; height: 50px; background: var(--border); margin: 0 4px; }
-    .pos-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 4px; }
-    .pos-number { font-size: 38px; font-weight: 900; color: var(--blue-deep); line-height: 1; }
-    .pos-sub { font-size: 12px; color: var(--text-sub); margin-top: 3px; }
-
-    /* PROGRESS CARD */
-    .progress-card { margin: 12px 16px 0; background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--border); padding: 16px 18px; box-shadow: var(--shadow-sm); }
-    .prog-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 10px; }
-    .prog-bar-wrap { background: var(--bg); border-radius: 30px; height: 10px; overflow: hidden; margin-bottom: 8px; border: 1px solid var(--border); }
-    .prog-bar { height: 100%; border-radius: 30px; background: linear-gradient(90deg, var(--blue-mid), var(--yellow-mid)); transition: width .8s ease; }
-    .prog-stats { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); font-weight: 500; }
-
-    /* NOTIFICATION CARD */
-    .notif-card { margin: 12px 16px 0; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: var(--radius-md); padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-    .notif-card.granted { background: #f0fdf4; border-color: rgba(22,163,74,.3); }
-    .notif-icon { font-size: 26px; flex-shrink: 0; }
-    .notif-text { flex: 1; }
-    .notif-text strong { display: block; font-size: 13px; font-weight: 700; color: var(--blue-deep); }
-    .notif-text span { font-size: 12px; color: var(--text-sub); }
-    .btn-notif { background: var(--blue-mid); color: var(--white); border: none; border-radius: var(--radius-sm); padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .2s; }
-    .btn-notif:hover { opacity: .88; }
-    .btn-notif.done { background: var(--green); }
-    .btn-notif.denied { background: var(--text-sub); cursor: not-allowed; }
-
-    /* CALLED BANNER */
-    .called-banner { margin: 12px 16px 0; background: linear-gradient(135deg, #f0fdf4, #fffde7); border: 2px solid var(--yellow-mid); border-radius: var(--radius-md); padding: 18px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 20px rgba(22,163,74,.2); animation: bannerIn .4s cubic-bezier(.17,.67,.35,1.4); }
-    .called-banner.hidden { display: none; }
-    @keyframes bannerIn { from { transform: scale(.9) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-    .called-icon { font-size: 36px; flex-shrink: 0; }
-    .called-text strong { display: block; font-size: 16px; font-weight: 800; color: var(--green); }
-    .called-text span { font-size: 13px; color: var(--text-sub); line-height: 1.5; }
-
-    /* FOOTER */
-    .tracker-footer { text-align: center; padding: 24px 20px 8px; margin-top: auto; }
-    .tracker-footer a { font-size: 13px; color: var(--text-sub); text-decoration: none; font-weight: 600; }
-    .tracker-footer a:hover { color: var(--blue-mid); }
-  </style>
 </head>
 <body>
   <div class="tracker-wrap">
@@ -152,53 +42,45 @@
       <div class="done-ticket" id="doneTicketNum">—</div>
     </div>
 
-    <!-- NOSHOW -->
+    <!-- NO-SHOW -->
     <div id="stateNoshow" class="state-panel hidden">
-      <div class="state-icon">⏰</div>
-      <h2>Missed Your Turn</h2>
-      <p>Your ticket was marked as No-Show.<br/>Please proceed to the counter or get a new ticket.</p>
+      <div class="state-icon">😔</div>
+      <h2>Marked as No-Show</h2>
+      <p>Your ticket was called but you were not present.<br/>Please queue again if you still need assistance.</p>
     </div>
 
     <!-- CANCELLED -->
     <div id="stateCancelled" class="state-panel hidden">
       <div class="state-icon">🚫</div>
       <h2>Ticket Cancelled</h2>
-      <p>This ticket has been cancelled.</p>
+      <p>This ticket has been cancelled.<br/>Please queue again at the kiosk.</p>
     </div>
 
-    <!-- ACTIVE TRACKER -->
+    <!-- ACTIVE STATE -->
     <div id="stateActive" class="hidden">
 
-      <div class="ticket-card">
-        <div class="tc-school">STI College Fairview</div>
+      <div class="ticket-card" id="statusCard">
+        <div class="tc-school">STI COLLEGE FAIRVIEW</div>
         <div class="tc-dept-tag" id="tcDept">CASHIER</div>
-        <div class="tc-number" id="tcNumber">C-01</div>
+        <div class="tc-number" id="tcNumber">—</div>
+        <div id="statusIconWrap" class="status-icon-wrap">
+          <span id="statusIcon">⏳</span>
+        </div>
+        <div id="statusLabel" class="status-label">Waiting in Queue</div>
+        <div id="statusSub"   class="status-sub">We'll notify you when it's your turn</div>
         <div class="tc-details">
-          <div class="tc-row"><span>Name / ID</span><strong id="tcName">—</strong></div>
-          <div class="tc-row"><span>Reason</span><strong id="tcReason">—</strong></div>
-          <div class="tc-row"><span>Type</span><strong id="tcType">—</strong></div>
+          <div class="tc-row"><span>Name / ID</span>    <strong id="tcName">—</strong></div>
+          <div class="tc-row"><span>Reason</span>       <strong id="tcReason">—</strong></div>
+          <div class="tc-row"><span>Type</span>         <strong id="tcType">—</strong></div>
+          <div class="tc-row"><span>Now Serving</span>  <strong id="nowServingNum">—</strong></div>
         </div>
-      </div>
-
-      <div class="status-card" id="statusCard">
-        <div class="status-icon-wrap" id="statusIconWrap">
-          <span class="status-icon" id="statusIcon">⏳</span>
-        </div>
-        <div class="status-label" id="statusLabel">Waiting in Queue</div>
-        <div class="status-sub" id="statusSub">Please wait for your number to be called</div>
-      </div>
-
-      <div class="live-card">
-        <div class="live-title">Now Serving</div>
-        <div class="live-number" id="nowServingNum">—</div>
-        <div class="live-dept" id="nowServingDept">CASHIER</div>
       </div>
 
       <div class="position-card" id="positionCard">
         <div class="pos-left">
-          <div class="pos-label">Your Position</div>
+          <div class="pos-label">Queue Position</div>
           <div class="pos-number" id="posNumber">—</div>
-          <div class="pos-sub" id="posAhead">— ahead of you</div>
+          <div class="pos-sub" id="posAhead">—</div>
         </div>
         <div class="pos-divider"></div>
         <div class="pos-right">
@@ -244,183 +126,8 @@
 
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, collection, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-      authDomain: "etickette-78f74.firebaseapp.com",
-      projectId: "etickette-78f74",
-      storageBucket: "etickette-78f74.firebasestorage.app",
-      messagingSenderId: "147547566302",
-      appId: "1:147547566302:web:2c7a52792b539331d8524f"
-    };
-
-    let myTicket = null, myDept = null, lastStatus = null, notifGranted = false;
-    window.requestNotification = requestNotification;
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-
-    const params    = new URLSearchParams(window.location.search);
-    const ticketNum = params.get('t');
-    const dept      = params.get('d') || '';
-
-    if (!ticketNum) { showState('error'); }
-    else { myDept = dept.toLowerCase(); loadTicket(ticketNum); }
-
-    async function loadTicket(tNum) {
-      try {
-        const snap = await getDoc(doc(db, 'tickets', tNum));
-        if (!snap.exists()) { showState('error'); return; }
-        myTicket = { id: snap.id, ...snap.data() };
-        renderTicketCard(myTicket);
-        checkAndShowState(myTicket);
-        startListeners(tNum);
-      } catch (e) { console.error('[loadTicket]', e); showState('error'); }
-    }
-
-    function startListeners(tNum) {
-      onSnapshot(doc(db, 'tickets', tNum), snap => {
-        if (!snap.exists()) return;
-        myTicket = { id: snap.id, ...snap.data() };
-        checkAndShowState(myTicket);
-        renderTicketCard(myTicket);
-      });
-      onSnapshot(query(collection(db, 'tickets'), where('department', '==', myDept)), snap => {
-        updatePositionInfo(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      });
-      onSnapshot(doc(db, 'departments', myDept), snap => {
-        if (!snap.exists()) return;
-        const d = snap.data();
-        document.getElementById('nowServingNum').textContent  = d.nowServing || '—';
-        document.getElementById('nowServingDept').textContent = myDept.toUpperCase();
-      });
-    }
-
-    function checkAndShowState(ticket) {
-      const status = ticket.status;
-      if (status === 'completed') { showState('completed'); return; }
-      if (status === 'noshow')    { showState('noshow');    return; }
-      if (status === 'cancelled') { showState('cancelled'); return; }
-
-      showState('active');
-
-      const statusCard   = document.getElementById('statusCard');
-      const statusIcon   = document.getElementById('statusIcon');
-      const label        = document.getElementById('statusLabel');
-      const sub          = document.getElementById('statusSub');
-      const calledBanner = document.getElementById('calledBanner');
-
-      if (status === 'serving') {
-        statusCard.classList.add('serving');
-        statusIcon.textContent = '📣';
-        label.textContent = "It's Your Turn!";
-        sub.textContent   = 'Please proceed to the ' + myDept.toUpperCase() + ' counter now';
-        calledBanner.classList.remove('hidden');
-        document.getElementById('calledDept').textContent = myDept.toUpperCase();
-        document.getElementById('positionCard').style.opacity = '0.5';
-        if (lastStatus !== 'serving') { triggerNotification(ticket.ticketNumber); playAlertSound(); pulseIcon(); }
-      } else {
-        statusCard.classList.remove('serving');
-        statusIcon.textContent = '⏳';
-        label.textContent = 'Waiting in Queue';
-        sub.textContent   = "We'll notify you when it's your turn";
-        calledBanner.classList.add('hidden');
-        document.getElementById('positionCard').style.opacity = '1';
-      }
-      lastStatus = status;
-    }
-
-    function showState(state) {
-      ['loading','error','completed','noshow','cancelled','active'].forEach(s => {
-        const el = document.getElementById('state' + s.charAt(0).toUpperCase() + s.slice(1));
-        if (el) el.classList.toggle('hidden', s !== state);
-      });
-      if (state === 'completed') document.getElementById('doneTicketNum').textContent = ticketNum;
-    }
-
-    function renderTicketCard(ticket) {
-      document.getElementById('tcDept').textContent   = (ticket.department || myDept).toUpperCase();
-      document.getElementById('tcNumber').textContent = ticket.ticketNumber;
-      document.getElementById('tcName').textContent   = ticket.displayName || ticket.userId || '—';
-      document.getElementById('tcReason').textContent = ticket.reason || '—';
-      document.getElementById('tcType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
-    }
-
-    function updatePositionInfo(all) {
-      const waiting   = all.filter(t => t.status === 'waiting' || t.status === 'serving')
-                           .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
-      const serving   = all.find(t => t.status === 'serving');
-      const completed = all.filter(t => t.status === 'completed' || t.status === 'noshow').length;
-      const total     = all.length;
-      const myPos     = waiting.findIndex(t => t.ticketNumber === ticketNum);
-      const ahead     = myPos > 0 ? myPos - (serving ? 1 : 0) : 0;
-
-      document.getElementById('posNumber').textContent = myPos >= 0 ? myPos + 1 : '—';
-      document.getElementById('posAhead').textContent  = ahead > 0 ? ahead + ' ahead of you' : myPos === 0 ? "You're next!" : '—';
-      document.getElementById('estWait').textContent   = myPos >= 0 ? (Math.round(ahead * 5) || '<1') : '—';
-
-      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-      document.getElementById('progBar').style.width       = pct + '%';
-      document.getElementById('progServed').textContent    = completed + ' served';
-      document.getElementById('progTotal').textContent     = total + ' total';
-    }
-
-    async function requestNotification() {
-      const btn = document.getElementById('btnNotif');
-      if (!('Notification' in window)) { btn.textContent = 'Not supported'; btn.classList.add('denied'); return; }
-      if (Notification.permission === 'granted') { grantNotif(); return; }
-      const result = await Notification.requestPermission();
-      if (result === 'granted') grantNotif();
-      else { btn.textContent = 'Denied'; btn.classList.add('denied'); }
-    }
-
-    function grantNotif() {
-      notifGranted = true;
-      const btn = document.getElementById('btnNotif');
-      btn.textContent = '✓ Enabled'; btn.classList.add('done');
-      document.getElementById('notifCard').classList.add('granted');
-    }
-
-    function triggerNotification(tNum) {
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
-      if (notifGranted && Notification.permission === 'granted') {
-        new Notification("📣 It's Your Turn!", {
-          body: 'Ticket ' + tNum + ' — Please proceed to the ' + myDept.toUpperCase() + ' counter.',
-          icon: 'assets/logo.png', tag: 'etickette-call', requireInteraction: true
-        });
-      }
-      let flashing = true;
-      const origTitle = document.title;
-      const fi = setInterval(() => { document.title = flashing ? "📣 IT'S YOUR TURN!" : origTitle; flashing = !flashing; }, 800);
-      setTimeout(() => { clearInterval(fi); document.title = origTitle; }, 10000);
-    }
-
-    function playAlertSound() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [440, 554, 659].forEach((freq, i) => {
-          const o = ctx.createOscillator(), g = ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.type = 'sine'; o.frequency.value = freq;
-          const t = ctx.currentTime + i * 0.22;
-          g.gain.setValueAtTime(0, t);
-          g.gain.linearRampToValueAtTime(0.4, t + 0.05);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-          o.start(t); o.stop(t + 0.4);
-        });
-      } catch (_) {}
-    }
-
-    function pulseIcon() {
-      const el = document.getElementById('statusIconWrap');
-      el.classList.add('ping');
-      setTimeout(() => el.classList.remove('ping'), 600);
-    }
-
-    if ('Notification' in window && Notification.permission === 'granted') grantNotif();
-  </script>
+  <!-- ✅ FIX #13 — All JS logic lives ONLY in tracker/js/tracker.js.
+       The duplicate inline <script> block has been removed entirely. -->
+  <script type="module" src="tracker/js/tracker.js"></script>
 </body>
 </html>
