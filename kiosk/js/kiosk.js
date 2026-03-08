@@ -377,7 +377,7 @@ async function issueTicket(userId) {
     try {
         const resCheck = await getDocs(query(
             collection(db, 'reservations'),
-            where('studentId', '==', userId), where('status', '==', 'pending')
+            where('studentId', '==', userId), where('status', 'in', ['pending', 'active'])
         ));
         if (!resCheck.empty) {
             if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }

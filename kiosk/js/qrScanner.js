@@ -173,6 +173,7 @@ async function onScanSuccess(decodedText) {
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum = `${prefix}-${String(newCounter).padStart(2, '0')}`;
             const ticketRef  = doc(collection(db, 'tickets'), tNum);
+            transaction.update(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.set(ticketRef, {
                 ticketNumber:  tNum,
@@ -189,7 +190,7 @@ async function onScanSuccess(decodedText) {
             });
             transaction.update(resRef, {
                 status:       'active',
-                checkedInAt:  serverTimestamp(),
+                activatedAt:  serverTimestamp(),
                 ticketNumber: tNum
             });
         });
@@ -245,7 +246,7 @@ async function submitId() {
     } else {
         const name = (document.getElementById('nameInput')?.value || '').trim();
         if (name.length < 2) { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
-        userId      = 'GUEST-' + Date.now();
+        userId = 'GUEST-' + name.trim().toLowerCase().replace(/\s+/g, '-');
         displayName = name;
     }
 

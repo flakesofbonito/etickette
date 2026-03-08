@@ -498,7 +498,9 @@ async function cancelReservation(rid, status) {
         }
 
         try {
-            await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(-1) });
+            if (status === 'active') {
+                await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(-1) });
+            }
         } catch (e) {
             console.warn('[quota restore]', e.message);
         }

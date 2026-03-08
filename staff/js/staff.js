@@ -426,10 +426,18 @@ async function markManualComplete() {
   try {
     const snap = await getDoc(doc(db,'tickets',tNum));
     if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+    const ticketData = snap.data();
     await updateDoc(doc(db,'tickets',tNum), { status:'completed', completedAt:serverTimestamp() });
-    const st = snap.data().status;
+    const st = ticketData.status;
     if (st === 'waiting' || st === 'serving')
       await updateDoc(doc(db,'departments',staffDept), { queue:increment(-1) });
+    if (ticketData.isReservation && ticketData.reservationId) {
+      try {
+        await updateDoc(doc(db,'reservations', ticketData.reservationId), {
+          status: 'completed', completedAt: serverTimestamp()
+        });
+      } catch (e) { console.warn('[markManualComplete] reservation sync:', e.message); }
+    }
     servedToday++;
     document.getElementById('statServed').textContent = servedToday;
     addActivity('completed', tNum, '—');
@@ -459,7 +467,7 @@ async function dailyReset(auto = false) {
     batches.push(current);
     await Promise.all(batches.map(b => b.commit()));
 
-    const resSnap = await getDocs(query(collection(db,'reservations'), where('status','==','pending')));
+    const resSnap = await getDocs(query(collection(db,'reservations'), where('status', 'in', ['pending', 'active'])));
     if (!resSnap.empty) {
       const rb = writeBatch(db);
       resSnap.docs.forEach(d => rb.update(d.ref, { status:'expired', expiredAt:serverTimestamp() }));
