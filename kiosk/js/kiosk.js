@@ -220,10 +220,6 @@ function pickUserType(type) {
         if (inp) { inp.placeholder = "Child's Student ID (11 digits)"; inp.inputMode = 'numeric'; }
         if (title) title.textContent = "Enter Your Child's Student ID";
 
-    } else { 
-        if (idField)   idField.style.display   = 'none';
-        if (nameField) nameField.style.display = 'block';
-        if (title) title.textContent = 'Enter Your Full Name';
     }
 
     const idInp = document.getElementById('idInput');
@@ -306,11 +302,6 @@ async function submitId() {
         if (name.length < 2)           { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
         userId = childId; displayName = name + ' (Parent)';
 
-    } else {
-        const name = (document.getElementById('nameInput')?.value || '').trim();
-        if (name.length < 2) { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
-        userId      = 'GUEST-' + name.trim().toLowerCase().replace(/\s+/g, '-');
-        displayName = name;
     }
 
     const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');

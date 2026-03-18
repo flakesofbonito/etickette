@@ -110,10 +110,6 @@ function selectUserType(type) {
         inputName.style.display    = 'block';
         nameLabel.textContent      = 'Your Full Name';
         loginHint.textContent      = "Enter your child's Student ID and your name";
-    } else if (type === 'guest') {
-        inputName.style.display = 'block';
-        nameLabel.textContent   = 'Your Full Name';
-        loginHint.textContent   = 'Enter your full name to continue';
     }
 }
 
@@ -150,16 +146,7 @@ function loginStudent() {
         userId      = childId;
         displayName = name + ' (Parent)';
 
-    } else if (currentUserType === 'guest') {
-        const name = document.getElementById('loginName').value.trim();
-        if (name.length < 2) {
-            err.textContent = 'Please enter your full name.';
-            return;
-        }
-        userId = 'GUEST-' + name.trim().toLowerCase().replace(/\s+/g, '-');
-        displayName = name;
     }
-
     currentStudentId   = userId;
     currentDisplayName = displayName;
     sessionStorage.setItem('studentId',   userId);
@@ -247,6 +234,10 @@ function listenToDepts() {
             if (el) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
             const qEl = document.getElementById(dept + 'Queue');
             if (qEl) qEl.textContent = d.queue || 0;
+            const numEl = document.getElementById(dept + 'QueueNum');
+            if (numEl) numEl.textContent = d.queue || 0;
+            const nsEl = document.getElementById(dept + 'NowServing');
+            if (nsEl) nsEl.textContent = 'Serving: ' + (d.nowServing || '—');
         });
     });
 }
@@ -278,6 +269,7 @@ function listenToSettings() {
                 btn.style.background = 'rgba(220,38,38,.1)';
                 btn.style.color      = '#dc2626';
                 btn.style.border     = '2px solid rgba(220,38,38,.3)';
+                btn.style.pointerEvents = 'none';
             } else if (!hasActiveReservation) {
                 btn.disabled = false;
                 btn.title    = '';
@@ -285,6 +277,7 @@ function listenToSettings() {
                 btn.style.background = '';
                 btn.style.color      = '';
                 btn.style.border     = '';
+                btn.style.pointerEvents = '';
             }
         });
 
@@ -529,6 +522,8 @@ async function cancelReservation(rid, status) {
 }
 
 function openReserveModal(dept) {
+    const btn = document.getElementById(dept + 'Btn');
+    if (btn && btn.disabled) { showToast('No slots available today.', 'error'); return; }
     if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
 
