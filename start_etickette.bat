@@ -47,7 +47,6 @@ echo.
 echo    Printer Server : http://localhost:8000
 echo    Kiosk          : http://localhost:8000/kiosk/index.html
 echo.
-echo    To stop, run stop_etickette.bat
 echo  =========================================
 echo.
 pause
