@@ -73,6 +73,8 @@ export function initKiosk() {
     window.proceedIssue        = proceedIssue;
     window.startScanner = startScanner;
     window.stopScanner         = stopScanner;
+    window.startScreensaver = startScreensaver;
+    window.dismissScreensaver = dismissScreensaver;
     window.addEventListener('beforeunload', () => stopScanner());
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopScanner(); });
 
@@ -163,6 +165,10 @@ function listenToQueueCounts() {
                     chip.textContent = label;
                     chip.className   = cls;
                 }
+
+                const ssId = dept === 'cashier' ? 'ssCashier' : 'ssRegistrar';
+                const ssEl = document.getElementById(ssId);
+                if (ssEl) ssEl.textContent = open ? 'OPEN' : st === 'break' ? 'BREAK' : 'CLOSED';
             },
             err => console.error('[listenToQueueCounts] ' + dept + ':', err.code, err.message)
         );
@@ -178,6 +184,8 @@ function goScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
     if (el) el.classList.add('active');
+
+    if (name === 'home') startScreensaver(); else clearTimeout(ssTimer);
 }
 
 function pickDept(dept) {
@@ -473,6 +481,17 @@ function showTicketScreen(tNum, userId, ahead) {
         });
     }
     goScreen('ticket');
+    let countdown = 15;
+    const countEl = document.getElementById('ticketCountdown');
+    if (countEl) countEl.textContent = countdown;
+    const countTimer = setInterval(() => {
+        countdown--;
+        if (countEl) countEl.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(countTimer);
+            goScreen('home');
+        }
+    }, 1000);
 }
 
 
@@ -750,4 +769,23 @@ function initIdleTimeout() {
         document.addEventListener(evt, resetIdleTimer, { passive: true }));
 
     resetIdleTimer();
+}
+
+const SS_DELAY = 10000; 
+let ssTimer;
+
+function startScreensaver() {
+    clearTimeout(ssTimer);
+    ssTimer = setTimeout(showScreensaver, SS_DELAY);
+}
+
+function showScreensaver() {
+    const active = document.querySelector('.screen.active');
+    if (!active || active.id !== 'screen-home') return;
+    document.getElementById('screensaver').classList.add('active');
+}
+
+function dismissScreensaver() {
+    document.getElementById('screensaver').classList.remove('active');
+    startScreensaver();
 }

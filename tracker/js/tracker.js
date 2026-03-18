@@ -132,28 +132,44 @@ function renderTicketCard(ticket) {
   document.getElementById('tcType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
 }
 
+// REPLACE WITH
 function updatePositionInfo(all) {
-  const waiting = all
-    .filter(t => t.status === 'waiting' || t.status === 'serving')
+  const waitingOnly = all
+    .filter(t => t.status === 'waiting')
     .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 
-  const serving = all.find(t => t.status === 'serving');
+  const serving  = all.find(t => t.status === 'serving');
   const completed = all.filter(t => t.status === 'completed' || t.status === 'noshow').length;
-  const total = all.filter(t => t.status !== 'cancelled').length;
+  const total     = all.filter(t => t.status !== 'cancelled').length;
 
-  const myPos = waiting.findIndex(t => t.ticketNumber === ticketNum);
-  const ahead = myPos > 0 ? myPos - (serving ? 1 : 0) : 0;
-  const posDisplay = myPos >= 0 ? myPos + 1 : '—';
-  const estWait = myPos > 0 ? Math.round(ahead * 5) : 0;
+  const iAmServing = serving && serving.ticketNumber === ticketNum;
+  const myPos      = waitingOnly.findIndex(t => t.ticketNumber === ticketNum);
+
+  let posDisplay, aheadText, estWait;
+
+  if (iAmServing) {
+    posDisplay = '📣';
+    aheadText  = "You're being served!";
+    estWait    = '<1';
+  } else if (myPos >= 0) {
+    const ahead = myPos;
+    posDisplay  = myPos + 1;
+    aheadText   = ahead > 0 ? ahead + ' ahead of you' : "You're next!";
+    estWait     = ahead > 0 ? Math.round(ahead * 5) : '<1';
+  } else {
+    posDisplay = '—';
+    aheadText  = '—';
+    estWait    = '—';
+  }
 
   document.getElementById('posNumber').textContent = posDisplay;
-  document.getElementById('posAhead').textContent = ahead > 0 ? ahead + ' ahead of you' : myPos === 0 ? 'You\'re next!' : '—';
-  document.getElementById('estWait').textContent = myPos >= 0 ? (estWait || '<1') : '—';
+  document.getElementById('posAhead').textContent  = aheadText;
+  document.getElementById('estWait').textContent   = estWait;
 
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  document.getElementById('progBar').style.width = pct + '%';
-  document.getElementById('progServed').textContent = completed + ' served';
-  document.getElementById('progTotal').textContent  = total + ' total';
+  document.getElementById('progBar').style.width        = pct + '%';
+  document.getElementById('progServed').textContent     = completed + ' served';
+  document.getElementById('progTotal').textContent      = total + ' total';
 }
 
 async function requestNotification() {

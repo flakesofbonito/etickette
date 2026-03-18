@@ -45,12 +45,8 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       DASHBOARD
-  ═══════════════════════════════════════════════ -->
   <div id="dashboard" class="dashboard hidden">
 
-    <!-- Topbar -->
     <div class="dash-topbar">
       <div class="dash-topbar-left">
         <img src="../assets/logo.png" class="dash-logo" alt="eTickette" />
@@ -66,7 +62,6 @@
       </div>
     </div>
 
-    <!-- Status bar -->
     <div class="status-bar">
       <div class="status-bar-item">
         <span class="status-bar-label">Department Status</span>
@@ -101,10 +96,8 @@
       </div>
     </div>
 
-    <!-- Main content -->
     <div class="dash-content">
 
-      <!-- Now Serving Panel -->
       <div class="panel serving-panel">
         <div class="panel-label">Now Serving</div>
         <div class="serving-number" id="servingNumber">—</div>
@@ -130,7 +123,6 @@
         </button>
       </div>
 
-      <!-- Queue Panel -->
       <div class="panel queue-panel">
         <div class="panel-label">
           Waiting Queue
@@ -141,7 +133,6 @@
         </div>
       </div>
 
-      <!-- Stats Panel -->
       <div class="panel stats-panel">
         <div class="panel-label">Today's Summary</div>
         <div class="stats-grid">
@@ -199,6 +190,19 @@
             placeholder="e.g. 100" class="tool-input" />
           <button class="btn-tool" onclick="setDailyQuota()">Set</button>
         </div>
+
+        <div class="panel-label" style="margin-top:20px">System Announcement</div>
+        <div class="tool-row">
+            <input type="text" id="statusMsgInput" class="tool-input"
+                placeholder="e.g. Window 2 is now open..."
+                maxlength="80"
+                style="text-transform:none;font-weight:500;" />
+        </div>
+        <div class="tool-row">
+            <button class="btn-tool" onclick="setStatusMessage()" style="flex:1">Set Message</button>
+            <button class="btn-tool" onclick="clearStatusMessage()" style="flex:1;background:var(--slate-500);">Clear</button>
+        </div>
+        <p id="statusMsgHint" style="font-size:11px;color:var(--slate-400);margin-bottom:8px;min-height:16px;"></p>
 
         <div class="panel-label" style="margin-top:20px">System Reset</div>
         <div class="reset-box">

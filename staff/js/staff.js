@@ -20,6 +20,8 @@ let staffDept      = 'cashier';
 let currentTicket  = null;
 let serveStartTime = null;
 let timerInterval  = null;
+let noShowTimer = null;
+const NOSHOW_TIMEOUT_SEC = 180;
 let serveTimes     = [];
 let servedToday    = 0;
 let noShowToday    = 0;
@@ -37,6 +39,8 @@ window.recallTicket       = recallTicket;
 window.markManualComplete = markManualComplete;
 window.dailyReset         = dailyReset;
 window.setDailyQuota = setDailyQuota;
+window.setStatusMessage   = setStatusMessage;
+window.clearStatusMessage = clearStatusMessage;
 
 app = initializeApp(firebaseConfig);
 db  = getFirestore(app);
@@ -107,6 +111,29 @@ function startDashboard() {
   listenToQuota();
   checkAutoReset();
   loadTodayStats();
+  expireOldReservations();
+}
+
+async function expireOldReservations() {
+    try {
+        const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        const snap = await getDocs(query(
+            collection(db, 'reservations'),
+            where('status', '==', 'pending')
+        ));
+        const expired = snap.docs.filter(d => {
+            const date = d.data().reservationDate;
+            return date && date < todayPH;
+        });
+        if (expired.length === 0) return;
+        const batch = writeBatch(db);
+        expired.forEach(d => batch.update(d.ref, {
+            status: 'expired',
+            expiredAt: serverTimestamp()
+        }));
+        await batch.commit();
+        console.log(`[expireOldRes] Expired ${expired.length} old reservations.`);
+    } catch (e) { console.warn('[expireOldRes]', e.message); }
 }
 
 async function setDailyQuota() {
@@ -273,10 +300,27 @@ function clearServing() {
   document.getElementById('servingTimer').className   = 'serving-timer';
   serveStartTime = null;
   clearInterval(timerInterval);
+  clearTimeout(noShowTimer); 
 }
 
 function startTimer() {
   clearInterval(timerInterval);
+  clearTimeout(noShowTimer);
+
+  // Auto no-show after NOSHOW_TIMEOUT_SEC seconds
+  noShowTimer = setTimeout(async () => {
+    if (!currentTicket) return;
+    const ok = await showConfirmDialog(
+      `⏱ Ticket ${currentTicket.ticketNumber} has been waiting ${Math.floor(NOSHOW_TIMEOUT_SEC / 60)} minutes with no response. Mark as No-Show?`,
+      '✕ Mark No-Show', 'Keep Waiting'
+    );
+    if (ok) {
+      await noShowTicket();
+    } else {
+      startTimer();
+    }
+  }, NOSHOW_TIMEOUT_SEC * 1000);
+
   timerInterval = setInterval(() => {
     if (!serveStartTime) return;
     const e = Math.floor((Date.now() - serveStartTime) / 1000);
@@ -293,6 +337,9 @@ function updateStats(waiting) {
   const avg   = serveTimes.length > 0 ? Math.round(serveTimes.reduce((a,b) => a+b, 0) / serveTimes.length) : null;
   const avgEl = document.getElementById('avgWait');
   if (avgEl) avgEl.textContent = avg ? Math.floor(avg/60) + 'm ' + (avg%60) + 's' : '—';
+  if (avg) {
+      updateDoc(doc(db, 'departments', staffDept), { avgWaitSeconds: avg }).catch(() => {});
+  }
   const scEl  = document.getElementById('servedCount');
   if (scEl)   scEl.textContent = servedToday;
 }
@@ -320,10 +367,11 @@ async function callNextTicket() {
       addActivity('completed', currentTicket.ticketNumber, currentTicket.displayName || currentTicket.userId || '—');
     }
 
+    clearTimeout(noShowTimer);
     serveStartTime = Date.now();
     clearInterval(timerInterval);
     await updateDoc(doc(db,'tickets',next.id), {
-      status:'serving', calledAt:serverTimestamp(), called:true, notified:true, notifiedAt:serverTimestamp()
+        status:'serving', calledAt:serverTimestamp(), called:true, notified:true, notifiedAt:serverTimestamp()
     });
     await updateDoc(doc(db,'departments',staffDept), { nowServing: next.ticketNumber });
     addActivity('called', next.ticketNumber, next.displayName || next.userId || '—');
@@ -354,6 +402,7 @@ function showConfirmDialog(message, confirmText, cancelText) {
 }
 
 async function completeTicket() {
+  clearTimeout(noShowTimer);
   if (!currentTicket) return;
   await finishServing(currentTicket, 'completed');
   servedToday++;
@@ -365,6 +414,7 @@ async function completeTicket() {
 }
 
 async function noShowTicket() {
+  clearTimeout(noShowTimer); 
   if (!currentTicket) return;
   await finishServing(currentTicket, 'noshow');
   noShowToday++;
@@ -490,6 +540,35 @@ async function dailyReset(auto = false) {
   }
 }
 
+async function setStatusMessage() {
+    const input = document.getElementById('statusMsgInput');
+    const hint  = document.getElementById('statusMsgHint');
+    const msg   = input.value.trim();
+    if (!msg) { hint.textContent = 'Please type a message first.'; hint.style.color = '#dc2626'; return; }
+    try {
+        await updateDoc(doc(db, 'system', 'settings'), { statusMessage: msg });
+        hint.textContent = '✅ Message set! Showing on website and monitor.';
+        hint.style.color = '#16a34a';
+        setTimeout(() => { hint.textContent = ''; }, 3000);
+    } catch (e) {
+        hint.textContent = 'Failed to set message.';
+        hint.style.color = '#dc2626';
+    }
+}
+
+async function clearStatusMessage() {
+    const hint = document.getElementById('statusMsgHint');
+    try {
+        await updateDoc(doc(db, 'system', 'settings'), { statusMessage: '' });
+        document.getElementById('statusMsgInput').value = '';
+        hint.textContent = '✅ Message cleared.';
+        hint.style.color = '#16a34a';
+        setTimeout(() => { hint.textContent = ''; }, 3000);
+    } catch (e) {
+        hint.textContent = 'Failed to clear message.';
+        hint.style.color = '#dc2626';
+    }
+}
 
 function addActivity(type, tNum, name) {
   const log   = document.getElementById('activityLog');

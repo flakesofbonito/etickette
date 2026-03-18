@@ -256,7 +256,7 @@
 
                 <div class="home-banner">
                     <div class="home-banner-img-wrap">
-                        <img alt="eTickette" class="home-banner-img" src="../assets/poster.jpg" />
+                        <img alt="eTickette" class="home-banner-img" src="../assets/poster.png" />
                     </div>
                     <div class="home-banner-chips">
                         <div class="home-banner-chip">
@@ -293,6 +293,7 @@
                             <div class="dept-queue-stat-info">
                                 <span>In Queue</span>
                                 <strong id="cashierNowServing">Serving: —</strong>
+                                <span id="cashierAvgWait" style="font-size:11px;color:var(--slate-400);font-weight:500;">Avg wait: —</span>
                             </div>
                         </div>
                         <button class="btn-reserve" id="cashierBtn" onclick="openReserveModal('cashier')">
@@ -321,6 +322,7 @@
                             <div class="dept-queue-stat-info">
                                 <span>In Queue</span>
                                 <strong id="registrarNowServing">Serving: —</strong>
+                                <span id="registrarAvgWait" style="font-size:11px;color:var(--slate-400);font-weight:500;">Avg wait: —</span>
                             </div>
                         </div>
                         <button class="btn-reserve" id="registrarBtn" onclick="openReserveModal('registrar')">
@@ -612,8 +614,10 @@
                     var thisDate = new Date(calState.year, calState.month, d);
                     var dateStr = toDateStr(calState.year, calState.month, d);
 
-                    if (thisDate < today) {
+                    var isWeekend = thisDate.getDay() === 0 || thisDate.getDay() === 6;
+                    if (thisDate < today || isWeekend) {
                         cell.classList.add("cal-day-disabled");
+                        if (isWeekend) cell.classList.add("cal-day-weekend");
                         cell.disabled = true;
                     } else {
                         if (thisDate.toDateString() === today.toDateString()) {

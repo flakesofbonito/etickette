@@ -22,11 +22,37 @@ const firebaseConfig = {
 
 let app, db;
 
+let lastServing = { cashier: null, registrar: null };
+
+function playCallAlert() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [659, 784, 880]; 
+        notes.forEach((freq, i) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine';
+            o.frequency.value = freq;
+            const t = ctx.currentTime + i * 0.18;
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.5, t + 0.05);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+            o.start(t); o.stop(t + 0.5);
+        });
+    } catch (_) {}
+}
+
 export function initMonitor() {
     app = initializeApp(firebaseConfig, 'monitor');
     db  = getFirestore(app);
     updateClock();
     setInterval(updateClock, 1000);
+    document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', () => {}, { once: true });
+    const silentUnlock = new (window.AudioContext || window.webkitAudioContext)();
+    silentUnlock.resume().then(() => silentUnlock.close());
+    }, { once: true });
     listenToDept('cashier');
     listenToDept('registrar');
     listenToSettings();
@@ -77,7 +103,12 @@ function listenToQueue(dept) {
         const waiting = all.filter(t => t.status === 'waiting');
 
         const nowEl = document.getElementById(dept + 'Now');
-        nowEl.textContent = serving ? serving.ticketNumber : '—';
+        const newNum = serving ? serving.ticketNumber : '—';
+        if (serving && newNum !== lastServing[dept]) {
+            playCallAlert();
+        }
+        lastServing[dept] = newNum;
+        nowEl.textContent = newNum;
 
         const nextEl = document.getElementById(dept + 'Next');
         if (waiting.length === 0) {
@@ -99,7 +130,39 @@ function listenToSettings() {
         const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
         document.getElementById('footerQuota').textContent =
             'Slots: ' + rem + ' / ' + (d.dailyQuota || 100);
-        if (d.statusMessage)
-            document.getElementById('footerStatus').textContent = d.statusMessage;
+
+        const msg    = d.statusMessage || '';
+        const ticker = document.getElementById('monitorTicker');
+        const tickerText = document.getElementById('tickerText');
+
+        clearTimeout(window._tickerTimer);
+
+        if (msg.trim() !== '') {
+            tickerText.textContent = msg + '     •     ' + msg + '     •     ' + msg;
+            ticker.classList.remove('fading');
+            ticker.style.display = 'flex';
+            ticker.style.opacity = '1';
+
+            let pos = ticker.offsetWidth;
+            clearInterval(window._tickerScroll);
+            tickerText.style.transform = `translateX(${pos}px)`;
+            window._tickerScroll = setInterval(() => {
+                pos -= 2;
+                if (pos < -(tickerText.offsetWidth)) pos = ticker.offsetWidth;
+                tickerText.style.transform = `translateX(${pos}px)`;
+            }, 16);
+
+            window._tickerTimer = setTimeout(() => {
+                ticker.classList.add('fading');
+                setTimeout(() => {
+                    ticker.style.display = 'none';
+                    clearInterval(window._tickerScroll);
+                }, 800);
+            }, 30000);
+
+        } else {
+            ticker.style.display = 'none';
+            clearInterval(window._tickerScroll);
+        }
     });
 }

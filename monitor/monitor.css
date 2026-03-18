@@ -673,3 +673,47 @@ body {
     letter-spacing: 6px;
   }
 }
+
+#monitorTicker {
+    position: fixed;
+    bottom: var(--footer-h);
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: var(--blue-800);
+    border-top: 3px solid var(--gold-400);
+    border-bottom: 3px solid var(--gold-400);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 8888;
+}
+
+.ticker-icon {
+    font-size: 20px;
+    width: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gold-400);
+    height: 100%;
+    border-right: none;
+}
+
+.ticker-track {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+}
+
+.ticker-text {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold-400);
+    letter-spacing: .5px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}

@@ -9,6 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
+    <div id="monitorTicker" style="display:none;">
+        <div class="ticker-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue-900)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;">
+                <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+            </svg>
+        </div>
+        <div class="ticker-track">
+            <span class="ticker-text" id="tickerText">—</span>
+        </div>
+    </div>
+
     <div class="monitor-gate" id="monitorGate">
         <div class="gate-box">
         <img src="../assets/sti-logo.png" class="gate-logo" alt="STI" />
@@ -118,8 +129,6 @@
         </div>
 
         <div class="monitor-footer">
-        <span id="footerStatus">🟢 System Live</span>
-        <span class="footer-divider">·</span>
         <span>Please wait for your number to be called at the window</span>
         <span class="footer-divider">·</span>
         <span id="footerQuota">Slots: — / —</span>
@@ -160,7 +169,7 @@
             err.textContent = 'Incorrect PIN. Try again.';
             input.value = '';
             input.classList.remove('shake');
-            void input.offsetWidth; // Trigger reflow for animation
+            void input.offsetWidth;
             input.classList.add('shake');
             return;
         }

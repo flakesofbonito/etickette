@@ -583,3 +583,38 @@ html, body {
   .ticket-card { padding: 14px 16px; }
   #screen-ticket { padding-top: 10px; }
 }
+
+#screensaver {
+  display: none;
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--blue-900);
+  flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  animation: ssFadeIn .8s ease;
+}
+#screensaver.active { display: flex; }
+@keyframes ssFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.ss-logo { width: 100px; height: 100px; object-fit: contain; margin-bottom: 28px;
+  animation: ssPulse 3s ease-in-out infinite; }
+@keyframes ssPulse {
+  0%,100% { transform: scale(1); opacity: .9; }
+  50%     { transform: scale(1.06); opacity: 1; }
+}
+.ss-title { font-size: 42px; font-weight: 900; color: var(--white); letter-spacing: -.5px; }
+.ss-title span { color: var(--gold-400); }
+.ss-sub   { font-size: 16px; color: rgba(255,255,255,.45); margin-top: 10px; font-weight: 500; }
+.ss-tap   { margin-top: 48px; font-size: 14px; color: rgba(255,255,255,.3);
+  font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+  animation: ssBlink 2s ease-in-out infinite; }
+@keyframes ssBlink { 0%,100% { opacity: .3; } 50% { opacity: .8; } }
+
+.ss-status-row {
+  display: flex; gap: 24px; margin-top: 36px;
+}
+.ss-chip {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 30px; padding: 8px 22px;
+  font-size: 14px; font-weight: 700; color: rgba(255,255,255,.7);
+}
+.ss-chip span { color: #4ade80; }

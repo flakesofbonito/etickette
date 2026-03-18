@@ -9,6 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
+    <div id="screensaver" onclick="dismissScreensaver()">
+        <img src="../assets/logo.png" class="ss-logo" alt="eTickette" />
+        <div class="ss-title">e<span>Tickette</span></div>
+        <div class="ss-sub">STI College Fairview — Queue System</div>
+    <div class="ss-status-row">
+        <div class="ss-chip">Cashier: <span id="ssCashier">OPEN</span></div>
+        <div class="ss-chip">Registrar: <span id="ssRegistrar">OPEN</span></div>
+    </div>
+        <div class="ss-tap">Tap anywhere to begin</div>
+    </div>
 
     <div class="kiosk-header">
         <div class="kiosk-header-brand">
@@ -182,6 +192,9 @@
 
     <div id="screen-ticket" class="screen">
         <div class="ticket-card">
+        <p style="margin-top:18px;font-size:14px;color:var(--slate-500);text-align:center;">
+        Returning to home in <strong id="ticketCountdown" style="color:var(--blue-800);">15</strong> seconds...
+        </p>
         <div class="ticket-school">STI College Fairview</div>
         <div class="ticket-dept-tag" id="issuedDept">CASHIER</div>
         <div class="ticket-big-num" id="issuedNumber">C-01</div>

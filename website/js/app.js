@@ -238,6 +238,13 @@ function listenToDepts() {
             if (numEl) numEl.textContent = d.queue || 0;
             const nsEl = document.getElementById(dept + 'NowServing');
             if (nsEl) nsEl.textContent = 'Serving: ' + (d.nowServing || '—');
+            const waitEl = document.getElementById(dept + 'AvgWait');
+            if (waitEl) {
+                const avg = d.avgWaitSeconds;
+                waitEl.textContent = avg
+                    ? '~' + Math.floor(avg / 60) + 'm ' + (avg % 60) + 's avg wait'
+                    : 'Avg wait: —';
+            }
         });
     });
 }
@@ -289,9 +296,23 @@ function listenToSettings() {
             else                 { el.textContent = 'HIGH TRAFFIC';  el.className = 'closed'; }
         }
 
-        if (d.statusMessage) {
-            const gs = document.getElementById('globalStatus');
-            if (gs) gs.textContent = d.statusMessage;
+        const gs = document.getElementById('globalStatus');
+        if (gs) {
+            clearTimeout(window._bannerTimer);
+            if (d.statusMessage && d.statusMessage.trim() !== '') {
+                gs.innerHTML = `<div class="status-live-dot"></div><span>System is LIVE</span><span class="status-banner-divider">|</span><span>${d.statusMessage}</span>`;
+                window._bannerTimer = setTimeout(() => {
+                    gs.style.transition = 'opacity .8s ease';
+                    gs.style.opacity = '0';
+                    setTimeout(() => {
+                        gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
+                        gs.style.opacity = '1';
+                    }, 800);
+                }, 30000);
+            } else {
+                gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
+                gs.style.opacity = '1';
+            }
         }
     });
 }
@@ -703,8 +724,13 @@ async function loadHistory() {
 }
 
 function closeModal(id)         { document.getElementById(id).classList.remove('active'); }
-function handleOverlay(e, id)   { if (e.target === document.getElementById(id)) closeModal(id); }
-
+function handleOverlay(e, id) {
+    if (e.target !== document.getElementById(id)) return;
+    if (id === 'reserveModal' && currentStep > 1) {
+        if (!confirm('Close reservation? Your progress will be lost.')) return;
+    }
+    closeModal(id);
+}
 let toastTimer;
 function showToast(msg, type = 'info') {
     const t = document.getElementById('toast');
