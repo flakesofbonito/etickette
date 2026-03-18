@@ -681,7 +681,7 @@ async function loadHistory() {
         const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
         const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
         el.innerHTML += `<div class="history-item">
-            <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
+            <div><strong>${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
             <span class="subtle">Walk-in · ${date}</span></div>
             <span class="${cls}">${t.status.toUpperCase()}</span>
         </div>`;
