@@ -1,309 +1,610 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>eTickette</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="icon" href="../assets/logo.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eTickette</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-
 <body>
-    <div id="loginOverlay" class="login-overlay">
 
-        <div class="login-left">
-            <div class="login-left-content">
-                <img src="../assets/sti-logo.png" class="login-sti-logo" />
-                <h1 class="login-brand">eTickette</h1>
-                <p class="login-tagline">Queue Smarter.<br/>Anywhere.</p>
-                <div class="login-features">
-                    <div class="login-feature-item">
-                        <span class="lf-icon">📅</span>
-                        <span>Reserve a slot before you arrive</span>
-                    </div>
-                    <div class="login-feature-item">
-                        <span class="lf-icon">📱</span>
-                        <span>Get your QR — scan at the Kiosk</span>
-                    </div>
-                    <div class="login-feature-item">
-                        <span class="lf-icon">📊</span>
-                        <span>Track your queue live</span>
-                    </div>
+  <div id="loginOverlay" class="login-overlay">
+
+    <div class="login-left">
+      <div class="login-left-top">
+        <div class="login-brand-row">
+          <div>
+            <div class="login-brand-name">e<span>Tickette</span></div>
+            <div class="login-brand-sub">STI College Fairview</div>
+          </div>
+        </div>
+
+        <div class="login-hero">
+          <h2>Queue <span class="hero-accent">Smarter.</span><br />Anywhere.</h2>
+          <p>Reserve your slot before you arrive, scan at the Kiosk, and track your queue live.</p>
+        </div>
+
+        <div class="login-features">
+          <div class="login-feat">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+              </svg>
+            </div>
+            <span>Reserve a slot online before you arrive</span>
+          </div>
+          <div class="login-feat">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h.01M17 14h.01M14 17h.01M17 17h.01"/>
+              </svg>
+            </div>
+            <span>Get your QR code — scan at the Kiosk</span>
+          </div>
+          <div class="login-feat">
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <span>Track your queue live from your phone</span>
+          </div>
+        </div>
+      </div>
+      <p class="login-foot">STI SHS · IT in Mobile &amp; Web App Development · 2025</p>
+    </div>
+
+    <div class="login-right">
+      <div class="login-card">
+
+        <div class="login-mobile-header">
+          <div class="login-mobile-logo-wrap">
+            <img src="../assets/logo.png" alt="eTickette" />
+          </div>
+          <div>
+            <div class="login-mobile-brand">eTickette</div>
+            <div class="login-mobile-sub">STI College Fairview</div>
+          </div>
+        </div>
+
+        <div class="login-card-head">
+          <h2>Welcome</h2>
+          <p>Select your type and enter your details</p>
+        </div>
+
+        <div class="user-type-grid">
+          <div class="user-type-btn active" data-type="student" onclick="selectUserType('student')">
+            <div class="utb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            </div>
+            <span>Student</span>
+          </div>
+          <div class="user-type-btn" data-type="teacher" onclick="selectUserType('teacher')">
+            <div class="utb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <span>Teacher</span>
+          </div>
+          <div class="user-type-btn" data-type="parent" onclick="selectUserType('parent')">
+            <div class="utb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <span>Parent</span>
+          </div>
+          <div class="user-type-btn" data-type="guest" onclick="selectUserType('guest')">
+            <div class="utb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span>Guest</span>
+          </div>
+        </div>
+
+        <div class="login-fields">
+          <div id="inputId" class="login-field">
+            <label class="login-label" id="idLabel">Student ID Number</label>
+            <div class="login-input-wrap">
+              <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              <input type="text" id="loginId" class="login-input" maxlength="11"
+                placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+                oninput="this.value=this.value.replace(/\D/g,'')"
+                onkeydown="if(event.key==='Enter') loginStudent()" />
+            </div>
+          </div>
+
+          <div id="inputParentChildId" class="login-field" style="display:none">
+            <label class="login-label">Child's Student ID</label>
+            <div class="login-input-wrap">
+              <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              <input type="text" id="loginChildId" class="login-input" maxlength="11"
+                placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
+                oninput="this.value=this.value.replace(/\D/g,'')" />
+            </div>
+          </div>
+
+          <div id="inputName" class="login-field" style="display:none">
+            <label class="login-label" id="nameLabel">Your Full Name</label>
+            <div class="login-input-wrap">
+              <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="loginName" class="login-input name-input"
+                placeholder="e.g. Juan Dela Cruz" autocomplete="off"
+                onkeydown="if(event.key==='Enter') loginStudent()" />
+            </div>
+          </div>
+
+          <p id="loginError" class="login-error"></p>
+
+          <button class="login-btn" onclick="loginStudent()">
+            Continue
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <p class="login-hint" id="loginHint">11-digit Student ID required</p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div id="appShell" class="app-shell locked">
+
+    <!-- Sidebar (desktop) -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-logo-wrap">
+          <img src="../assets/logo.png" class="sidebar-logo" alt="eTickette" />
+        </div>
+        <a class="nav-link active" data-view="home" onclick="navigate('home')" title="Home">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </a>
+        <a class="nav-link" data-view="about" onclick="navigate('about')" title="About">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>About</span>
+        </a>
+        <a class="nav-link" data-view="history" onclick="navigate('history')" title="My Ticket">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <span>My Ticket</span>
+        </a>
+        <a class="nav-link" data-view="profile" onclick="navigate('profile')" title="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </a>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>About</span>
+      </button>
+      <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>My Ticket</span>
+      </button>
+      <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </button>
+    </nav>
+
+    <div class="main" id="mainContent">
+
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" onclick="toggleMenu()" aria-label="Toggle menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-brand">
+            <img src="../assets/logo.png" class="brand-logo" alt="" />
+            <h2>eTickette</h2>
+          </div>
+        </div>
+        <div class="user" id="userDisplay" style="display:none">
+          <div class="user-avatar-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span id="userLabel">—</span>
+          <button class="btn-logout" onclick="logout()">Log out</button>
+        </div>
+      </div>
+
+      <div id="view-home" class="view active">
+
+        <div class="status-banner" id="globalStatus">
+          <div class="status-live-dot"></div>
+          <span>System is LIVE</span>
+        </div>
+
+        <div class="home-grid">
+
+          <div class="home-left">
+            <div class="poster-wrap">
+              <img src="../assets/poster.jpg" class="poster" alt="eTickette" />
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-chip">
+                <span class="stat-chip-label">Lobby Congestion</span>
+                <b id="congestionText" class="status-text open">LOW TRAFFIC</b>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-chip-label">Slots Remaining Today</span>
+                <b id="quotaText" class="stat-chip-val">— / —</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-right">
+
+            <div class="dept-card">
+              <div class="dept-card-inner">
+                <div class="dept-icon cashier-icon">
+                  <img src="../assets/cashier.png" alt="Cashier" />
                 </div>
-            </div>
-            <p class="login-footer-note">STI College Fairview · SHS IT in Mobile and Web Development · 2025</p>
-        </div>
-
-        <div class="login-right">
-            <div class="login-card">
-    <div class="login-card-header">
-    <div class="login-avatar">🎓</div>
-    <h2>Welcome</h2>
-    <p>Select your type and enter your details</p>
-    </div>
-
-    <div class="user-type-grid">
-    <div class="user-type-btn active" data-type="student" onclick="selectUserType('student')">
-        <span>🎓</span><span>Student</span>
-    </div>
-    <div class="user-type-btn" data-type="teacher" onclick="selectUserType('teacher')">
-        <span>👨‍🏫</span><span>Teacher</span>
-    </div>
-    <div class="user-type-btn" data-type="parent" onclick="selectUserType('parent')">
-        <span>👨‍👩‍👧</span><span>Parent</span>
-    </div>
-    <div class="user-type-btn" data-type="guest" onclick="selectUserType('guest')">
-        <span>👤</span><span>Guest</span>
-    </div>
-    </div>
-
-    <div class="login-form">
-    <div id="inputId" class="login-field">
-        <label class="login-label" id="idLabel">Student ID Number</label>
-        <div class="login-input-wrap">
-        <span class="login-input-icon">🪪</span>
-        <input type="text" id="loginId" class="login-input" maxlength="11"
-            placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
-            oninput="this.value=this.value.replace(/\D/g,'')"
-            onkeydown="if(event.key==='Enter') loginStudent()" />
-        </div>
-    </div>
-
-    <!-- Parent: Child's Student ID -->
-    <div id="inputParentChildId" class="login-field" style="display:none">
-        <label class="login-label">Child's Student ID</label>
-        <div class="login-input-wrap">
-        <span class="login-input-icon">🪪</span>
-        <input type="text" id="loginChildId" class="login-input" maxlength="11"
-            placeholder="e.g. 02000385394" inputmode="numeric" autocomplete="off"
-            oninput="this.value=this.value.replace(/\D/g,'')" />
-        </div>
-    </div>
-
-    <!-- Parent / Guest: Full Name -->
-    <div id="inputName" class="login-field" style="display:none">
-        <label class="login-label" id="nameLabel">Your Full Name</label>
-        <div class="login-input-wrap">
-        <span class="login-input-icon">✏️</span>
-        <input type="text" id="loginName" class="login-input name-input"
-            placeholder="e.g. Juan Dela Cruz" autocomplete="off"
-            onkeydown="if(event.key==='Enter') loginStudent()" />
-        </div>
-    </div>
-
-    <p id="loginError" class="login-error"></p>
-    <button class="login-btn" onclick="loginStudent()">
-        <span>Continue</span>
-        <span class="login-btn-arrow">→</span>
-    </button>
-    </div>
-    <p class="login-hint" id="loginHint">Student ID required</p>
-</div>
-        </div>
-
-    </div>
-
-    <div id="appShell" class="app-shell locked">
-
-        <div class="sidebar" id="sidebar">
-            <div class="icon-bar">
-                <button class="menu-btn" onclick="toggleMenu()">☰</button>
-                <img src="../assets/home.png" class="icon" onclick="navigate('home')" title="Home" />
-                <img src="../assets/about.png" class="icon" onclick="navigate('about')" title="About" />
-                <img src="../assets/ticket.png" class="icon" onclick="navigate('history')" title="My Ticket" />
-                <img src="../assets/profile.png" class="icon" onclick="navigate('profile')" title="Profile" />
-            </div>
-            <div class="slide-menu" id="slideMenu">
-                <img src="../assets/sti-logo.png" class="sti-logo" />
-                <a class="nav-link active" data-view="home" onclick="navigate('home')">
-                    <img src="../assets/home.png" />Home
-                </a>
-                <a class="nav-link" data-view="about" onclick="navigate('about')">
-                    <img src="../assets/about.png" />About
-                </a>
-                <a class="nav-link" data-view="history" onclick="navigate('history')">
-                    <img src="../assets/ticket.png" />My Ticket
-                </a>
-                <a class="nav-link" data-view="profile" onclick="navigate('profile')">
-                    <img src="../assets/profile.png" />Profile
-                </a>
-            </div>
-        </div>
-
-        <nav class="bottom-nav" id="bottomNav">
-            <button class="bottom-nav-item active" data-view="home" onclick="navigate('home')">
-        <img src="../assets/home.png" alt="Home"/>
-        Home
-    </button>
-            <button class="bottom-nav-item" data-view="about" onclick="navigate('about')">
-        <img src="../assets/about.png" alt="About"/>
-        About
-    </button>
-            <button class="bottom-nav-item" data-view="history" onclick="navigate('history')">
-        <img src="../assets/ticket.png" alt="My Ticket"/>
-        My Ticket
-    </button>
-            <button class="bottom-nav-item" data-view="profile" onclick="navigate('profile')">
-        <img src="../assets/profile.png" alt="Profile"/>
-        Profile
-    </button>
-        </nav>
-
-        <div class="main" id="mainContent">
-
-            <div class="topbar">
-                <div class="brand">
-                    <img src="../assets/logo.png" class="brand-logo" />
-                    <h2>eTickette</h2>
+                <div class="dept-details">
+                  <h3>Cashier Department</h3>
+                  <div class="dept-meta-row">
+                    <span class="dept-status open" id="cashierStatus">OPEN</span>
+                    <span class="dept-queue">Queue: <span id="cashierQueue">0</span> ahead</span>
+                  </div>
                 </div>
-                <div class="user" id="userDisplay" style="display:none">
-                    <img src="../assets/avatar.png" />
-                    <span id="userLabel">—</span>
-                    <button class="btn-logout" onclick="logout()">Log out</button>
-                </div>
-            </div>
-
-            <div id="view-home" class="view active">
-                <div class="status-banner" id="globalStatus">🟢 System is LIVE</div>
-                <div class="content">
-                    <div class="left">
-                        <img src="../assets/poster.jpg" class="poster" />
-                        <div class="info">
-                            <span>Lobby Congestion</span>
-                            <b id="congestionText" class="open">LOW TRAFFIC</b>
-                        </div>
-                        <div class="info">
-                            <span>Slots Remaining Today</span>
-                            <b id="quotaText">— / —</b>
-                        </div>
-                    </div>
-
-                    <div class="right">
-                        <div class="card">
-                            <div class="card-header">
-                                <img src="../assets/cashier.png" />
-                                <div>
-                                    <h3>Cashier Department</h3>
-                                    <p>Status: <span id="cashierStatus" class="open">OPEN</span></p>
-                                    <p class="queue-count">Queue: <span id="cashierQueue">0</span> ahead</p>
-                                </div>
-                            </div>
-                            <button class="btn-primary" id="cashierBtn" onclick="openReserveModal('cashier')">
+              </div>
+              <button class="btn-reserve" id="cashierBtn" onclick="openReserveModal('cashier')">
                 RESERVE CASHIER TICKET
-            </button>
-                        </div>
+              </button>
+            </div>
 
-                        <div class="card">
-                            <div class="card-header">
-                                <img src="../assets/registrar.png" />
-                                <div>
-                                    <h3>Registrar Department</h3>
-                                    <p>Status: <span id="registrarStatus" class="open">OPEN</span></p>
-                                    <p class="queue-count">Queue: <span id="registrarQueue">0</span> ahead</p>
-                                </div>
-                            </div>
-                            <button class="btn-primary" id="registrarBtn" onclick="openReserveModal('registrar')">
+            <div class="dept-card">
+              <div class="dept-card-inner">
+                <div class="dept-icon registrar-icon">
+                  <img src="../assets/registrar.png" alt="Registrar" />
+                </div>
+                <div class="dept-details">
+                  <h3>Registrar Department</h3>
+                  <div class="dept-meta-row">
+                    <span class="dept-status open" id="registrarStatus">OPEN</span>
+                    <span class="dept-queue">Queue: <span id="registrarQueue">0</span> ahead</span>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-reserve" id="registrarBtn" onclick="openReserveModal('registrar')">
                 RESERVE REGISTRAR TICKET
-            </button>
-                        </div>
-                    </div>
-                </div>
+              </button>
             </div>
 
-            <div id="view-history" class="view">
-                <div class="page-card">
-                    <h2>My Ticket</h2>
-                    <div id="historyList">
-                        <p class="subtle">Loading…</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-about" class="view">
-                <div class="page-card">
-                    <h2>About eTickette</h2>
-                    <p>eTickette is a <strong>Hybrid Smart Queue Management System</strong> for STI College Fairview.</p>
-                    <ul class="about-list">
-                        <li>Reserve a slot online before coming to school</li>
-                        <li>Get a QR code — scan at the Kiosk when you arrive</li>
-                        <li>Queue number is only issued when you scan at the Kiosk</li>
-                        <li>Track your queue live from your phone</li>
-                    </ul>
-                    <p class="subtle">STI SHS – IT in Mobile &amp; Web App Development · 2025</p>
-                </div>
-            </div>
-
-            <div id="view-profile" class="view">
-                <div class="page-card">
-                    <h2>Profile</h2>
-                    <div id="profileInfo"></div>
-                </div>
-            </div>
-
+          </div>
         </div>
+      </div>
+
+      <div id="view-history" class="view">
+        <div class="page-card">
+          <h2>My Ticket</h2>
+          <div id="historyList">
+            <p class="subtle">Loading…</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-about" class="view">
+        <div class="page-card">
+          <h2>About eTickette</h2>
+          <p>eTickette is a <strong>Hybrid Smart Queue Management System</strong> for STI College Fairview.</p>
+          <ul class="about-list">
+            <li>Reserve a slot online before coming to school</li>
+            <li>Get a QR code — scan at the Kiosk when you arrive</li>
+            <li>Queue number is only issued when you scan at the Kiosk</li>
+            <li>Track your queue live from your phone</li>
+          </ul>
+          <p class="subtle">STI SHS – IT in Mobile &amp; Web App Development · 2025</p>
+        </div>
+      </div>
+
+      <div id="view-profile" class="view">
+        <div class="page-card">
+          <h2>Profile</h2>
+          <div id="profileInfo"></div>
+        </div>
+      </div>
+
     </div>
 
-<div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
+  </div>
+
+  <div class="modal-overlay" id="reserveModal" onclick="handleOverlay(event,'reserveModal')">
     <div class="modal">
-        <button class="modal-close" onclick="closeModal('reserveModal')">✕</button>
-        <div class="modal-dept-tag" id="reserveDeptTag">CASHIER</div>
-        <h2 id="reserveTitle">Reserve a Ticket</h2>
 
-        <div class="step-indicator">
-            <div class="step-dot active" id="rdot1"></div>
-            <div class="step-line"></div>
-            <div class="step-dot" id="rdot2"></div>
-            <div class="step-line"></div>
-            <div class="step-dot" id="rdot3"></div>
-            <div class="step-line"></div>
-            <div class="step-dot" id="rdot4"></div>
+      <div class="modal-header">
+        <div>
+          <div class="modal-dept-chip" id="reserveDeptTag">CASHIER</div>
+          <h2 id="reserveTitle">Reserve a Ticket</h2>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('reserveModal')" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="step-track">
+        <div class="step-pip active" id="rdot1"></div>
+        <div class="step-line"></div>
+        <div class="step-pip" id="rdot2"></div>
+        <div class="step-line"></div>
+        <div class="step-pip" id="rdot3"></div>
+        <div class="step-line"></div>
+        <div class="step-pip" id="rdot4"></div>
+      </div>
+
+      <div id="rstep1" class="modal-step active">
+        <p class="step-section-label">What do you need?</p>
+        <div id="reserveReasonList" class="reason-list"></div>
+      </div>
+
+      <div id="rstep2" class="modal-step">
+        <p class="step-section-label">
+          Bring these documents to the <strong id="docsForDept">Cashier</strong>:
+        </p>
+        <div id="requiredDocsList" class="docs-list"></div>
+        <p class="subtle" style="margin-bottom:18px">Make sure you have all documents ready before your visit.</p>
+        <button class="btn-primary" onclick="rGoStep(3)">
+          Next — Pick a Date
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn-ghost" onclick="rGoStep(1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+      </div>
+
+      <div id="rstep3" class="modal-step">
+        <p class="step-section-label">Pick a date for your visit:</p>
+
+        <div class="cal-trigger" id="calTrigger" onclick="calToggle()" tabindex="0" role="button" aria-label="Select date">
+          <svg class="cal-trigger-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span id="calDisplay" class="cal-trigger-text">Select a date</span>
+          <svg class="cal-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
 
-        <div id="rstep1" class="modal-step active">
-            <p class="step-label">What do you need?</p>
-            <div id="reserveReasonList" class="reason-list"></div>
+        <input type="hidden" id="reserveDate" />
+
+        <div class="cal-panel" id="calPanel" style="display:none">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="calPrev()" aria-label="Previous month">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="cal-month-label" id="calMonthYear">March 2026</span>
+            <button class="cal-nav-btn" onclick="calNext()" aria-label="Next month">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="cal-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
         </div>
 
-        <div id="rstep2" class="modal-step">
-            <p class="step-label">Bring these documents to the <strong id="docsForDept">Cashier</strong>:</p>
-            <div id="requiredDocsList" class="docs-list"></div>
-            <p class="subtle" style="margin-bottom:16px">Make sure you have all documents ready before your visit.</p>
-            <button class="btn-primary" onclick="rGoStep(3)">Next → Pick a Date</button>
-            <button class="btn-ghost" onclick="rGoStep(1)">← Back</button>
-        </div>
+        <p id="dateError" class="error-msg"></p>
 
-        <div id="rstep3" class="modal-step">
-            <p class="step-label">Pick a date:</p>
-            <input type="date" id="reserveDate" class="modal-input" />
-            <p id="dateError" class="error-msg"></p>
-            <button class="btn-primary" onclick="submitReserveDate()">Reserve →</button>
-            <button class="btn-ghost" onclick="rGoStep(2)">← Back</button>
-        </div>
+        <button class="btn-primary" onclick="submitReserveDate()" style="margin-top:8px">
+          Reserve
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn-ghost" onclick="rGoStep(2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+      </div>
 
-        <div id="rstep4" class="modal-step">
-            <div class="success-anim">✅</div>
-            <h3 style="text-align:center">Reservation Confirmed!</h3>
-            <p id="reserveSummary" class="subtle" style="text-align:center;margin-bottom:12px"></p>
-            <div id="reserveQR" class="qr-center"></div>
-            <p class="subtle" style="text-align:center;margin-top:8px">
-                Screenshot or save this QR code.<br/> Scan it at the <strong>Lobby Kiosk</strong> when you arrive.
-            </p>
-            <div class="qr-warning">
-                ⚠️ Your queue number is <strong>NOT yet assigned</strong>.<br/> You must scan this QR at the Kiosk to get your number.
-            </div>
-            <button class="btn-primary" style="margin-top:16px" onclick="closeModal('reserveModal')">Done</button>
+      <div id="rstep4" class="modal-step">
+        <div class="confirm-icon-wrap">
+          <div class="confirm-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
         </div>
+        <h3 class="confirm-title">Reservation Confirmed!</h3>
+        <p id="reserveSummary" class="subtle confirm-summary"></p>
+        <div id="reserveQR" class="qr-center"></div>
+        <p class="subtle qr-hint">Screenshot or save this QR code.</p>
+        <div class="qr-warning">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Your queue number is <strong>NOT yet assigned</strong>Scan this QR at the Kiosk to get your number.
+        </div>
+        <button class="btn-primary" style="margin-top:18px" onclick="closeModal('reserveModal')">Done</button>
+      </div>
+
     </div>
-</div>
+  </div>
 
-    <div id="toast" class="toast"></div>
+  <div id="toast" class="toast"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script type="module">
-        import { initWebsite } from './js/app.js?v=3'; initWebsite();
-    </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    (function () {
+      var calState = {
+        year: 0,
+        month: 0,
+        selected: null,
+        open: false
+      };
+
+    function todayPH() {
+        var s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        var p = s.split('-');
+        return new Date(+p[0], +p[1] - 1, +p[2]);
+    }
+
+      function pad2(n) { return String(n).padStart(2, '0'); }
+
+      function toDateStr(y, m, d) {
+        return y + '-' + pad2(m + 1) + '-' + pad2(d);
+      }
+
+      function toDisplayStr(dateStr) {
+        if (!dateStr) return '';
+        var parts = dateStr.split('-');
+        var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+        return d.toLocaleDateString('en-PH', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
+      function initCal() {
+        var t = todayPH();
+        calState.year = t.getFullYear();
+        calState.month = t.getMonth();
+        calState.selected = null;
+        calState.open = false;
+      }
+
+      function renderCal() {
+        var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        var lbl = document.getElementById('calMonthYear');
+        if (lbl) lbl.textContent = months[calState.month] + ' ' + calState.year;
+
+        var grid = document.getElementById('calGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        var today = todayPH();
+        var firstDay = new Date(calState.year, calState.month, 1).getDay();
+        var daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
+
+        for (var i = 0; i < firstDay; i++) {
+          var blank = document.createElement('div');
+          blank.className = 'cal-day cal-day-blank';
+          grid.appendChild(blank);
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+          var cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'cal-day';
+          cell.textContent = d;
+
+          var thisDate = new Date(calState.year, calState.month, d);
+          var dateStr = toDateStr(calState.year, calState.month, d);
+
+          if (thisDate < today) {
+            cell.classList.add('cal-day-disabled');
+            cell.disabled = true;
+          } else {
+            if (thisDate.toDateString() === today.toDateString()) {
+              cell.classList.add('cal-day-today');
+            }
+            if (dateStr === calState.selected) {
+              cell.classList.add('cal-day-selected');
+            }
+            (function(ds) {
+              cell.onclick = function () { calSelect(ds); };
+            })(dateStr);
+          }
+
+          grid.appendChild(cell);
+        }
+      }
+
+      function calSelect(dateStr) {
+        calState.selected = dateStr;
+        var inp = document.getElementById('reserveDate');
+        if (inp) inp.value = dateStr;
+        var disp = document.getElementById('calDisplay');
+        if (disp) {
+          disp.textContent = toDisplayStr(dateStr);
+          disp.classList.add('cal-trigger-text--filled');
+        }
+        var err = document.getElementById('dateError');
+        if (err) err.textContent = '';
+        calClose();
+        renderCal();
+      }
+
+      window.calToggle = function () {
+        if (calState.open) { calClose(); } else { calOpen(); }
+      };
+
+      function calOpen() {
+        calState.open = true;
+        var panel = document.getElementById('calPanel');
+        if (panel) {
+          panel.style.display = 'block';
+          renderCal();
+        }
+        var trigger = document.getElementById('calTrigger');
+        if (trigger) trigger.classList.add('cal-trigger--open');
+        var arrow = trigger && trigger.querySelector('.cal-trigger-arrow');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+        setTimeout(function () {
+          document.addEventListener('click', calOutsideClick);
+        }, 10);
+      }
+
+      function calClose() {
+        calState.open = false;
+        var panel = document.getElementById('calPanel');
+        if (panel) panel.style.display = 'none';
+        var trigger = document.getElementById('calTrigger');
+        if (trigger) trigger.classList.remove('cal-trigger--open');
+        var arrow = trigger && trigger.querySelector('.cal-trigger-arrow');
+        if (arrow) arrow.style.transform = '';
+        document.removeEventListener('click', calOutsideClick);
+      }
+
+      function calOutsideClick(e) {
+        var panel = document.getElementById('calPanel');
+        var trigger = document.getElementById('calTrigger');
+        if (panel && !panel.contains(e.target) && trigger && !trigger.contains(e.target)) {
+          calClose();
+        }
+      }
+
+      window.calPrev = function () {
+        calState.month--;
+        if (calState.month < 0) { calState.month = 11; calState.year--; }
+        renderCal();
+      };
+
+      window.calNext = function () {
+        calState.month++;
+        if (calState.month > 11) { calState.month = 0; calState.year++; }
+        renderCal();
+      };
+
+      var _origOpenReserveModal = null;
+      function hookOpenModal() {
+        if (window.openReserveModal && !window._calHooked) {
+          window._calHooked = true;
+          var orig = window.openReserveModal;
+          window.openReserveModal = function (dept) {
+            initCal();
+            var disp = document.getElementById('calDisplay');
+            if (disp) { disp.textContent = 'Select a date'; disp.classList.remove('cal-trigger-text--filled'); }
+            var inp = document.getElementById('reserveDate');
+            if (inp) inp.value = '';
+            calClose();
+            orig(dept);
+          };
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        initCal();
+        var attempts = 0;
+        var timer = setInterval(function () {
+          hookOpenModal();
+          if (window._calHooked || ++attempts > 20) clearInterval(timer);
+        }, 100);
+      });
+    })();
+  </script>
+
+  <script type="module">
+    import { initWebsite } from './js/app.js?v=3';
+    initWebsite();
+  </script>
+
 </body>
-
 </html>

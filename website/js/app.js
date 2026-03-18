@@ -415,7 +415,7 @@ function renderActiveResBanner(res, rid) {
     banner.dataset.bannerType    = 'reservation';
     banner.innerHTML = `
     <div class="active-res-header">
-      <span>📋 Active Reservation</span>
+      <span>Active Reservation</span>
       ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
     </div>
     <div class="active-res-body">
@@ -465,7 +465,7 @@ function renderActiveWalkinBanner(ticket) {
     banner.className          = 'active-res-banner';
     banner.dataset.bannerType = 'walkin';
     banner.innerHTML = `
-    <div class="active-res-header"><span>🎫 Active Ticket</span></div>
+    <div class="active-res-header"><span>Active Ticket</span></div>
     <div class="active-res-body">
       <div class="active-res-info">
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
