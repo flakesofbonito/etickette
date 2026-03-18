@@ -1,182 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>eTickette – Lobby Monitor</title>
-    <link rel="stylesheet" href="monitor.css" />
-    <link rel="icon" href="../assets/logo.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-    <style>
-        .monitor-gate {
-            position: fixed; inset: 0;
-            background: #0f1f5c;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .gate-box {
-            background: #fff; border-radius: 20px;
-            padding: 40px 36px; max-width: 380px; width: 90%;
-            text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.4);
-        }
-        .gate-logo { width: 56px; margin-bottom: 12px; }
-        .gate-box h2 { font-size: 22px; font-weight: 800; color: #1f3c88; margin-bottom: 4px; }
-        .gate-box p  { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
-        .gate-input {
-            width: 100%; padding: 14px 16px;
-            border: 2px solid #e5e7eb; border-radius: 12px;
-            font-size: 28px; font-weight: 700; letter-spacing: 10px;
-            text-align: center; color: #1f3c88;
-            font-family: inherit; margin-bottom: 10px;
-            transition: border-color .2s;
-        }
-        .gate-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
-        .gate-err { color: #dc2626; font-size: 13px; min-height: 18px; margin-bottom: 10px; }
-        .gate-btn {
-            width: 100%; padding: 14px;
-            background: linear-gradient(90deg, #2563eb, #1f3c88);
-            border: none; border-radius: 12px;
-            color: #fff; font-size: 16px; font-weight: 700;
-            cursor: pointer; font-family: inherit; transition: opacity .2s;
-        }
-        .gate-btn:hover { opacity: .9; }
-        .gate-hint { font-size: 11px; color: #9ca3af; margin-top: 14px; }
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            20%,60%  { transform: translateX(-8px); }
-            40%,80%  { transform: translateX(8px); }
-        }
-        .gate-input.shake { animation: shake .35s ease; }
-
-
-        #monitorContent {
-            display: none;
-        }
-        #monitorContent.unlocked {
-            display: contents; 
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eTickette – Lobby Monitor</title>
+  <link rel="stylesheet" href="monitor.css" />
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-    <div class="monitor-gate" id="monitorGate">
-        <div class="gate-box">
-            <img src="../assets/sti-logo.png" class="gate-logo" alt="STI" />
-            <h2>Lobby Monitor</h2>
-            <p>Enter the monitor PIN to display the live queue screen</p>
-            <input
-                type="password"
-                id="gatePinInput"
-                class="gate-input"
-                placeholder="••••"
-                maxlength="6"
-                inputmode="numeric"
-            />
-            <p class="gate-err" id="gateErr"></p>
-            <button class="gate-btn" id="gateBtn">Open Monitor →</button>
-            <p class="gate-hint">This screen is intended for the lobby display computer only</p>
+  <div class="monitor-gate" id="monitorGate">
+    <div class="gate-box">
+      <img src="../assets/sti-logo.png" class="gate-logo" alt="STI" />
+      <h2>Lobby Monitor</h2>
+      <p>Enter the monitor PIN to display the live queue screen</p>
+      <input
+        type="password"
+        id="gatePinInput"
+        class="gate-input"
+        placeholder="••••"
+        maxlength="6"
+        inputmode="numeric"
+      />
+      <p class="gate-err" id="gateErr"></p>
+      <button class="gate-btn" id="gateBtn">Open Monitor →</button>
+      <p class="gate-hint">This screen is intended for the lobby display computer only</p>
+    </div>
+  </div>
+
+  <div id="monitorContent">
+
+    <div class="monitor-header">
+      <div class="monitor-header-brand">
+        <img src="../assets/sti-logo.png" class="monitor-logo" />
+        <div class="monitor-title">
+          <h1>eTickette</h1>
+          <p>STI College Fairview — Queue Monitor</p>
         </div>
+      </div>
+      <div class="monitor-header-right">
+        <div class="monitor-live-badge">
+          <span class="monitor-live-dot"></span>
+          LIVE
+        </div>
+        <div class="monitor-time" id="monitorTime">00:00:00</div>
+      </div>
     </div>
 
-    <div id="monitorContent">
-        <div class="monitor-header">
-            <img src="../assets/sti-logo.png" class="monitor-logo" />
-            <div class="monitor-title">
-                <h1>eTickette</h1>
-                <p>STI College Fairview — Queue Monitor</p>
-            </div>
-            <div class="monitor-time" id="monitorTime">00:00:00</div>
+    <div class="monitor-grid">
+
+      <div class="dept-panel" id="cashierPanel">
+        <div class="dept-panel-header cashier-header">
+          <div class="dept-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <path d="M2 10h20"/>
+              <path d="M6 15h4M14 15h4"/>
+            </svg>
+          </div>
+          <div class="dept-label-group">
+            <div class="dept-name">CASHIER</div>
+            <div class="dept-status" id="cashierMonStatus">OPEN</div>
+          </div>
         </div>
 
-        <div class="monitor-grid">
-            <div class="dept-panel" id="cashierPanel">
-                <div class="dept-label cashier-label">💰 CASHIER</div>
-                <div class="dept-status" id="cashierMonStatus">OPEN</div>
-                <div class="now-serving-label">Now Serving</div>
-                <div class="now-serving-number" id="cashierNow">—</div>
-                <div class="next-label">Next in Line</div>
-                <div class="next-list" id="cashierNext">
-                    <span class="next-item empty">No tickets yet</span>
-                </div>
-                <div class="queue-total">Total in queue: <strong id="cashierTotal">0</strong></div>
-            </div>
-
-            <div class="monitor-divider"></div>
-
-            <div class="dept-panel" id="registrarPanel">
-                <div class="dept-label registrar-label">📋 REGISTRAR</div>
-                <div class="dept-status" id="registrarMonStatus">OPEN</div>
-                <div class="now-serving-label">Now Serving</div>
-                <div class="now-serving-number" id="registrarNow">—</div>
-                <div class="next-label">Next in Line</div>
-                <div class="next-list" id="registrarNext">
-                    <span class="next-item empty">No tickets yet</span>
-                </div>
-                <div class="queue-total">Total in queue: <strong id="registrarTotal">0</strong></div>
-            </div>
+        <div class="now-serving-section">
+          <div class="now-serving-label">NOW SERVING</div>
+          <div class="now-serving-number" id="cashierNow">—</div>
         </div>
 
-        <div class="monitor-footer">
-            <span id="footerStatus">🟢 System Live</span>
-            <span>Please wait for your number to be called at the window</span>
-            <span id="footerQuota">Slots: — / —</span>
+        <div class="next-section">
+          <div class="next-label">NEXT IN LINE</div>
+          <div class="next-list" id="cashierNext">
+            <span class="next-item empty">No tickets yet</span>
+          </div>
         </div>
+
+        <div class="dept-panel-footer">
+          <span>Total in queue:</span>
+          <strong id="cashierTotal">0</strong>
+        </div>
+      </div>
+
+      <div class="monitor-divider"></div>
+
+      <div class="dept-panel" id="registrarPanel">
+        <div class="dept-panel-header registrar-header">
+          <div class="dept-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+            </svg>
+          </div>
+          <div class="dept-label-group">
+            <div class="dept-name">REGISTRAR</div>
+            <div class="dept-status" id="registrarMonStatus">OPEN</div>
+          </div>
+        </div>
+
+        <div class="now-serving-section">
+          <div class="now-serving-label">NOW SERVING</div>
+          <div class="now-serving-number" id="registrarNow">—</div>
+        </div>
+
+        <div class="next-section">
+          <div class="next-label">NEXT IN LINE</div>
+          <div class="next-list" id="registrarNext">
+            <span class="next-item empty">No tickets yet</span>
+          </div>
+        </div>
+
+        <div class="dept-panel-footer">
+          <span>Total in queue:</span>
+          <strong id="registrarTotal">0</strong>
+        </div>
+      </div>
+
     </div>
 
-    <script type="module">
-        import { initMonitor } from './js/monitor.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <div class="monitor-footer">
+      <span id="footerStatus">🟢 System Live</span>
+      <span class="footer-divider">·</span>
+      <span>Please wait for your number to be called at the window</span>
+      <span class="footer-divider">·</span>
+      <span id="footerQuota">Slots: — / —</span>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-            authDomain: "etickette-78f74.firebaseapp.com",
-            projectId: "etickette-78f74",
-            storageBucket: "etickette-78f74.firebasestorage.app",
-            messagingSenderId: "147547566302",
-            appId: "1:147547566302:web:2c7a52792b539331d8524f"
-        };
+  </div>
 
-        let monitorPin = '1234';
-        try {
-            const app  = initializeApp(firebaseConfig, 'gate');
-            const db   = getFirestore(app);
-            const snap = await getDoc(doc(db, 'system', 'settings'));
-            if (snap.exists() && snap.data().monitorPin) monitorPin = snap.data().monitorPin;
-        } catch (e) { console.warn('[Monitor gate] Using default PIN'); }
+  <script type="module">
+    import { initMonitor } from './js/monitor.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        function unlockMonitor() {
-            const pin   = document.getElementById('gatePinInput').value.trim();
-            const err   = document.getElementById('gateErr');
-            const input = document.getElementById('gatePinInput');
+    const firebaseConfig = {
+      apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
+      authDomain: "etickette-78f74.firebaseapp.com",
+      projectId: "etickette-78f74",
+      storageBucket: "etickette-78f74.firebasestorage.app",
+      messagingSenderId: "147547566302",
+      appId: "1:147547566302:web:2c7a52792b539331d8524f"
+    };
 
-            if (pin !== monitorPin) {
-                err.textContent = 'Incorrect PIN. Try again.';
-                input.value = '';
-                input.classList.remove('shake');
-                void input.offsetWidth;
-                input.classList.add('shake');
-                return;
-            }
+    let monitorPin = '1234';
+    try {
+      const app = initializeApp(firebaseConfig, 'gate');
+      const db = getFirestore(app);
+      const snap = await getDoc(doc(db, 'system', 'settings'));
+      if (snap.exists() && snap.data().monitorPin) monitorPin = snap.data().monitorPin;
+    } catch (e) { console.warn('[Monitor gate] Using default PIN'); }
 
-            document.getElementById('monitorGate').style.display = 'none';
-            document.getElementById('monitorContent').classList.add('unlocked');
-            sessionStorage.setItem('monitorUnlocked', '1');
-            initMonitor();
-        }
+    function unlockMonitor() {
+      const pin = document.getElementById('gatePinInput').value.trim();
+      const err = document.getElementById('gateErr');
+      const input = document.getElementById('gatePinInput');
 
-        document.getElementById('gateBtn').addEventListener('click', unlockMonitor);
-        document.getElementById('gatePinInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') unlockMonitor();
-        });
+      if (pin !== monitorPin) {
+        err.textContent = 'Incorrect PIN. Try again.';
+        input.value = '';
+        input.classList.remove('shake');
+        void input.offsetWidth;
+        input.classList.add('shake');
+        return;
+      }
 
-        if (sessionStorage.getItem('monitorUnlocked') === '1') {
-            document.getElementById('monitorGate').style.display = 'none';
-            document.getElementById('monitorContent').classList.add('unlocked');
-            initMonitor();
-        }
-    </script>
+      document.getElementById('monitorGate').style.display = 'none';
+      document.getElementById('monitorContent').classList.add('unlocked');
+      sessionStorage.setItem('monitorUnlocked', '1');
+      initMonitor();
+    }
+
+    document.getElementById('gateBtn').addEventListener('click', unlockMonitor);
+    document.getElementById('gatePinInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') unlockMonitor();
+    });
+
+    if (sessionStorage.getItem('monitorUnlocked') === '1') {
+      document.getElementById('monitorGate').style.display = 'none';
+      document.getElementById('monitorContent').classList.add('unlocked');
+      initMonitor();
+    }
+  </script>
 </body>
 </html>
