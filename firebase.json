@@ -1,6 +1,9 @@
 {
   "hosting": {
+    "site": "etickette",
     "public": ".",
+    "cleanUrls": true,
+    "trailingSlash": true,
     "ignore": [
       "firebase.json",
       "**/.*",
