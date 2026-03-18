@@ -415,19 +415,19 @@ function renderActiveResBanner(res, rid) {
     banner.dataset.bannerType    = 'reservation';
     banner.innerHTML = `
     <div class="active-res-header">
-      <span>Active Reservation</span>
-      ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
+        <span>Active Reservation</span>
+        ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
     </div>
     <div class="active-res-body">
-      <div class="active-res-info">
+        <div class="active-res-info">
         <p><strong>Department:</strong> ${res.department.toUpperCase()}</p>
         <p><strong>Reason:</strong> ${res.reason}</p>
         <p><strong>Date:</strong> ${res.reservationDate}</p>
         ${ticketLine}
         <p><strong>Status:</strong> ${statusLabel}</p>
         ${res.status === 'pending' ? '<p class="subtle" style="margin-top:8px">Scan the QR below at the Kiosk when you arrive.</p>' : ''}
-      </div>
-      ${res.status === 'pending' ? '<div id="bannerQR" class="qr-center banner-qr"></div>' : ''}
+        </div>
+        ${res.status === 'pending' ? '<div id="bannerQR" class="qr-center banner-qr"></div>' : ''}
     </div>
     ${trackingCard}`;
 
@@ -453,11 +453,11 @@ function renderActiveWalkinBanner(ticket) {
     const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
     const trackingCard = `
     <div class="tracking-card">
-      <span class="tracking-label">🔴 Live Queue Tracker</span>
-      <div class="tracking-actions">
-        <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
-        <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
-      </div>
+        <span class="tracking-label">🔴 Live Queue Tracker</span>
+        <div class="tracking-actions">
+            <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
+            <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
+        </div>
     </div>`;
 
     const banner = document.createElement('div');
@@ -467,11 +467,11 @@ function renderActiveWalkinBanner(ticket) {
     banner.innerHTML = `
     <div class="active-res-header"><span>Active Ticket</span></div>
     <div class="active-res-body">
-      <div class="active-res-info">
+        <div class="active-res-info">
         <p><strong>Department:</strong> ${ticket.department.toUpperCase()}</p>
         <p><strong>Ticket #:</strong> <span style="font-size:1.6em;font-weight:900;color:#1f3c88">${ticket.ticketNumber}</span></p>
         <p><strong>Status:</strong> ${statusLabel}</p>
-      </div>
+        </div>
     </div>
     ${trackingCard}`;
 
@@ -681,9 +681,9 @@ async function loadHistory() {
         const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
         const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
         el.innerHTML += `<div class="history-item">
-          <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
-          <span class="subtle">Walk-in · ${date}</span></div>
-          <span class="${cls}">${t.status.toUpperCase()}</span>
+            <div><strong>🎫 ${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
+            <span class="subtle">Walk-in · ${date}</span></div>
+            <span class="${cls}">${t.status.toUpperCase()}</span>
         </div>`;
         hasHistory = true;
     });
@@ -693,9 +693,9 @@ async function loadHistory() {
         if (r.status === 'pending' || r.status === 'active') return;
         const cls = r.status === 'cancelled' ? 'closed' : 'open';
         el.innerHTML += `<div class="history-item">
-          <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
-          <span class="subtle">Reservation · ${r.reservationDate}</span></div>
-          <span class="${cls}">${r.status.toUpperCase()}</span>
+            <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
+            <span class="subtle">Reservation · ${r.reservationDate}</span></div>
+            <span class="${cls}">${r.status.toUpperCase()}</span>
         </div>`;
         hasHistory = true;
     });
