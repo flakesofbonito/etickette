@@ -250,7 +250,7 @@ function renderQueue(waiting) {
     item.innerHTML = `
       <div class="queue-num">${t.ticketNumber}</div>
       <div class="queue-details">
-        <div class="q-name">${t.displayName || t.userId || '—'}</div>
+        <div class="q-name">${t.userId || t.displayName || '—'}</div>
         <div class="q-reason">${t.reason || '—'}</div>
         <div class="q-time">Issued: ${time}</div>
       </div>
@@ -262,8 +262,7 @@ function renderQueue(waiting) {
 
 function renderServing(ticket, isNew = true) {
   document.getElementById('servingNumber').textContent = ticket.ticketNumber;
-  document.getElementById('servingUserId').textContent = '👤 ' + (ticket.displayName || ticket.userId || '—');
-  document.getElementById('servingReason').textContent = '📝 ' + (ticket.reason || '—');
+  document.getElementById('servingUserId').textContent = '🪪 Student No: ' + (ticket.userId || ticket.displayName || '—');  document.getElementById('servingReason').textContent = '📝 ' + (ticket.reason || '—');
   document.getElementById('servingType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
   document.getElementById('btnComplete').disabled      = false;
   document.getElementById('btnNoshow').disabled        = false;

@@ -20,20 +20,35 @@ const PRINTER_URL = 'http://localhost:8000/print';
 
 const REASONS = {
     cashier: [
-        { label: "Pay Tuition / Fees",       docs: ["Valid ID", "Statement of Account"] },
-        { label: "Pay Miscellaneous Fees",    docs: ["Valid ID", "Fee Slip"] },
+        { label: "Pay Tuition / Fees",       docs: ["Valid ID"] },
         { label: "Request Official Receipt",  docs: ["Valid ID", "Proof of Payment"] },
-        { label: "Scholarship Clearance",     docs: ["Valid ID", "Grant Letter"] },
         { label: "Other",                     docs: [] }
     ],
     registrar: [
-        { label: "Request Transcript (TOR)",   docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Certificate of Enrollment",  docs: ["Valid ID", "Request Form"] },
-        { label: "Certificate of Graduation",  docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Form 137 / 138",             docs: ["Valid ID", "Request Form"] },
-        { label: "Diploma / Authentication",   docs: ["Valid ID", "Claim Stub"] },
-        { label: "Other",                      docs: [] }
-    ]
+        { category: "College Graduates" },
+        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "Diploma / Authentication",         docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "Certificate of Graduation",        docs: ["Valid ID", "Graduating Clearance"] },
+
+        { category: "SHS Graduates" },
+        { label: "Form 137 / 138",                  docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "Diploma",                          docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "CTC of Report Card",               docs: ["Valid ID", "Graduating Clearance"] },
+
+        { category: "Ongoing Students" },
+        { label: "Certificate of Enrollment",        docs: ["School ID or RAF"] },
+        { label: "CTC of Report Card",               docs: ["School ID or RAF"] },
+        { label: "Statement of Account",             docs: ["School ID or RAF"] },
+        { label: "Registration Form",                docs: ["School ID", "Official Receipt"] },
+
+        { category: "Undergraduate (Transferees)" },
+        { label: "Transcript of Records (TOR)",      docs: ["School ID", "Exit Clearance"] },
+        { label: "Certificate of Enrollment",      docs: ["School ID", "Exit Clearance"] },
+        { label: "Copy of Grades",                   docs: ["School ID", "Exit Clearance"] },
+
+        { category: "Other" },
+        { label: "Other",                            docs: ["Valid ID or School ID"] }
+    ], 
 };
 
 let app, db;
@@ -248,6 +263,13 @@ function buildReasonList() {
     if (deptLbl) deptLbl.textContent = selectedDept.toUpperCase();
 
     (REASONS[selectedDept] || []).forEach((r, i) => {
+        if (r.category) {
+            const header = document.createElement('div');
+            header.className = 'reason-category-header';
+            header.textContent = r.category;
+            list.appendChild(header);
+            return;
+        }
         const btn = document.createElement('button');
         btn.className   = 'reason-btn';
         btn.textContent = r.label;
@@ -324,9 +346,10 @@ async function submitId() {
     buildReasonList();
     goScreen('reason');
 }
-
 function selectReason(idx) {
-    selectedReason = REASONS[selectedDept][idx];
+    const item = REASONS[selectedDept][idx];
+    if (!item || item.category) return;
+    selectedReason = item;
     const trigger  = document.getElementById('reasonTriggerText');
     if (trigger && selectedReason) trigger.textContent = selectedReason.label;
 }
@@ -343,7 +366,7 @@ function submitReason() {
 
 function showDocsScreen(reason) {
     const btn = document.querySelector('#screen-docs .kiosk-submit-btn');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
 
     const lbl = document.getElementById('docsReasonLabel');
     if (lbl) lbl.textContent = selectedDept.toUpperCase() + ' — ' + reason.label;
@@ -380,7 +403,7 @@ async function issueTicket(userId) {
             where('studentId', '==', userId), where('status', 'in', ['pending', 'active'])
         ));
         if (!resCheck.empty) {
-            if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
             alert('You have a pending reservation. Please scan your QR code instead.');
             goScreen('home'); return;
         }
@@ -393,7 +416,7 @@ async function issueTicket(userId) {
         const sSnap = await getDoc(doc(db, 'system', 'settings'));
         const sData = sSnap.data();
         if ((sData.ticketsIssued || 0) >= (sData.dailyQuota || 100)) {
-            if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
             alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
             goScreen('home');
             return;
@@ -401,7 +424,7 @@ async function issueTicket(userId) {
 
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
-            if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
             alert('You already have ticket ' + t.ticketNumber + ' in the queue.');
             goScreen('home'); return;
         }
@@ -436,7 +459,7 @@ async function issueTicket(userId) {
 
     } catch (e) {
         console.error(e);
-        if (btn) { btn.disabled = false; btn.textContent = '✅ I Have All Documents — Get Ticket'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
         alert('Error issuing ticket. Please try again.');
     }
 }

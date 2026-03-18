@@ -1372,3 +1372,16 @@ body.dark {
   background: #dbeafe;
   border-color: var(--blue-light);
 }
+
+.reason-category-header {
+  padding: 8px 14px 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--blue-deep);
+  background: #eff6ff;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  cursor: default;
+}

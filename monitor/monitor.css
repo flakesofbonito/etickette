@@ -197,14 +197,22 @@ body {
 }
 
 .queue-total {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-sub);
   background: var(--bg);
-  padding: 6px 16px;
+  padding: 10px 24px;
   border-radius: 20px;
   border: 1px solid var(--border);
+  margin-top: 8px;
 }
-.queue-total strong { color: var(--blue-deep); }
+.queue-total strong {
+  color: var(--blue-deep);
+  font-size: 28px;
+  font-weight: 900;
+  display: block;
+  text-align: center;
+  margin-top: 2px;
+}
 
 .monitor-footer {
   display: flex;

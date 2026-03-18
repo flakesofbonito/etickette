@@ -16,20 +16,34 @@ const firebaseConfig = {
 
 const REASONS = {
     cashier: [
-        { label: "Pay Tuition / Fees",       docs: ["Valid ID", "Statement of Account"] },
-        { label: "Pay Miscellaneous Fees",    docs: ["Valid ID", "Fee Slip"] },
+        { label: "Pay Tuition / Fees",       docs: ["Valid ID"] },
         { label: "Request Official Receipt",  docs: ["Valid ID", "Proof of Payment"] },
-        { label: "Scholarship Clearance",     docs: ["Valid ID", "Grant Letter"] },
         { label: "Other",                     docs: [] }
     ],
     registrar: [
-        { label: "Request Transcript (TOR)",      docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Certificate of Enrollment",     docs: ["Valid ID", "Request Form"] },
-        { label: "Certificate of Graduation",     docs: ["Valid ID", "Request Form", "Clearance"] },
-        { label: "Form 137 / 138",                docs: ["Valid ID", "Request Form"] },
-        { label: "Diploma / Authentication",      docs: ["Valid ID", "Claim Stub"] },
-        { label: "Other",                         docs: [] }
-    ]
+        { category: "College Graduates" },
+        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+        { label: "Diploma / Authentication",         docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
+        { label: "Certificate of Graduation",        docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+
+        { category: "SHS Graduates" },
+        { label: "Form 137 / 138",                  docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+        { label: "Diploma",                          docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
+        { label: "CTC of Report Card",               docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+
+        { category: "Ongoing Students" },
+        { label: "Certificate of Enrollment",        docs: ["School ID or RAF", "Request Form (PAF)"] },
+        { label: "CTC of Report Card",               docs: ["School ID or RAF", "Request Form (PAF)"] },
+        { label: "Statement of Account",             docs: ["School ID or RAF"] },
+        { label: "Registration Form",                docs: ["School ID", "Official Receipt of Payment"] },
+
+        { category: "Undergraduate (Transferees)" },
+        { label: "Transcript of Records (TOR)",      docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
+        { label: "Copy of Grades",                   docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
+
+        { category: "Other" },
+        { label: "Other",                            docs: ["Valid ID or School ID", "Request Form (PAF)"] }
+    ], 
 };
 
 let app, db;
@@ -231,6 +245,8 @@ function listenToDepts() {
             const map = { open: { t: 'OPEN', c: 'open' }, break: { t: 'ON BREAK', c: 'break' }, closed: { t: 'CLOSED', c: 'closed' } };
             const m   = map[st] || map.open;
             if (el) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
+            const qEl = document.getElementById(dept + 'Queue');
+            if (qEl) qEl.textContent = d.queue || 0;
         });
     });
 }
@@ -265,7 +281,7 @@ function listenToSettings() {
             } else if (!hasActiveReservation) {
                 btn.disabled = false;
                 btn.title    = '';
-                btn.textContent = `📅 RESERVE ${dept.toUpperCase()} TICKET`;
+                btn.textContent = `RESERVE ${dept.toUpperCase()} TICKET`;
                 btn.style.background = '';
                 btn.style.color      = '';
                 btn.style.border     = '';
@@ -523,6 +539,13 @@ function openReserveModal(dept) {
     const list = document.getElementById('reserveReasonList');
     list.innerHTML = '';
     REASONS[dept].forEach(r => {
+        if (r.category) {
+            const h = document.createElement('div');
+            h.className = 'reason-category-header';
+            h.textContent = r.category;
+            list.appendChild(h);
+            return;
+        }
         const d        = document.createElement('div');
         d.className    = 'reason-item';
         d.textContent  = r.label;
