@@ -604,14 +604,11 @@ async function onScanSuccess(decoded) {
 
         let tNum, ahead;
 
-        const sSnap = await getDoc(doc(db, 'system', 'settings'));
-        const sData = sSnap.data();
-        if ((sData.ticketsIssued || 0) >= (sData.dailyQuota || 100)) {
-            setScanStatus('❌ Daily quota is full. Please come back tomorrow or ask staff.');
-            return;
-        }
-
         await runTransaction(db, async (transaction) => {
+            const sSnap = await transaction.get(doc(db, 'system', 'settings'));
+            if ((sSnap.data().ticketsIssued || 0) >= (sSnap.data().dailyQuota || 100)) {
+                throw new Error('QUOTA_FULL');
+            }
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
@@ -654,6 +651,10 @@ async function onScanSuccess(decoded) {
         goScreen('scan-success');
         playBeep();
     } catch (e) {
+        if (e.message === 'QUOTA_FULL') {
+            setScanStatus('❌ Daily quota is full. Please come back tomorrow or ask staff.');
+            return;
+        }
         console.error(e);
         setScanStatus('Server error. Try again.');
     }

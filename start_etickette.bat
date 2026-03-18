@@ -36,16 +36,16 @@ if errorlevel 1 (
 echo  [2/2] Opening pages...
 echo.
 
-start "" "https://etickette-78f74.web.app/website/index.html"
+start "" "https://etickette.web.app/website/"
 timeout /t 1 /nobreak >nul
 
-start "" "https://etickette-78f74.web.app/monitor/index.html"
+start "" "https://etickette.web.app/monitor/"
 timeout /t 1 /nobreak >nul
 
-start "" "https://etickette-78f74.web.app/staff/index.html"
+start "" "https://etickette.web.app/staff/"
 timeout /t 2 /nobreak >nul
 
-start "" "http://localhost:8000/kiosk/index.html"
+start "" "https://etickette.web.app/kiosk/"
 timeout /t 2 /nobreak >nul
 
 powershell -command "(New-Object -ComObject WScript.Shell).SendKeys('{F11}')"
@@ -58,10 +58,10 @@ echo.
 echo    Printer Server : http://localhost:8000
 echo    Health Check   : http://localhost:8000/health
 echo.
-echo    Website  : https://etickette-78f74.web.app/website/index.html
-echo    Staff  : https://etickette-78f74.web.app/staff/index.html
-echo    Monitor  : https://etickette-78f74.web.app/monitor/index.html
-echo    Kiosk  : https://etickette-78f74.web.app/kiosk/index.html
+echo    Website  : https://etickette.web.app/website/
+echo    Staff  : https://etickette.web.app/staff/
+echo    Monitor  : https://etickette.web.app/monitor/
+echo    Kiosk  : https://etickette.web.app/kiosk/
 echo.
 echo    Students reserve online via Website URL
 echo    Kiosk runs locally for printer access

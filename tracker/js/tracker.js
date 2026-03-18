@@ -69,7 +69,6 @@ function startListeners(tNum) {
     if (!snap.exists()) return;
     const d = snap.data();
     document.getElementById('nowServingNum').textContent = d.nowServing || '—';
-    document.getElementById('nowServingDept').textContent = myDept.toUpperCase();
   });
 }
 

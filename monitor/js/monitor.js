@@ -23,7 +23,7 @@ const firebaseConfig = {
 let app, db;
 
 export function initMonitor() {
-    app = initializeApp(firebaseConfig);
+    app = initializeApp(firebaseConfig, 'monitor');
     db  = getFirestore(app);
     updateClock();
     setInterval(updateClock, 1000);

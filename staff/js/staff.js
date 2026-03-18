@@ -111,24 +111,19 @@ function startDashboard() {
 
 async function setDailyQuota() {
     const input = document.getElementById('quotaInput');
-    const msg   = document.getElementById('quotaMsg');
     const val   = parseInt(input.value);
 
     if (!val || val < 1 || val > 999) {
-        msg.style.color = '#dc2626';
-        msg.textContent = '⚠️ Enter a valid number between 1 and 999.';
+        alert('Enter a valid number between 1 and 999.');
         return;
     }
 
     try {
         await updateDoc(doc(db, 'system', 'settings'), { dailyQuota: val });
-        msg.style.color = '#16a34a';
-        msg.textContent = `✅ Quota set to ${val} tickets.`;
+        alert(`Quota set to ${val} tickets.`);
         input.value = '';
-        setTimeout(() => { msg.textContent = ''; }, 3000);
     } catch (e) {
-        msg.style.color = '#dc2626';
-        msg.textContent = '❌ Failed to update quota.';
+        alert(`Failed to update quota.`);
         console.error('[setQuota]', e);
     }
 }
