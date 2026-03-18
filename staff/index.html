@@ -10,133 +10,209 @@
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
+  <!-- ═══════════════════════════════════════════════
+       LOGIN OVERLAY
+  ═══════════════════════════════════════════════ -->
   <div id="loginOverlay" class="login-overlay">
     <div class="login-box">
-      <div class="login-logo">
-        <img src="../assets/sti-logo.png" alt="STI" />
+      <div class="login-brand">
+        <img src="../assets/logo.png" alt="eTickette" class="login-logo" />
         <div>
           <h1>eTickette</h1>
           <p>Staff Dashboard</p>
         </div>
       </div>
+
       <div class="login-form">
-        <label>Department</label>
+        <label class="field-label">Department</label>
         <div class="dept-selector">
-          <div class="dept-opt active" data-dept="cashier" onclick="selectDept('cashier')">💰 Cashier</div>
-          <div class="dept-opt" data-dept="registrar" onclick="selectDept('registrar')">📋 Registrar</div>
+          <div class="dept-opt active" data-dept="cashier" onclick="selectDept('cashier')">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4M14 15h4"/></svg>
+            Cashier
+          </div>
+          <div class="dept-opt" data-dept="registrar" onclick="selectDept('registrar')">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            Registrar
+          </div>
         </div>
-        <label>Staff PIN</label>
-        <input type="password" id="pinInput" class="pin-input" placeholder="Enter PIN" maxlength="6"
-          onkeydown="if(event.key==='Enter') staffLogin()" />
+
+        <label class="field-label" style="margin-top:18px">Staff PIN</label>
+        <input type="password" id="pinInput" class="pin-input" placeholder="Enter PIN"
+          maxlength="6" onkeydown="if(event.key==='Enter') staffLogin()" />
         <p id="loginErr" class="login-err"></p>
-        <button class="btn-login" onclick="staffLogin()">Enter Dashboard →</button>
+        <button class="btn-login" onclick="staffLogin()">
+          Enter Dashboard
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════
+       DASHBOARD
+  ═══════════════════════════════════════════════ -->
   <div id="dashboard" class="dashboard hidden">
-    <div class="dash-header">
-      <div class="dash-brand">
-        <img src="../assets/sti-logo.png" />
-        <div><h1>eTickette</h1><span class="dash-sub">Staff Dashboard</span></div>
+
+    <!-- Topbar -->
+    <div class="dash-topbar">
+      <div class="dash-topbar-left">
+        <img src="../assets/logo.png" class="dash-logo" alt="eTickette" />
+        <div>
+          <h1>eTickette</h1>
+          <span class="dash-sub">Staff Dashboard</span>
+        </div>
       </div>
-      <div class="dash-dept-tag" id="deptTag">CASHIER</div>
-      <div class="dash-header-right">
+      <div class="dash-topbar-right">
+        <div class="dash-dept-badge" id="deptTag">CASHIER</div>
         <div class="dash-time" id="dashTime">00:00</div>
         <button class="btn-logout-dash" onclick="staffLogout()">Log Out</button>
       </div>
     </div>
 
+    <!-- Status bar -->
     <div class="status-bar">
-      <div class="status-item">
-        <span>Department Status</span>
+      <div class="status-bar-item">
+        <span class="status-bar-label">Department Status</span>
         <div class="status-toggle-group">
-          <button class="status-btn active" id="btnOpen"   onclick="setDeptStatus('open')">🟢 Open</button>
-          <button class="status-btn"        id="btnBreak"  onclick="setDeptStatus('break')">🟡 Break</button>
-          <button class="status-btn"        id="btnClosed" onclick="setDeptStatus('closed')">🔴 Closed</button>
+          <button class="status-btn active" id="btnOpen"   onclick="setDeptStatus('open')">
+            <span class="status-dot green"></span> Open
+          </button>
+          <button class="status-btn"        id="btnBreak"  onclick="setDeptStatus('break')">
+            <span class="status-dot orange"></span> Break
+          </button>
+          <button class="status-btn"        id="btnClosed" onclick="setDeptStatus('closed')">
+            <span class="status-dot red"></span> Closed
+          </button>
         </div>
       </div>
-      <div class="status-item"><span>Queue</span><strong id="queueCount" class="stat-big">0</strong></div>
-      <div class="status-item"><span>Served Today</span><strong id="servedCount" class="stat-big">0</strong></div>
-      <div class="status-item"><span>Avg Wait</span><strong id="avgWait" class="stat-big">—</strong></div>
-      <div class="status-item" style="margin-left: auto;">
-      <span>Daily Quota</span>
-      <strong id="quotaStatusDisplay" class="stat-big" style="color:#2563eb;">0/100</strong>
-      <span id="quotaStatusSub" style="font-size:11px;color:#6b7280;font-weight:600;">100 left</span>
+      <div class="status-bar-item">
+        <span class="status-bar-label">Queue</span>
+        <strong id="queueCount" class="stat-num">0</strong>
+      </div>
+      <div class="status-bar-item">
+        <span class="status-bar-label">Served Today</span>
+        <strong id="servedCount" class="stat-num">0</strong>
+      </div>
+      <div class="status-bar-item">
+        <span class="status-bar-label">Avg Wait</span>
+        <strong id="avgWait" class="stat-num">—</strong>
+      </div>
+      <div class="status-bar-item" style="margin-left:auto">
+        <span class="status-bar-label">Daily Quota</span>
+        <strong id="quotaStatusDisplay" class="stat-num">0/100</strong>
+        <span id="quotaStatusSub" class="stat-sub">100 left</span>
       </div>
     </div>
 
+    <!-- Main content -->
     <div class="dash-content">
-      <div class="now-serving-panel">
-        <div class="panel-label">NOW SERVING</div>
+
+      <!-- Now Serving Panel -->
+      <div class="panel serving-panel">
+        <div class="panel-label">Now Serving</div>
         <div class="serving-number" id="servingNumber">—</div>
         <div class="serving-info">
           <p id="servingUserId">—</p>
           <p id="servingReason">—</p>
-          <p id="servingType" class="serving-badge">—</p>
+          <span class="serving-badge" id="servingType">—</span>
         </div>
         <div class="serving-timer" id="servingTimer">00:00</div>
         <div class="serving-actions">
-          <button class="btn-complete" id="btnComplete" onclick="completeTicket()" disabled>✅ Complete</button>
-          <button class="btn-noshow"   id="btnNoshow"   onclick="noShowTicket()"   disabled>❌ No-Show</button>
-        </div>
-        <button class="btn-call-next" id="btnCallNext" onclick="callNextTicket()">📣 Call Next Ticket</button>
-      </div>
-
-      <div class="queue-panel">
-        <div class="panel-label">WAITING QUEUE <span class="queue-badge" id="queueBadge">0</span></div>
-        <div id="queueList" class="queue-list"><div class="queue-empty">No tickets waiting</div></div>
-      </div>
-
-      <div class="stats-panel">
-        <div class="panel-label">TODAY'S SUMMARY</div>
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-icon">🎫</div><div class="stat-val" id="statIssued">0</div><div class="stat-lbl">Issued</div></div>
-          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="statServed">0</div><div class="stat-lbl">Served</div></div>
-          <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-val" id="statNoShow">0</div><div class="stat-lbl">No-Show</div></div>
-          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val" id="statWaiting">0</div><div class="stat-lbl">Waiting</div></div>
-        </div>
-
-        <div class="panel-label" style="margin-top:20px">RECENT ACTIVITY</div>
-        <div id="activityLog" class="activity-log"><div class="activity-empty">No activity yet</div></div>
-
-        <div class="panel-label" style="margin-top:20px">RECALL / OVERRIDE</div>
-        <div class="recall-row">
-          <input type="text" id="recallInput" class="recall-input" placeholder="e.g. C-05" />
-          <button class="btn-recall" onclick="recallTicket()">📣 Recall</button>
-        </div>
-        <div class="manual-row">
-          <button class="btn-manual" onclick="markManualComplete()">Mark Ticket Done</button>
-          <input type="text" id="manualInput" class="recall-input" placeholder="Ticket #" style="flex:1" />
-        </div>
-
-        <div class="panel-label" style="margin-top:20px">SET DAILY QUOTA</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-          <input 
-            type="number" 
-            id="quotaInput" 
-            min="1" max="999" 
-            placeholder="Max tickets e.g. 100"
-            style="flex:1;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;color:#1f3c88;background:#f0f2f8;text-align:center;"
-          />
-          <button 
-            onclick="setDailyQuota()" 
-            style="padding:10px 16px;background:linear-gradient(90deg,#2563eb,#1f3c88);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
-            ✅ Set
+          <button class="btn-complete" id="btnComplete" onclick="completeTicket()" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Complete
+          </button>
+          <button class="btn-noshow" id="btnNoshow" onclick="noShowTicket()" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            No-Show
           </button>
         </div>
+        <button class="btn-call-next" id="btnCallNext" onclick="callNextTicket()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.22 1.16 2 2 0 012.2.08h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+          Call Next Ticket
+        </button>
+      </div>
 
-        <div class="panel-label" style="margin-top:20px">SYSTEM RESET</div>
-        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:14px 16px;margin-top:8px;">
-          <p style="font-size:12px;color:#dc2626;font-weight:600;margin-bottom:10px;">
-            ⚠️ Daily Reset — clears ALL tickets and resets counters to zero. Only do this at the start of a new school day.
-          </p>
-          <button class="btn-manual"
-            style="background:rgba(220,38,38,.1);color:#dc2626;border-color:rgba(220,38,38,.3);width:100%;"
-            onclick="dailyReset()">🔄 Reset System for Today</button>
+      <!-- Queue Panel -->
+      <div class="panel queue-panel">
+        <div class="panel-label">
+          Waiting Queue
+          <span class="queue-count-badge" id="queueBadge">0</span>
+        </div>
+        <div id="queueList" class="queue-list">
+          <div class="queue-empty">No tickets waiting</div>
         </div>
       </div>
+
+      <!-- Stats Panel -->
+      <div class="panel stats-panel">
+        <div class="panel-label">Today's Summary</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon issued">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div class="stat-card-val" id="statIssued">0</div>
+            <div class="stat-card-lbl">Issued</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon served">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="stat-card-val" id="statServed">0</div>
+            <div class="stat-card-lbl">Served</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon noshow">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </div>
+            <div class="stat-card-val" id="statNoShow">0</div>
+            <div class="stat-card-lbl">No-Show</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon waiting">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="stat-card-val" id="statWaiting">0</div>
+            <div class="stat-card-lbl">Waiting</div>
+          </div>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">Recent Activity</div>
+        <div id="activityLog" class="activity-log">
+          <div class="activity-empty">No activity yet</div>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">Recall / Override</div>
+        <div class="tool-row">
+          <input type="text" id="recallInput" class="tool-input" placeholder="e.g. C-05" />
+          <button class="btn-tool" onclick="recallTicket()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.22 1.16 2 2 0 012.2.08h3a2 2 0 012 1.72"/></svg>
+            Recall
+          </button>
+        </div>
+        <div class="tool-row">
+          <input type="text" id="manualInput" class="tool-input" placeholder="Ticket #" style="flex:1" />
+          <button class="btn-tool-green" onclick="markManualComplete()">Mark Done</button>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">Set Daily Quota</div>
+        <div class="tool-row">
+          <input type="number" id="quotaInput" min="1" max="999"
+            placeholder="e.g. 100" class="tool-input" />
+          <button class="btn-tool" onclick="setDailyQuota()">Set</button>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px">System Reset</div>
+        <div class="reset-box">
+          <p>Daily reset — clears all tickets and resets counters. Only do this at the start of a new school day.</p>
+          <button class="btn-reset" onclick="dailyReset()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            Reset System for Today
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
