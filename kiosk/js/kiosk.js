@@ -15,7 +15,7 @@ const firebaseConfig = {
     measurementId: "G-QHMMWXW7F3"
 };
 
-const PUBLIC_URL  = 'https://etickette-78f74.web.app';
+const PUBLIC_URL  = 'https://etickette.web.app';
 const PRINTER_URL = 'http://localhost:8000/print';
 
 const REASONS = {
@@ -477,7 +477,7 @@ function showTicketScreen(tNum, userId, ahead) {
     if (qrEl) {
         qrEl.innerHTML = '';
         new QRCode(qrEl, {
-            text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + selectedDept,
+            text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + selectedDept,
             width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
         });
     }
@@ -647,7 +647,7 @@ async function onScanSuccess(decoded) {
         if (scanQREl) {
             scanQREl.innerHTML = '';
             new QRCode(scanQREl, {
-                text: PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept,
+                text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + dept,
                 width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
             });
         }
@@ -665,7 +665,7 @@ function setScanStatus(msg) {
 }
 
 async function printTicket(tNum, dept) {
-    const qr_link = PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
+    const qr_link = PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + dept;
     try {
         const res = await fetch(PRINTER_URL, {
             method: 'POST', mode: 'cors',

@@ -398,14 +398,14 @@ function renderActiveResBanner(res, rid) {
 
     let trackingCard = '';
     if (res.ticketNumber) {
-        const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
+        const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
         trackingCard = `
         <div class="tracking-card">
-          <span class="tracking-label">🔴 Live Queue Tracker</span>
-          <div class="tracking-actions">
+            <span class="tracking-label">🔴 Live Queue Tracker</span>
+            <div class="tracking-actions">
             <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
             <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
-          </div>
+            </div>
         </div>`;
     }
 
@@ -450,7 +450,7 @@ function renderActiveWalkinBanner(ticket) {
         ? '<span class="open">Now Serving — proceed to counter</span>'
         : '<span class="break">Waiting — watch the lobby monitor</span>';
 
-    const trackingUrl = `https://etickette-78f74.web.app/tracker.html?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
+    const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
     const trackingCard = `
     <div class="tracking-card">
       <span class="tracking-label">🔴 Live Queue Tracker</span>

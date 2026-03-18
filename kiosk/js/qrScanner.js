@@ -4,7 +4,7 @@ import {
     increment, serverTimestamp, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const PUBLIC_URL = 'https://etickette-78f74.web.app';
+const PUBLIC_URL = 'https://etickette.web.app';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
@@ -198,7 +198,7 @@ async function onScanSuccess(decodedText) {
         const resultBox = document.getElementById('qrResult');
         resultBox.style.display = 'block';
 
-        const trackUrl = PUBLIC_URL + '/tracker.html?t=' + encodeURIComponent(tNum) + '&d=' + dept;
+        const trackUrl = PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + dept;
         resultBox.innerHTML = `
             <strong>✅ Check-In Successful!</strong><br/>
             <span>Ticket: <b>${tNum}</b></span><br/>

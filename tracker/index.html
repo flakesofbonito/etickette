@@ -4,37 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>eTickette – Track Your Queue</title>
-  <link rel="icon" href="assets/logo.png" type="image/png" />
-  <!-- ✅ FIX #13 + #19 — Removed ALL duplicate inline <style> block.
-       Now uses the single external tracker/tracker.css source of truth. -->
-  <link rel="stylesheet" href="tracker/tracker.css" />
+  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <link rel="stylesheet" href="tracker.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="tracker-wrap">
 
     <div class="tracker-header">
-      <img src="assets/sti-logo.png" class="t-logo" />
+      <img src="../assets/sti-logo.png" class="t-logo" />
       <div>
         <h1>eTickette</h1>
         <p>Virtual Waiting Room</p>
       </div>
     </div>
 
-    <!-- LOADING -->
     <div id="stateLoading" class="state-panel">
       <div class="spinner"></div>
       <p>Loading ticket info…</p>
     </div>
 
-    <!-- ERROR -->
     <div id="stateError" class="state-panel hidden">
       <div class="state-icon">⚠️</div>
       <h2>Ticket not found</h2>
       <p>Please check your ticket number or scan the QR again.</p>
     </div>
 
-    <!-- COMPLETED -->
     <div id="stateCompleted" class="state-panel hidden">
       <div class="state-icon">✅</div>
       <h2>Service Complete</h2>
@@ -42,21 +37,18 @@
       <div class="done-ticket" id="doneTicketNum">—</div>
     </div>
 
-    <!-- NO-SHOW -->
     <div id="stateNoshow" class="state-panel hidden">
       <div class="state-icon">😔</div>
       <h2>Marked as No-Show</h2>
       <p>Your ticket was called but you were not present.<br/>Please queue again if you still need assistance.</p>
     </div>
 
-    <!-- CANCELLED -->
     <div id="stateCancelled" class="state-panel hidden">
       <div class="state-icon">🚫</div>
       <h2>Ticket Cancelled</h2>
       <p>This ticket has been cancelled.<br/>Please queue again at the kiosk.</p>
     </div>
 
-    <!-- ACTIVE STATE -->
     <div id="stateActive" class="hidden">
 
       <div class="ticket-card" id="statusCard">
@@ -121,13 +113,11 @@
     </div>
 
     <div class="tracker-footer">
-      <a href="website/index.html">← Back to eTickette</a>
+      <a href="website/">← Back to eTickette</a>
     </div>
 
   </div>
 
-  <!-- ✅ FIX #13 — All JS logic lives ONLY in tracker/js/tracker.js.
-       The duplicate inline <script> block has been removed entirely. -->
-  <script type="module" src="tracker/js/tracker.js"></script>
+  <script type="module" src="js/tracker.js"></script>
 </body>
 </html>
