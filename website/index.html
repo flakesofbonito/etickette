@@ -6,7 +6,7 @@
     <title>eTickette</title>
     <link href="styles.css" rel="stylesheet" />
     <link href="../assets/logo.png" rel="icon" type="image/png" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
     <div class="login-overlay" id="loginOverlay">
@@ -160,8 +160,15 @@
     <div class="app-shell locked" id="appShell">
         <div class="sidebar" id="sidebar">
             <div class="sidebar-top">
-                <div class="sidebar-logo-wrap"><img alt="eTickette" class="sidebar-logo" src="../assets/logo.png" /></div>
-                <a class="nav-link active" data-view="home" onclick="navigate('home')" title="Home">
+                <div class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <img alt="eTickette" src="../assets/logo.png" />
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <div class="sidebar-brand-name">e<span>Tickette</span></div>
+                        <div class="sidebar-brand-sub">STI College Fairview</div>
+                    </div>
+                </div>                <a class="nav-link active" data-view="home" onclick="navigate('home')" title="Home">
                     <svg viewBox="0 0 24 24">
                         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -252,59 +259,68 @@
                     <div class="status-live-dot"></div>
                     <span>System is LIVE</span>
                 </div>
-                <div class="home-grid">
-                    <div class="home-left">
-                        <div class="poster-wrap"><img alt="eTickette" class="poster" src="../assets/poster.jpg" /></div>
-                        <div class="stats-row">
-                            <div class="stat-chip">
-                                <span class="stat-chip-label">Lobby Congestion</span>
-                                <b class="status-text open" id="congestionText">LOW TRAFFIC</b>
-                            </div>
-                            <div class="stat-chip">
-                                <span class="stat-chip-label">Slots Remaining Today</span>
-                                <b class="stat-chip-val" id="quotaText">— / —</b>
-                            </div>
+                <div class="poster-wrap">
+                    <img alt="eTickette" class="poster" src="../assets/poster.jpg" />
+                    <div class="poster-stats">
+                        <div class="poster-stat">
+                            <span class="poster-stat-label">Lobby Congestion</span>
+                            <b class="poster-stat-val" id="congestionText">LOW TRAFFIC</b>
+                        </div>
+                        <div class="poster-stat-sep"></div>
+                        <div class="poster-stat">
+                            <span class="poster-stat-label">Slots Remaining Today</span>
+                            <b class="poster-stat-val" id="quotaText">— / —</b>
                         </div>
                     </div>
-                    <div class="home-right">
-                        <div class="dept-card">
-                            <div class="dept-card-inner">
-                                <div class="dept-icon cashier-icon"><img alt="Cashier" src="../assets/cashier.png" /></div>
-                                <div class="dept-details">
-                                    <h3>Cashier Department</h3>
-                                    <div class="dept-meta-row">
-                                        <span class="dept-status open" id="cashierStatus">OPEN</span>
-                                        <span class="dept-queue">
-                                            Queue:
-                                            <span id="cashierQueue">0</span>
-                                            ahead
-                                        </span>
-                                    </div>
+                </div>
+                <div class="dept-row">
+                    <div class="dept-card">
+                        <div class="dept-card-inner">
+                            <div class="dept-icon cashier-icon">
+                                <svg viewBox="0 0 24 24" stroke="var(--gold-700)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                    <path d="M2 10h20"></path>
+                                </svg>
+                            </div>
+                            <div class="dept-details">
+                                <h3>Cashier Department</h3>
+                                <div class="dept-meta-row">
+                                    <span class="dept-status open" id="cashierStatus">OPEN</span>
+                                    <span class="dept-queue">
+                                        Queue:
+                                        <span id="cashierQueue">0</span>
+                                        ahead
+                                    </span>
                                 </div>
                             </div>
-                            <button class="btn-reserve" id="cashierBtn" onclick="openReserveModal('cashier')">
-                                RESERVE CASHIER TICKET
-                            </button>
                         </div>
-                        <div class="dept-card">
-                            <div class="dept-card-inner">
-                                <div class="dept-icon registrar-icon"><img alt="Registrar" src="../assets/registrar.png" /></div>
-                                <div class="dept-details">
-                                    <h3>Registrar Department</h3>
-                                    <div class="dept-meta-row">
-                                        <span class="dept-status open" id="registrarStatus">OPEN</span>
-                                        <span class="dept-queue">
-                                            Queue:
-                                            <span id="registrarQueue">0</span>
-                                            ahead
-                                        </span>
-                                    </div>
+                        <button class="btn-reserve" id="cashierBtn" onclick="openReserveModal('cashier')">
+                            RESERVE CASHIER TICKET
+                        </button>
+                    </div>
+                    <div class="dept-card">
+                        <div class="dept-card-inner">
+                            <div class="dept-icon registrar-icon">
+                                <svg viewBox="0 0 24 24" stroke="var(--blue-700)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                                </svg>
+                            </div>
+                            <div class="dept-details">
+                                <h3>Registrar Department</h3>
+                                <div class="dept-meta-row">
+                                    <span class="dept-status open" id="registrarStatus">OPEN</span>
+                                    <span class="dept-queue">
+                                        Queue:
+                                        <span id="registrarQueue">0</span>
+                                        ahead
+                                    </span>
                                 </div>
                             </div>
-                            <button class="btn-reserve" id="registrarBtn" onclick="openReserveModal('registrar')">
-                                RESERVE REGISTRAR TICKET
-                            </button>
                         </div>
+                        <button class="btn-reserve" id="registrarBtn" onclick="openReserveModal('registrar')">
+                            RESERVE REGISTRAR TICKET
+                        </button>
                     </div>
                 </div>
             </div>
@@ -650,8 +666,6 @@
                 }
                 renderCal();
             };
-
-            var _origOpenReserveModal = null;
 
             function hookOpenModal() {
                 if (window.openReserveModal && !window._calHooked) {
