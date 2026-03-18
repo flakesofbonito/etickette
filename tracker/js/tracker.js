@@ -139,7 +139,7 @@ function updatePositionInfo(all) {
 
   const serving = all.find(t => t.status === 'serving');
   const completed = all.filter(t => t.status === 'completed' || t.status === 'noshow').length;
-  const total = all.length;
+  const total = all.filter(t => t.status !== 'cancelled').length;
 
   const myPos = waiting.findIndex(t => t.ticketNumber === ticketNum);
   const ahead = myPos > 0 ? myPos - (serving ? 1 : 0) : 0;
