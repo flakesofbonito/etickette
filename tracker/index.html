@@ -9,111 +9,156 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
+
   <div class="tracker-wrap">
 
     <div class="tracker-header">
-      <img src="../assets/sti-logo.png" class="t-logo" />
-      <div>
-        <h1>eTickette</h1>
-        <p>Virtual Waiting Room</p>
-      </div>
-    </div>
-
-    <div id="stateLoading" class="state-panel">
-      <div class="spinner"></div>
-      <p>Loading ticket info…</p>
-    </div>
-
-    <div id="stateError" class="state-panel hidden">
-      <div class="state-icon">⚠️</div>
-      <h2>Ticket not found</h2>
-      <p>Please check your ticket number or scan the QR again.</p>
-    </div>
-
-    <div id="stateCompleted" class="state-panel hidden">
-      <div class="state-icon">✅</div>
-      <h2>Service Complete</h2>
-      <p>Thank you for using eTickette.<br/>Have a great day!</p>
-      <div class="done-ticket" id="doneTicketNum">—</div>
-    </div>
-
-    <div id="stateNoshow" class="state-panel hidden">
-      <div class="state-icon">😔</div>
-      <h2>Marked as No-Show</h2>
-      <p>Your ticket was called but you were not present.<br/>Please queue again if you still need assistance.</p>
-    </div>
-
-    <div id="stateCancelled" class="state-panel hidden">
-      <div class="state-icon">🚫</div>
-      <h2>Ticket Cancelled</h2>
-      <p>This ticket has been cancelled.<br/>Please queue again at the kiosk.</p>
-    </div>
-
-    <div id="stateActive" class="hidden">
-
-      <div class="ticket-card" id="statusCard">
-        <div class="tc-school">STI COLLEGE FAIRVIEW</div>
-        <div class="tc-dept-tag" id="tcDept">CASHIER</div>
-        <div class="tc-number" id="tcNumber">—</div>
-        <div id="statusIconWrap" class="status-icon-wrap">
-          <span id="statusIcon">⏳</span>
-        </div>
-        <div id="statusLabel" class="status-label">Waiting in Queue</div>
-        <div id="statusSub"   class="status-sub">We'll notify you when it's your turn</div>
-        <div class="tc-details">
-          <div class="tc-row"><span>Name / ID</span>    <strong id="tcName">—</strong></div>
-          <div class="tc-row"><span>Reason</span>       <strong id="tcReason">—</strong></div>
-          <div class="tc-row"><span>Type</span>         <strong id="tcType">—</strong></div>
-          <div class="tc-row"><span>Now Serving</span>  <strong id="nowServingNum">—</strong></div>
+      <div class="tracker-header-brand">
+        <img src="../assets/logo.png" class="tracker-logo" alt="eTickette" />
+        <div class="tracker-header-text">
+          <h1>eTickette</h1>
+          <p>Virtual Waiting Room — STI College Fairview</p>
         </div>
       </div>
+      <a href="../website/" class="tracker-header-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Home
+      </a>
+    </div>
 
-      <div class="position-card" id="positionCard">
-        <div class="pos-left">
-          <div class="pos-label">Queue Position</div>
-          <div class="pos-number" id="posNumber">—</div>
-          <div class="pos-sub" id="posAhead">—</div>
-        </div>
-        <div class="pos-divider"></div>
-        <div class="pos-right">
-          <div class="pos-label">Est. Wait</div>
-          <div class="pos-number" id="estWait">—</div>
-          <div class="pos-sub">minutes</div>
-        </div>
+    <div class="tracker-body">
+
+      <div id="stateLoading" class="state-panel">
+        <div class="spinner"></div>
+        <p>Loading ticket info…</p>
       </div>
 
-      <div class="progress-card">
-        <div class="prog-label">Queue Progress</div>
-        <div class="prog-bar-wrap">
-          <div class="prog-bar" id="progBar" style="width:0%"></div>
-        </div>
-        <div class="prog-stats">
-          <span id="progServed">0 served</span>
-          <span id="progTotal">0 total</span>
-        </div>
+      <div id="stateError" class="state-panel hidden">
+        <div class="state-icon">⚠️</div>
+        <h2>Ticket not found</h2>
+        <p>Please check your ticket number or scan the QR again.</p>
       </div>
 
-      <div class="notif-card" id="notifCard">
-        <div class="notif-icon">🔔</div>
-        <div class="notif-text">
-          <strong>Get notified when called</strong>
-          <span>We'll alert you when it's your turn</span>
-        </div>
-        <button class="btn-notif" id="btnNotif" onclick="requestNotification()">Enable</button>
+      <div id="stateCompleted" class="state-panel hidden">
+        <div class="state-icon">✅</div>
+        <h2>Service Complete</h2>
+        <p>Thank you for using eTickette.<br/>Have a great day!</p>
+        <div class="done-ticket" id="doneTicketNum">—</div>
       </div>
 
-      <div id="calledBanner" class="called-banner hidden">
-        <div class="called-icon">📣</div>
-        <div class="called-text">
-          <strong>It's Your Turn!</strong>
-          <span>Please proceed to the <span id="calledDept">CASHIER</span> counter now</span>
+      <div id="stateNoshow" class="state-panel hidden">
+        <div class="state-icon">😔</div>
+        <h2>Marked as No-Show</h2>
+        <p>Your ticket was called but you were not present.<br/>Please queue again if you still need assistance.</p>
+      </div>
+
+      <div id="stateCancelled" class="state-panel hidden">
+        <div class="state-icon">🚫</div>
+        <h2>Ticket Cancelled</h2>
+        <p>This ticket has been cancelled.<br/>Please queue again at the kiosk.</p>
+      </div>
+
+      <div id="stateActive" class="hidden">
+        <div class="active-layout">
+
+          <div class="active-left">
+
+            <div class="ticket-card" id="statusCard">
+              <div class="ticket-card-header">
+                <div class="tc-school">STI COLLEGE FAIRVIEW</div>
+                <div class="tc-dept-tag" id="tcDept">CASHIER</div>
+              </div>
+              <div class="tc-number" id="tcNumber">—</div>
+              <div class="tc-status-block">
+                <div id="statusIconWrap" class="status-icon-wrap">
+                  <span id="statusIcon">⏳</span>
+                </div>
+                <div id="statusLabel" class="status-label">Waiting in Queue</div>
+                <div id="statusSub" class="status-sub">We'll notify you when it's your turn</div>
+              </div>
+              <div class="tc-details">
+                <div class="tc-row"><span>Name / ID</span><strong id="tcName">—</strong></div>
+                <div class="tc-row"><span>Reason</span><strong id="tcReason">—</strong></div>
+                <div class="tc-row"><span>Type</span><strong id="tcType">—</strong></div>
+                <div class="tc-row"><span>Now Serving</span><strong id="nowServingNum">—</strong></div>
+              </div>
+            </div>
+
+            <div id="calledBanner" class="called-banner hidden">
+              <div class="called-icon">📣</div>
+              <div class="called-text">
+                <strong>It's Your Turn!</strong>
+                <span>Please proceed to the <span id="calledDept">CASHIER</span> counter now</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="active-right">
+
+            <div class="position-card" id="positionCard">
+              <div class="pos-half">
+                <div class="pos-label">Queue Position</div>
+                <div class="pos-number" id="posNumber">—</div>
+                <div class="pos-sub" id="posAhead">—</div>
+              </div>
+              <div class="pos-divider"></div>
+              <div class="pos-half">
+                <div class="pos-label">Est. Wait</div>
+                <div class="pos-number" id="estWait">—</div>
+                <div class="pos-sub">minutes</div>
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="prog-label">Queue Progress</div>
+              <div class="prog-bar-wrap">
+                <div class="prog-bar" id="progBar" style="width:0%"></div>
+              </div>
+              <div class="prog-stats">
+                <span id="progServed">0 served</span>
+                <span id="progTotal">0 total</span>
+              </div>
+            </div>
+
+            <div class="notif-card" id="notifCard">
+              <div class="notif-icon">🔔</div>
+              <div class="notif-text">
+                <strong>Get notified when called</strong>
+                <span>We'll alert you when it's your turn</span>
+              </div>
+              <button class="btn-notif" id="btnNotif" onclick="requestNotification()">Enable</button>
+            </div>
+
+            <div class="how-it-works">
+              <div class="hiw-label">How it works</div>
+              <div class="hiw-steps">
+                <div class="hiw-step">
+                  <div class="hiw-num">1</div>
+                  <div class="hiw-text">Wait for your number on the lobby monitor</div>
+                </div>
+                <div class="hiw-step">
+                  <div class="hiw-num">2</div>
+                  <div class="hiw-text">Enable notifications to be alerted when called</div>
+                </div>
+                <div class="hiw-step">
+                  <div class="hiw-num">3</div>
+                  <div class="hiw-text">Proceed to your counter when it's your turn</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
 
     </div>
 
     <div class="tracker-footer">
-      <a href="website/">← Back to eTickette</a>
+      <span>eTickette · STI College Fairview · 2025</span>
     </div>
 
   </div>
