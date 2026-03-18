@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 import usb.core
@@ -11,6 +11,8 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 ID_VENDOR  = 0x0416
 ID_PRODUCT = 0x5011
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def get_printer():
     dll_path = os.path.join(os.getcwd(), 'libusb-1.0.dll')
@@ -25,6 +27,22 @@ def get_printer():
             pass
         dev.set_configuration()
     return dev
+
+@app.route('/')
+def serve_index():
+    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), 'index.html')
+
+@app.route('/kiosk/')
+def serve_kiosk_index():
+    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), 'index.html')
+
+@app.route('/kiosk/<path:path>')
+def serve_kiosk(path):
+    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), path)
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(BASE_DIR, path)
 
 @app.route('/print', methods=['POST', 'OPTIONS'])
 def print_ticket():
@@ -96,4 +114,5 @@ def health():
 
 if __name__ == '__main__':
     print("[eTickette] Printer server running on http://localhost:8000")
+    print("[eTickette] Kiosk available at http://localhost:8000/kiosk/")
     app.run(port=8000, debug=False)
