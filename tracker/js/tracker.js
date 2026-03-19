@@ -148,7 +148,7 @@ function updatePositionInfo(all) {
   let posDisplay, aheadText, estWait;
 
   if (iAmServing) {
-    posDisplay = '📣';
+    posDisplay = '#';
     aheadText  = "You're being served!";
     estWait    = '<1';
   } else if (myPos >= 0) {
@@ -181,7 +181,7 @@ async function requestNotification() {
   }
   if (Notification.permission === 'granted') {
     notifGranted = true;
-    btn.textContent = '✓ Enabled';
+    btn.textContent = 'Enabled';
     btn.classList.add('done');
     document.getElementById('notifCard').classList.add('granted');
     return;
@@ -189,7 +189,7 @@ async function requestNotification() {
   const result = await Notification.requestPermission();
   if (result === 'granted') {
     notifGranted = true;
-    btn.textContent = '✓ Enabled';
+    btn.textContent = 'Enabled';
     btn.classList.add('done');
     document.getElementById('notifCard').classList.add('granted');
   } else {
@@ -202,7 +202,7 @@ function triggerNotification(tNum) {
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
 
   if (notifGranted && Notification.permission === 'granted') {
-    new Notification('📣 It\'s Your Turn!', {
+    new Notification('It\'s Your Turn!', {
       body: 'Ticket ' + tNum + ' — Please proceed to the ' + myDept.toUpperCase() + ' counter.',
       icon: '../assets/logo.png',
       tag: 'etickette-call',
@@ -250,7 +250,7 @@ if ('Notification' in window && Notification.permission === 'granted') {
   notifGranted = true;
   const btn = document.getElementById('btnNotif');
   if (btn) {
-    btn.textContent = '✓ Enabled';
+    btn.textContent = 'Enabled';
     btn.classList.add('done');
   }
   document.getElementById('notifCard')?.classList.add('granted');

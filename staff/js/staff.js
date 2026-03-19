@@ -276,7 +276,7 @@ function renderQueue(waiting) {
         let docsHtml = '';
         if (t.requiredDocs && t.requiredDocs.length > 0) {
             const docItems = t.requiredDocs.map(d =>
-                `<span class="queue-doc-item">📄 ${d}</span>`
+                `<span class="queue-doc-item">${d}</span>`
             ).join('');
             docsHtml = `<div class="queue-docs">${docItems}</div>`;
         }
@@ -321,12 +321,11 @@ function startTimer() {
   clearInterval(timerInterval);
   clearTimeout(noShowTimer);
 
-  // Auto no-show after NOSHOW_TIMEOUT_SEC seconds
   noShowTimer = setTimeout(async () => {
     if (!currentTicket) return;
     const ok = await showConfirmDialog(
-      `⏱ Ticket ${currentTicket.ticketNumber} has been waiting ${Math.floor(NOSHOW_TIMEOUT_SEC / 60)} minutes with no response. Mark as No-Show?`,
-      '✕ Mark No-Show', 'Keep Waiting'
+      `Ticket ${currentTicket.ticketNumber} has been waiting ${Math.floor(NOSHOW_TIMEOUT_SEC / 60)} minutes with no response. Mark as No-Show?`,
+      'Mark No-Show', 'Keep Waiting'
     );
     if (ok) {
       await noShowTicket();
@@ -677,11 +676,11 @@ async function setStatusMessage() {
             statusMessage: msg,
             statusMessageAt: serverTimestamp()
         });
-        hint.textContent = '✅ Message set! Showing on website and monitor.';
+        hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Message set. Showing on website and monitor.</span>';
         hint.style.color = '#16a34a';
         setTimeout(() => { hint.textContent = ''; }, 3000);
     } catch (e) {
-        hint.textContent = 'Failed to set message.';
+        hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Failed to set message.</span>';
         hint.style.color = '#dc2626';
     }
 }
@@ -691,11 +690,11 @@ async function clearStatusMessage() {
     try {
         await updateDoc(doc(db, 'system', 'settings'), { statusMessage: '' });
         document.getElementById('statusMsgInput').value = '';
-        hint.textContent = '✅ Message cleared.';
+        hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Message cleared.</span>';
         hint.style.color = '#16a34a';
         setTimeout(() => { hint.textContent = ''; }, 3000);
     } catch (e) {
-        hint.textContent = 'Failed to clear message.';
+        hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Failed to clear message.</span>';
         hint.style.color = '#dc2626';
     }
 }
@@ -771,7 +770,8 @@ async function exportCSV(mode = 'single') {
         allRows.sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 
         if (allRows.length === 0) {
-            hint.textContent = 'No tickets found for today.';
+            hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>No tickets found for today.</span>';
+            hint.style.color = 'var(--red-600)';
             hint.style.color = 'var(--red-600)';
             return;
         }
@@ -898,12 +898,12 @@ async function exportCSV(mode = 'single') {
         a.click();
         URL.revokeObjectURL(url);
 
-        hint.textContent = `✅ Report downloaded — ${allRows.length} tickets exported.`;
+        hint.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Report downloaded — ${allRows.length} tickets exported.</span>`;
         hint.style.color = 'var(--green-600)';
 
     } catch (e) {
         console.error('[exportCSV]', e);
-        hint.textContent = 'Failed to generate report.';
+        hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Failed to generate report.</span>';
         hint.style.color = 'var(--red-600)';
     }
 }

@@ -368,7 +368,7 @@ html, body {
 .a-label { flex: 1; color: var(--slate-500); }
 .a-time { color: var(--slate-400); font-size: 11px; }
 
-.tool-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.tool-row { display: flex; gap: 8px; margin-bottom: 8px; min-width: 0; }
 .tool-input {
   flex: 1; padding: 10px 12px;
   border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);

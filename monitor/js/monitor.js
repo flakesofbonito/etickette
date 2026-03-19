@@ -111,7 +111,6 @@ function listenToQueue(dept) {
         }
         initialLoad[dept] = false;
         lastServing[dept] = newNum;
-        lastServing[dept] = newNum;
         nowEl.textContent = newNum;
 
         const nextEl = document.getElementById(dept + 'Next');

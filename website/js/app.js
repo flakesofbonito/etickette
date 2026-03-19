@@ -438,7 +438,7 @@ function renderActiveResBanner(res, rid) {
     banner.innerHTML = `
     <div class="active-res-header">
         <span>Active Reservation</span>
-        ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')">✕ Cancel</button>` : ''}
+        ${canCancel ? `<button class="btn-cancel-res" onclick="cancelReservation('${rid}','${res.status}')" style="display:inline-flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancel</button>` : ''}
     </div>
     <div class="active-res-body">
         <div class="active-res-info">
@@ -475,7 +475,7 @@ function renderActiveWalkinBanner(ticket) {
     const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
     const trackingCard = `
     <div class="tracking-card">
-        <span class="tracking-label">🔴 Live Queue Tracker</span>
+        <span class="tracking-label" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red-600);display:inline-block;flex-shrink:0;"></span> Live Queue Tracker</span>
         <div class="tracking-actions">
             <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
             <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>

@@ -382,7 +382,7 @@ function showDocsScreen(reason) {
             list.appendChild(item);
         });
     } else {
-        list.innerHTML = '<p class="no-docs-msg">✅ No specific documents required.</p>';
+        list.innerHTML = '<p class="no-docs-msg" style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No specific documents required.</p>';
     }
     goScreen('docs');
 }
@@ -444,15 +444,12 @@ async function issueTicket(userId) {
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.update(sRef, { ticketsIssued: increment(1) });
             transaction.set(ticketRef, {
-                ticketNumber: tNum, department: dept,
-                userId: res.studentId || res.userId || 'N/A',
-                userType: res.userType || 'student',
-                displayName: res.displayName || res.studentId || 'N/A',
-                reason: res.reason || 'Reservation Check-In',
-                requiredDocs: res.requiredDocs || [],
+                ticketNumber: tNum, department: selectedDept,
+                userId, userType: selectedUserType, displayName: selectedDisplayName,
+                reason: selectedReason ? selectedReason.label : '—',
+                requiredDocs: selectedReason ? selectedReason.docs : [],
                 status: 'waiting', issuedAt: serverTimestamp(),
-                printed: false, called: false,
-                isReservation: true, reservationId
+                printed: false, called: false, isReservation: false
             });
         });
 
@@ -494,7 +491,7 @@ function showTicketScreen(tNum, userId, ahead) {
         countdown--;
         if (countEl) countEl.textContent = countdown;
         if (countdown <= 0) {
-            clearInterval(countTimer);
+            clearInterval(window._ticketCountTimer);
             goScreen('home');
         }
     }, 1000);
@@ -507,7 +504,7 @@ let scanLoop = null;
 
 function startScanner() {
     if (scannerActive) return;
-    setScanStatus('📷 Starting camera...');
+    setScanStatus('Starting camera...');
 
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: 640, height: 480 }
@@ -551,13 +548,13 @@ function startScanner() {
         scannerActive = false;
         console.error('[Camera]', e.name, e.message);
         if (e.name === 'NotReadableError' || e.name === 'AbortError') {
-            setScanStatus('❌ Camera is in use by another app. Close it and try again.');
+            setScanStatus('Camera is in use by another app. Close it and try again.');
         } else if (e.name === 'NotAllowedError') {
-            setScanStatus('❌ Camera permission denied. Please allow camera access.');
+            setScanStatus('Camera permission denied. Please allow camera access.');
         } else if (e.name === 'NotFoundError') {
-            setScanStatus('❌ No camera found on this device.');
+            setScanStatus('No camera found on this device.');
         } else {
-            setScanStatus('❌ Camera error: ' + e.message);
+            setScanStatus('Camera error: ' + e.message);
         }
     });
 }
@@ -592,16 +589,16 @@ async function onScanSuccess(decoded) {
         reservationId = url.searchParams.get('res') || url.searchParams.get('id') || decoded.trim();
     } catch (_) { reservationId = decoded.trim(); }
 
-    if (!reservationId) { setScanStatus('❌ Invalid QR code.'); return; }
+    if (!reservationId) { setScanStatus('Invalid QR code.'); return; }
 
     try {
         const resSnap = await getDoc(doc(db, 'reservations', reservationId));
-        if (!resSnap.exists()) { setScanStatus('❌ Reservation not found.'); return; }
+        if (!resSnap.exists()) { setScanStatus('Reservation not found.'); return; }
         const res = resSnap.data();
-        if (res.status !== 'pending') { setScanStatus('❌ Reservation already used or cancelled.'); return; }
+        if (res.status !== 'pending') { setScanStatus('Reservation already used or cancelled.'); return; }
 
         const now = new Date();
-        const todayPH = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); // gives "YYYY-MM-DD"
+        const todayPH = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
         let resDateStr = '';
         if (res.reservationDate?.toDate) {
             resDateStr = res.reservationDate.toDate().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
@@ -609,7 +606,7 @@ async function onScanSuccess(decoded) {
             resDateStr = res.reservationDate || '';
         }
         if (resDateStr && resDateStr !== todayPH) {
-            setScanStatus('❌ This reservation is not for today. (Reserved: ' + resDateStr + ')');
+            setScanStatus('This reservation is not for today. (Reserved: ' + resDateStr + ')');
             return;
         }
 
@@ -669,7 +666,7 @@ async function onScanSuccess(decoded) {
         playBeep();
     } catch (e) {
         if (e.message === 'QUOTA_FULL') {
-            setScanStatus('❌ Daily quota is full. Please come back tomorrow or ask staff.');
+            setScanStatus('Daily quota is full. Please come back tomorrow or ask staff.');
             return;
         }
         console.error(e);
