@@ -152,8 +152,13 @@ body {
 }
 
 .state-icon {
-  font-size: 60px;
-  margin-bottom: 4px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 4px;
+}
+.state-icon svg {
+    width: 64px;
+    height: 64px;
 }
 
 .state-panel h2 {
@@ -293,9 +298,14 @@ body {
 }
 
 .status-icon-wrap {
-  font-size: 38px;
-  margin-bottom: 6px;
-  animation: statusPulse 2.2s ease-in-out infinite;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 6px;
+    animation: statusPulse 2.2s ease-in-out infinite;
+}
+.status-icon-wrap svg {
+    width: 48px;
+    height: 48px;
 }
 
 @keyframes statusPulse {

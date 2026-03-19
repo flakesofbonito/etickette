@@ -1819,7 +1819,7 @@ svg {
     .login-card-head h2 { font-size: 20px; }
 
     .user-type-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 6px;
         padding: 0 22px;
         margin-bottom: 18px;

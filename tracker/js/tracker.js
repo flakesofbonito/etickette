@@ -90,7 +90,7 @@ function checkAndShowState(ticket) {
 
   if (status === 'serving') {
     statusCard.classList.add('serving');
-    statusIcon.textContent = '📣';
+    statusIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>';
     label.textContent = "It's Your Turn!";
     sub.textContent   = 'Please proceed to the ' + myDept.toUpperCase() + ' counter now';
     calledBanner.classList.remove('hidden');
@@ -104,7 +104,7 @@ function checkAndShowState(ticket) {
     }
   } else {
     statusCard.classList.remove('serving');
-    statusIcon.textContent = '⏳';
+    statusIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
     label.textContent = 'Waiting in Queue';
     sub.textContent   = 'We\'ll notify you when it\'s your turn';
     calledBanner.classList.add('hidden');
@@ -129,7 +129,7 @@ function renderTicketCard(ticket) {
   document.getElementById('tcNumber').textContent = ticket.ticketNumber;
   document.getElementById('tcName').textContent   = ticket.displayName || ticket.userId || '—';
   document.getElementById('tcReason').textContent = ticket.reason || '—';
-  document.getElementById('tcType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
+  document.getElementById('tcType').textContent   = ticket.isReservation ? 'Reservation' : 'Walk-in';
 }
 
 // REPLACE WITH
@@ -213,7 +213,7 @@ function triggerNotification(tNum) {
   let flashing = true;
   const origTitle = document.title;
   const flashInterval = setInterval(() => {
-    document.title = flashing ? '📣 IT\'S YOUR TURN!' : origTitle;
+    document.title = flashing ? '[ IT\'S YOUR TURN ] ' + origTitle : origTitle;
     flashing = !flashing;
   }, 800);
   setTimeout(() => {
@@ -236,6 +236,7 @@ function playAlertSound() {
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
       o.start(t); o.stop(t + 0.4);
     });
+    setTimeout(() => ctx.close(), 2000);
   } catch (_) {}
 }
 

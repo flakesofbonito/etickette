@@ -22,7 +22,8 @@ const firebaseConfig = {
 
 let app, db;
 
-let lastServing = { cashier: null, registrar: null };
+let lastServing  = { cashier: null, registrar: null };
+let initialLoad  = { cashier: true, registrar: true };
 
 function playCallAlert() {
     try {
@@ -40,6 +41,7 @@ function playCallAlert() {
             g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
             o.start(t); o.stop(t + 0.5);
         });
+        setTimeout(() => ctx.close(), 2000);
     } catch (_) {}
 }
 
@@ -104,9 +106,11 @@ function listenToQueue(dept) {
 
         const nowEl = document.getElementById(dept + 'Now');
         const newNum = serving ? serving.ticketNumber : '—';
-        if (serving && newNum !== lastServing[dept]) {
+        if (serving && newNum !== lastServing[dept] && !initialLoad[dept]) {
             playCallAlert();
         }
+        initialLoad[dept] = false;
+        lastServing[dept] = newNum;
         lastServing[dept] = newNum;
         nowEl.textContent = newNum;
 
@@ -131,38 +135,47 @@ function listenToSettings() {
         document.getElementById('footerQuota').textContent =
             'Slots: ' + rem + ' / ' + (d.dailyQuota || 100);
 
-        const msg    = d.statusMessage || '';
-        const ticker = document.getElementById('monitorTicker');
+        const msg        = d.statusMessage || '';
+        const ticker     = document.getElementById('monitorTicker');
         const tickerText = document.getElementById('tickerText');
 
         clearTimeout(window._tickerTimer);
+        clearInterval(window._tickerScroll);
 
-        if (msg.trim() !== '') {
-            tickerText.textContent = msg + '     •     ' + msg + '     •     ' + msg;
-            ticker.classList.remove('fading');
-            ticker.style.display = 'flex';
-            ticker.style.opacity = '1';
-
-            let pos = ticker.offsetWidth;
-            clearInterval(window._tickerScroll);
-            tickerText.style.transform = `translateX(${pos}px)`;
-            window._tickerScroll = setInterval(() => {
-                pos -= 2;
-                if (pos < -(tickerText.offsetWidth)) pos = ticker.offsetWidth;
-                tickerText.style.transform = `translateX(${pos}px)`;
-            }, 16);
-
-            window._tickerTimer = setTimeout(() => {
-                ticker.classList.add('fading');
-                setTimeout(() => {
-                    ticker.style.display = 'none';
-                    clearInterval(window._tickerScroll);
-                }, 800);
-            }, 30000);
-
-        } else {
+        if (msg.trim() === '') {
             ticker.style.display = 'none';
-            clearInterval(window._tickerScroll);
+            return;
         }
+
+        const msgTime = d.statusMessageAt?.toMillis?.();
+        const DISPLAY_MS = 30000;
+        const age = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
+        const remaining = DISPLAY_MS - age;
+
+        if (remaining <= 0) {
+            ticker.style.display = 'none';
+            return;
+        }
+
+        tickerText.textContent = msg + '     •     ' + msg + '     •     ' + msg;
+        ticker.classList.remove('fading');
+        ticker.style.display = 'flex';
+        ticker.style.opacity = '1';
+
+        let pos = ticker.offsetWidth;
+        tickerText.style.transform = `translateX(${pos}px)`;
+        window._tickerScroll = setInterval(() => {
+            pos -= 2;
+            if (pos < -(tickerText.offsetWidth)) pos = ticker.offsetWidth;
+            tickerText.style.transform = `translateX(${pos}px)`;
+        }, 16);
+
+        window._tickerTimer = setTimeout(() => {
+            ticker.classList.add('fading');
+            setTimeout(() => {
+                ticker.style.display = 'none';
+                clearInterval(window._tickerScroll);
+            }, 800);
+        }, remaining);
     });
 }

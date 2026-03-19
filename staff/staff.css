@@ -302,8 +302,22 @@ html, body {
 .queue-details { flex: 1; }
 .q-name { font-size: 13px; font-weight: 600; color: var(--slate-700); }
 .q-reason { font-size: 12px; color: var(--slate-500); }
-.q-time { font-size: 11px; color: var(--slate-400); }
-.queue-tag {
+.queue-docs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 5px 0 3px;
+}
+.queue-doc-item {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold-700);
+    background: var(--gold-50);
+    border: 1px solid var(--gold-100);
+    border-radius: 4px;
+    padding: 2px 7px;
+    white-space: nowrap;
+}.queue-tag {
   font-size: 10px; font-weight: 700; padding: 3px 8px;
   border-radius: 20px; letter-spacing: .3px;
 }

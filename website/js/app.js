@@ -1,6 +1,6 @@
 import {
     getFirestore, doc, collection, setDoc, getDoc, onSnapshot,
-    updateDoc, query, where, serverTimestamp, getDocs, increment
+    updateDoc, query, where, serverTimestamp, getDocs, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
@@ -272,7 +272,7 @@ function listenToSettings() {
             if (isFull && !hasActiveReservation) {
                 btn.disabled = true;
                 btn.title    = 'Daily quota is full. No more reservations today.';
-                btn.textContent = '🔴 Quota Full — No Slots Available';
+                btn.textContent = 'Quota Full — No Slots Available';
                 btn.style.background = 'rgba(220,38,38,.1)';
                 btn.style.color      = '#dc2626';
                 btn.style.border     = '2px solid rgba(220,38,38,.3)';
@@ -299,8 +299,17 @@ function listenToSettings() {
         const gs = document.getElementById('globalStatus');
         if (gs) {
             clearTimeout(window._bannerTimer);
-            if (d.statusMessage && d.statusMessage.trim() !== '') {
-                gs.innerHTML = `<div class="status-live-dot"></div><span>System is LIVE</span><span class="status-banner-divider">|</span><span>${d.statusMessage}</span>`;
+
+            const msg = d.statusMessage || '';
+            const msgTime = d.statusMessageAt?.toMillis?.();
+            const DISPLAY_MS = 30000;
+            const age = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
+            const remaining = DISPLAY_MS - age;
+
+            if (msg.trim() !== '' && remaining > 0) {
+                gs.style.opacity = '1';
+                gs.innerHTML = `<div class="status-live-dot"></div><span>System is LIVE</span><span class="status-banner-divider">|</span><span>${msg}</span>`;
+
                 window._bannerTimer = setTimeout(() => {
                     gs.style.transition = 'opacity .8s ease';
                     gs.style.opacity = '0';
@@ -308,7 +317,7 @@ function listenToSettings() {
                         gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                         gs.style.opacity = '1';
                     }, 800);
-                }, 30000);
+                }, remaining);  
             } else {
                 gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                 gs.style.opacity = '1';
@@ -415,11 +424,10 @@ function renderActiveResBanner(res, rid) {
         const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
         trackingCard = `
         <div class="tracking-card">
-            <span class="tracking-label">🔴 Live Queue Tracker</span>
+            <span class="tracking-label" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red-600);display:inline-block;flex-shrink:0;"></span> Live Queue Tracker</span>
             <div class="tracking-actions">
             <a href="${trackingUrl}" target="_blank" class="btn-track">Track My Queue →</a>
-            <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='🔗 Copy',2000); })">🔗 Copy</button>
-            </div>
+            <button class="btn-copy-link" onclick="navigator.clipboard.writeText('${trackingUrl}').then(()=>{ this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Link',2000); })">Copy Link</button>            </div>
         </div>`;
     }
 
@@ -498,46 +506,50 @@ async function cancelReservation(rid, status) {
         ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
         : 'Are you sure you want to cancel this reservation?')) return;
 
+    const banner = document.getElementById('activeResBanner');
+    if (banner) banner.remove();
+    hasActiveReservation = false;
+    setReserveButtonsLocked(false);
+
     try {
-        const banner = document.getElementById('activeResBanner');
-        if (banner) banner.remove();
-        hasActiveReservation = false;
-        setReserveButtonsLocked(false);
+        await runTransaction(db, async (transaction) => {
+            const resSnap = await transaction.get(doc(db, 'reservations', rid));
+            if (!resSnap.exists()) throw new Error('Reservation not found');
+            const resData = resSnap.data();
 
-        await updateDoc(doc(db, 'reservations', rid), { status: 'cancelled', cancelledAt: serverTimestamp() });
+            transaction.update(doc(db, 'reservations', rid), {
+                status: 'cancelled',
+                cancelledAt: serverTimestamp()
+            });
 
-        if (status === 'active') {
-            const snap = await getDoc(doc(db, 'reservations', rid));
-            const tNum = snap.data().ticketNumber;
-            if (tNum) {
-                const ticketSnap = await getDoc(doc(db, 'tickets', tNum));
+            if (status === 'active' && resData.ticketNumber) {
+                const tNum      = resData.ticketNumber;
+                const ticketSnap = await transaction.get(doc(db, 'tickets', tNum));
+
                 if (ticketSnap.exists()) {
                     const tStatus = ticketSnap.data().status;
-                    await updateDoc(doc(db, 'tickets', tNum), { status: 'cancelled' });
+                    transaction.update(doc(db, 'tickets', tNum), { status: 'cancelled' });
+
                     if (tStatus === 'waiting' || tStatus === 'serving') {
-                        const dept  = snap.data().department;
-                        const dSnap = await getDoc(doc(db, 'departments', dept));
+                        const dSnap = await transaction.get(doc(db, 'departments', resData.department));
                         if (dSnap.exists()) {
-                            await updateDoc(doc(db, 'departments', dept), {
+                            transaction.update(doc(db, 'departments', resData.department), {
                                 queue: Math.max(0, (dSnap.data().queue || 1) - 1)
                             });
                         }
+                        transaction.update(doc(db, 'system', 'settings'), {
+                            ticketsIssued: increment(-1)
+                        });
                     }
                 }
             }
-        }
-
-        try {
-            if (status === 'active') {
-                await updateDoc(doc(db, 'system', 'settings'), { ticketsIssued: increment(-1) });
-            }
-        } catch (e) {
-            console.warn('[quota restore]', e.message);
-        }
+        });
 
         showToast('Reservation cancelled.', 'warning');
     } catch (e) {
         console.error('[cancelReservation]', e);
+        hasActiveReservation = true;
+        setReserveButtonsLocked(true);
         showToast('Could not cancel. Try again.', 'error');
     }
 }
@@ -579,7 +591,7 @@ function openReserveModal(dept) {
                 r.docs.forEach(docName => {
                     const item = document.createElement('div');
                     item.className = 'docs-item';
-                    item.innerHTML = `<span class="docs-item-icon">📄</span><span>${docName}</span>`;
+                    item.innerHTML = `<span class="docs-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>${docName}</span>`;
                     docsList.appendChild(item);
                 });
             } else {
@@ -608,15 +620,22 @@ function rGoStep(n) {
 }
 
 async function submitReserveDate() {
+    const btn = document.querySelector('#rstep3 .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = 'Reserving...'; }
+
+    const resetBtn = () => {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Reserve <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;stroke:white;flex-shrink:0"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'; }
+    };
+
     const dateVal = document.getElementById('reserveDate').value;
     const errEl   = document.getElementById('dateError');
-    if (!dateVal) { errEl.textContent = 'Please pick a date.'; return; }
+    if (!dateVal) { errEl.textContent = 'Please pick a date.'; resetBtn(); return; }
     errEl.textContent = '';
 
     try {
         const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
         const already = snap.docs.some(d => { const s = d.data().status; return s === 'pending' || s === 'active'; });
-        if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; return; }
+        if (already) { errEl.textContent = 'You already have an active reservation. Cancel it first.'; resetBtn(); return; }
     } catch (e) { console.warn('[pre-check res]', e.code); }
 
     try {
@@ -625,7 +644,7 @@ async function submitReserveDate() {
         if (waiting) {
             const t = waiting.data();
             errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
-            return;
+            resetBtn(); return;
         }
     } catch (e) { console.warn('[pre-check ticket]', e.code); }
 
@@ -634,7 +653,7 @@ async function submitReserveDate() {
     const settingsData = settingsSnap.data();
     if ((settingsData.ticketsIssued || 0) >= (settingsData.dailyQuota || 100)) {
         errEl.textContent = 'Sorry, the daily quota is full. No more reservations can be made today.';
-        return;
+        resetBtn(); return;
     }
 
     const rid = 'RES-' + currentStudentId + '-' + Date.now();
@@ -663,6 +682,7 @@ async function submitReserveDate() {
         reserveDept.toUpperCase() + ' · ' + reserveReason.label + ' · ' + dateVal;
     renderQR(qrEl, rid, 160);
     rGoStep(4);
+    resetBtn();
     showToast('Reservation saved!', 'success');
 }
 

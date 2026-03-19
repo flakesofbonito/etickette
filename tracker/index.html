@@ -42,20 +42,26 @@
         </div>
 
         <div id="stateCompleted" class="state-panel hidden">
-          <div class="state-icon">✅</div>
+          <div class="state-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
           <h2>Service Complete</h2>
           <p>Thank you for using eTickette.<br />Have a great day!</p>
           <div class="done-ticket" id="doneTicketNum">—</div>
         </div>
 
         <div id="stateNoshow" class="state-panel hidden">
-          <div class="state-icon">😔</div>
+          <div class="state-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          </div>
           <h2>Marked as No-Show</h2>
           <p>Your ticket was called but you were not present.<br />Please queue again if you still need assistance.</p>
         </div>
 
         <div id="stateCancelled" class="state-panel hidden">
-          <div class="state-icon">🚫</div>
+          <div class="state-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--red-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          </div>
           <h2>Ticket Cancelled</h2>
           <p>This ticket has been cancelled.<br />Please queue again at the kiosk.</p>
         </div>
@@ -71,7 +77,7 @@
                 <div class="tc-number" id="tcNumber">—</div>
                 <div class="tc-status-block">
                   <div id="statusIconWrap" class="status-icon-wrap">
-                    <span id="statusIcon">⏳</span>
+                    <span id="statusIcon"></span>
                   </div>
                   <div id="statusLabel" class="status-label">Waiting in Queue</div>
                   <div id="statusSub" class="status-sub">We'll notify you when it's your turn</div>
@@ -85,7 +91,9 @@
               </div>
 
               <div id="calledBanner" class="called-banner hidden">
-                <div class="called-icon">📣</div>
+                <div class="called-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+                </div>
                 <div class="called-text">
                   <strong>It's Your Turn!</strong>
                   <span>Please proceed to the <span id="calledDept">CASHIER</span> counter now</span>
@@ -120,7 +128,9 @@
               </div>
 
               <div class="notif-card" id="notifCard">
-                <div class="notif-icon">🔔</div>
+                <div class="notif-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                </div>
                 <div class="notif-text">
                   <strong>Get notified when called</strong>
                   <span>We'll alert you when it's your turn</span>
@@ -154,6 +164,21 @@
         <span>eTickette · STI College Fairview · 2026</span>
       </div>
     </div>
+
+    <div id="offlineBanner" style="
+    display:none; position:fixed; top:0; left:0; right:0;
+    background:#dc2626; color:#fff;
+    padding:10px 20px; text-align:center;
+    font-size:13px; font-weight:700;
+    z-index:99999; font-family:'Plus Jakarta Sans',sans-serif;
+    letter-spacing:.3px;
+    ">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connection lost    </div>
+    </div>
+    <script>
+        window.addEventListener('online',  () => { document.getElementById('offlineBanner').style.display = 'none'; });
+        window.addEventListener('offline', () => { document.getElementById('offlineBanner').style.display = 'block'; });
+    </script>
 
     <script type="module" src="js/tracker.js"></script>
   </body>

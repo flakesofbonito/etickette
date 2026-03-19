@@ -26,29 +26,28 @@ const REASONS = {
     ],
     registrar: [
         { category: "College Graduates" },
-        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Graduating Clearance"] },
-        { label: "Diploma / Authentication",         docs: ["Valid ID", "Graduating Clearance"] },
-        { label: "Certificate of Graduation",        docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+        { label: "Diploma / Authentication",         docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
+        { label: "Certificate of Graduation",        docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
 
         { category: "SHS Graduates" },
-        { label: "Form 137 / 138",                  docs: ["Valid ID", "Graduating Clearance"] },
-        { label: "Diploma",                          docs: ["Valid ID", "Graduating Clearance"] },
-        { label: "CTC of Report Card",               docs: ["Valid ID", "Graduating Clearance"] },
+        { label: "Form 137 / 138",                  docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+        { label: "Diploma",                          docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
+        { label: "CTC of Report Card",               docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
 
         { category: "Ongoing Students" },
-        { label: "Certificate of Enrollment",        docs: ["School ID or RAF"] },
-        { label: "CTC of Report Card",               docs: ["School ID or RAF"] },
+        { label: "Certificate of Enrollment",        docs: ["School ID or RAF", "Request Form (PAF)"] },
+        { label: "CTC of Report Card",               docs: ["School ID or RAF", "Request Form (PAF)"] },
         { label: "Statement of Account",             docs: ["School ID or RAF"] },
-        { label: "Registration Form",                docs: ["School ID", "Official Receipt"] },
+        { label: "Registration Form",                docs: ["School ID", "Official Receipt of Payment"] },
 
         { category: "Undergraduate (Transferees)" },
-        { label: "Transcript of Records (TOR)",      docs: ["School ID", "Exit Clearance"] },
-        { label: "Certificate of Enrollment",      docs: ["School ID", "Exit Clearance"] },
-        { label: "Copy of Grades",                   docs: ["School ID", "Exit Clearance"] },
+        { label: "Transcript of Records (TOR)",      docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
+        { label: "Copy of Grades",                   docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
 
         { category: "Other" },
-        { label: "Other",                            docs: ["Valid ID or School ID"] }
-    ], 
+        { label: "Other",                            docs: ["Valid ID or School ID", "Request Form (PAF)"] }
+    ],
 };
 
 let app, db;
@@ -75,6 +74,7 @@ export function initKiosk() {
     window.stopScanner         = stopScanner;
     window.startScreensaver = startScreensaver;
     window.dismissScreensaver = dismissScreensaver;
+    window.reprintTicket = reprintTicket;
     window.addEventListener('beforeunload', () => stopScanner());
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopScanner(); });
 
@@ -147,7 +147,7 @@ function listenToQueueCounts() {
                 const qEl = document.getElementById(key);
                 if (qEl) qEl.textContent = open
                     ? (data.queue || 0) + ' in queue'
-                    : st === 'break' ? '🟡 On Break' : '🔴 Closed';
+                    : st === 'break' ? 'On Break' : 'Closed';
 
                 const btnId = dept === 'cashier' ? 'deptCashier' : 'deptRegistrar';
                 const btn   = document.getElementById(btnId);
@@ -318,9 +318,9 @@ async function submitId() {
     try {
         const [resSnap, ticketSnap] = await Promise.all([
             getDocs(query(collection(db, 'reservations'),
-                where('studentId', '==', userId), where('status', '==', 'pending'))),
+                where('studentId', '==', userId), where('status', 'in', ['pending', 'active']))),
             getDocs(query(collection(db, 'tickets'),
-                where('userId', '==', userId), where('status', '==', 'waiting')))
+                where('userId', '==', userId), where('status', 'in', ['waiting', 'serving'])))
         ]);
 
         if (!resSnap.empty) {
@@ -378,7 +378,7 @@ function showDocsScreen(reason) {
         reason.docs.forEach(docName => {
             const item = document.createElement('div');
             item.className = 'kiosk-doc-item';
-            item.innerHTML = `<span class="kiosk-doc-icon">📄</span><span>${docName}</span>`;
+            item.innerHTML = `<span class="kiosk-doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-900)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>${docName}</span>`;
             list.appendChild(item);
         });
     } else {
@@ -444,11 +444,15 @@ async function issueTicket(userId) {
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.update(sRef, { ticketsIssued: increment(1) });
             transaction.set(ticketRef, {
-                ticketNumber: tNum, department: selectedDept,
-                userId, userType: selectedUserType, displayName: selectedDisplayName,
-                reason: selectedReason ? selectedReason.label : '—',
+                ticketNumber: tNum, department: dept,
+                userId: res.studentId || res.userId || 'N/A',
+                userType: res.userType || 'student',
+                displayName: res.displayName || res.studentId || 'N/A',
+                reason: res.reason || 'Reservation Check-In',
+                requiredDocs: res.requiredDocs || [],
                 status: 'waiting', issuedAt: serverTimestamp(),
-                printed: false, called: false, isReservation: false
+                printed: false, called: false,
+                isReservation: true, reservationId
             });
         });
 
@@ -464,6 +468,7 @@ async function issueTicket(userId) {
 }
 
 function showTicketScreen(tNum, userId, ahead) {
+    window._lastTicket = { tNum, dept: selectedDept };
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     set('issuedDept',   selectedDept.toUpperCase());
     set('issuedNumber', tNum);
@@ -484,7 +489,8 @@ function showTicketScreen(tNum, userId, ahead) {
     let countdown = 15;
     const countEl = document.getElementById('ticketCountdown');
     if (countEl) countEl.textContent = countdown;
-    const countTimer = setInterval(() => {
+    window._ticketCountTimer && clearInterval(window._ticketCountTimer);
+    window._ticketCountTimer = setInterval(() => {
         countdown--;
         if (countEl) countEl.textContent = countdown;
         if (countdown <= 0) {
@@ -642,6 +648,7 @@ async function onScanSuccess(decoded) {
         });
 
         await printTicket(tNum, dept);
+        window._lastTicket = { tNum, dept };
 
         const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         set('scanDept',   dept.toUpperCase());
@@ -690,6 +697,23 @@ async function printTicket(tNum, dept) {
     }
 }
 
+async function reprintTicket() {
+    const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
+    if (!window._lastTicket) {
+        alert('Nothing to reprint.');
+        return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
+    try {
+        await printTicket(window._lastTicket.tNum, window._lastTicket.dept);
+        if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
+        playBeep();
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
+        alert('Reprint failed. Check if printer is connected.');
+    }
+}
+
 function playBeep() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -731,6 +755,8 @@ function initIdleTimeout() {
     }
 
     function showIdleWarning() {
+        const ss = document.getElementById('screensaver');
+        if (ss && ss.classList.contains('active')) return;
         idleWarningShown = true;
         let secondsLeft = 10;
         const banner = document.createElement('div');
@@ -738,7 +764,7 @@ function initIdleTimeout() {
         banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1f3c88;color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;z-index:9999;border-top:4px solid #e3cf57;animation:slideUp .3s ease;font-family:\'Plus Jakarta Sans\',sans-serif;';
         banner.innerHTML = `
             <div>
-                <div style="font-size:16px;font-weight:700;">⏱ Still there?</div>
+                <div style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Still there?</div>
                 <div style="font-size:13px;opacity:.8;margin-top:2px;">Returning to home in <span id="idleCountdown">10</span> seconds...</div>
             </div>
             <button onclick="window.resetIdleTimer()" style="background:#e3cf57;color:#1f3c88;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">

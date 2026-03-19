@@ -41,6 +41,8 @@ window.dailyReset         = dailyReset;
 window.setDailyQuota = setDailyQuota;
 window.setStatusMessage   = setStatusMessage;
 window.clearStatusMessage = clearStatusMessage;
+window.exportCSV          = exportCSV;
+
 
 app = initializeApp(firebaseConfig);
 db  = getFirestore(app);
@@ -175,7 +177,8 @@ function listenToQuota() {
             display.style.color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f97316' : '#2563eb';
         }
         if (sub) {
-            sub.textContent = remaining === 0 ? '🔴 Full' : `${remaining} left`;
+            sub.textContent = remaining === 0 ? 'Full' : `${remaining} left`;
+            sub.style.fontWeight = remaining === 0 ? '800' : '';
             sub.style.color = remaining === 0 ? '#dc2626' : remaining <= 10 ? '#f97316' : '#6b7280';
         }
     });
@@ -261,31 +264,42 @@ async function loadTodayStats() {
 }
 
 function renderQueue(waiting) {
-  const el = document.getElementById('queueList');
-  if (waiting.length === 0) { el.innerHTML = '<div class="queue-empty">No tickets waiting</div>'; return; }
-  el.innerHTML = '';
-  waiting.forEach((t, i) => {
-    const item = document.createElement('div');
-    item.className = 'queue-item';
-    const tag  = t.isReservation ? '<span class="queue-tag reservation">Reservation</span>' : '<span class="queue-tag walkin">Walk-in</span>';
-    const time = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—';
-    item.innerHTML = `
-      <div class="queue-num">${t.ticketNumber}</div>
-      <div class="queue-details">
-        <div class="q-name">${t.userId || t.displayName || '—'}</div>
-        <div class="q-reason">${t.reason || '—'}</div>
-        <div class="q-time">Issued: ${time}</div>
-      </div>
-      ${tag}
-      <div class="queue-pos">#${i + 1}</div>`;
-    el.appendChild(item);
-  });
+    const el = document.getElementById('queueList');
+    if (waiting.length === 0) { el.innerHTML = '<div class="queue-empty">No tickets waiting</div>'; return; }
+    el.innerHTML = '';
+    waiting.forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+        const tag  = t.isReservation ? '<span class="queue-tag reservation">Reservation</span>' : '<span class="queue-tag walkin">Walk-in</span>';
+        const time = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—';
+
+        let docsHtml = '';
+        if (t.requiredDocs && t.requiredDocs.length > 0) {
+            const docItems = t.requiredDocs.map(d =>
+                `<span class="queue-doc-item">📄 ${d}</span>`
+            ).join('');
+            docsHtml = `<div class="queue-docs">${docItems}</div>`;
+        }
+
+        item.innerHTML = `
+            <div class="queue-num">${t.ticketNumber}</div>
+            <div class="queue-details">
+                <div class="q-name">${t.userId || t.displayName || '—'}</div>
+                <div class="q-reason">${t.reason || '—'}</div>
+                ${docsHtml}
+                <div class="q-time">Issued: ${time}</div>
+            </div>
+            ${tag}
+            <div class="queue-pos">#${i + 1}</div>`;
+        el.appendChild(item);
+    });
 }
 
 function renderServing(ticket, isNew = true) {
   document.getElementById('servingNumber').textContent = ticket.ticketNumber;
-  document.getElementById('servingUserId').textContent = '🪪 Student No: ' + (ticket.userId || ticket.displayName || '—');  document.getElementById('servingReason').textContent = '📝 ' + (ticket.reason || '—');
-  document.getElementById('servingType').textContent   = ticket.isReservation ? '📅 Reservation' : '🚶 Walk-in';
+  document.getElementById('servingUserId').textContent = 'ID: ' + (ticket.userId || ticket.displayName || '—');
+  document.getElementById('servingReason').textContent = (ticket.reason || '—');
+  document.getElementById('servingType').textContent   = ticket.isReservation ? 'Reservation' : 'Walk-in';
   document.getElementById('btnComplete').disabled      = false;
   document.getElementById('btnNoshow').disabled        = false;
   if (isNew && !serveStartTime) { serveStartTime = Date.now(); startTimer(); }
@@ -388,7 +402,7 @@ function showConfirmDialog(message, confirmText, cancelText) {
     o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
     o.innerHTML = `
       <div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,.25);text-align:center;">
-        <div style="font-size:32px;margin-bottom:12px;">📣</div>
+        <div style="margin-bottom:12px;display:flex;justify-content:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--blue-800)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
         <p style="font-size:15px;font-weight:600;color:#1a1a2e;line-height:1.5;margin-bottom:20px;">${message}</p>
         <div style="display:flex;gap:10px;">
           <button id="dlgCancel"  style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:#6b7280;font-family:inherit;">${cancelText}</button>
@@ -414,13 +428,72 @@ async function completeTicket() {
 }
 
 async function noShowTicket() {
-  clearTimeout(noShowTimer); 
-  if (!currentTicket) return;
-  await finishServing(currentTicket, 'noshow');
-  noShowToday++;
-  document.getElementById('statNoShow').textContent = noShowToday;
-  addActivity('noshow', currentTicket.ticketNumber, currentTicket.displayName || currentTicket.userId || '—');
-  currentTicket = null; clearServing();
+    clearTimeout(noShowTimer);
+    if (!currentTicket) return;
+
+    const ticketNum  = currentTicket.ticketNumber;
+    const ticketName = currentTicket.displayName || currentTicket.userId || '—';
+
+    await finishServing(currentTicket, 'noshow');
+    noShowToday++;
+    document.getElementById('statNoShow').textContent = noShowToday;
+    addActivity('noshow', ticketNum, ticketName);
+    currentTicket = null;
+    clearServing();
+
+    const snap = await getDocs(query(
+        collection(db, 'tickets'),
+        where('department', '==', staffDept),
+        where('status', '==', 'waiting')
+    ));
+    if (snap.empty) return;
+
+    let secondsLeft = 3;
+    let cancelled   = false;
+
+    const toast = document.createElement('div');
+    toast.id    = 'autoCallToast';
+    toast.style.cssText = `
+        position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+        background:var(--blue-800); color:#fff;
+        padding:14px 24px; border-radius:12px;
+        font-size:14px; font-weight:600;
+        display:flex; align-items:center; gap:14px;
+        box-shadow:0 4px 20px rgba(0,0,0,.25);
+        z-index:9999; font-family:var(--font);
+        white-space:nowrap;
+    `;
+    toast.innerHTML = `
+        <span id="autoCallMsg">Calling next ticket in ${secondsLeft}s...</span>
+        <button id="autoCallCancel" style="
+            background:rgba(255,255,255,.15);
+            border:1px solid rgba(255,255,255,.3);
+            color:#fff; border-radius:8px;
+            padding:6px 14px; font-size:13px;
+            font-weight:700; cursor:pointer;
+            font-family:var(--font);
+        ">Cancel</button>
+    `;
+    document.body.appendChild(toast);
+
+    document.getElementById('autoCallCancel').onclick = () => {
+        cancelled = true;
+        toast.remove();
+    };
+
+    const interval = setInterval(async () => {
+        if (cancelled) { clearInterval(interval); return; }
+
+        secondsLeft--;
+        const msgEl = document.getElementById('autoCallMsg');
+        if (msgEl) msgEl.textContent = `Calling next ticket in ${secondsLeft}s...`;
+
+        if (secondsLeft <= 0) {
+            clearInterval(interval);
+            toast.remove();
+            if (!cancelled) await callNextTicket();
+        }
+    }, 1000);
 }
 
 async function finishServing(ticket, status) {
@@ -452,15 +525,69 @@ async function setDeptStatus(status) {
 }
 
 async function recallTicket() {
-  const input = document.getElementById('recallInput');
-  const tNum  = input.value.trim().toUpperCase();
-  if (!tNum) return;
-  try {
-    const snap = await getDoc(doc(db,'tickets',tNum));
-    if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
-    addActivity('called', tNum, snap.data().displayName || snap.data().userId || '—');
-    input.value = '';
-  } catch (e) { console.error('[recall]', e); }
+    const input = document.getElementById('recallInput');
+    const tNum  = input.value.trim().toUpperCase();
+    if (!tNum) return;
+
+    try {
+        const snap = await getDoc(doc(db, 'tickets', tNum));
+        if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+        const tData = snap.data();
+
+        if (tData.status === 'cancelled') {
+            alert(`Ticket ${tNum} was cancelled and cannot be recalled.`);
+            return;
+        }
+
+        if (tData.status === 'completed' || tData.status === 'noshow') {
+            const ok = await showConfirmDialog(
+                `Ticket ${tNum} was already ${tData.status}. Recall it anyway? (e.g. forgot to tell the student something)`,
+                'Yes, Recall Anyway', 'Cancel'
+            );
+            if (!ok) return;
+        }
+
+        if (currentTicket && currentTicket.status === 'serving') {
+            const ok = await showConfirmDialog(
+                `Ticket ${currentTicket.ticketNumber} is currently being served. Put it back in queue and recall ${tNum}?`,
+                'Yes, Put Back & Recall', 'Cancel'
+            );
+            if (!ok) return;
+
+            clearTimeout(noShowTimer);
+            clearInterval(timerInterval);
+            serveStartTime = null;
+
+            await updateDoc(doc(db, 'tickets', currentTicket.id), {
+                status: 'waiting',
+                calledAt: null
+            });
+            await updateDoc(doc(db, 'departments', staffDept), {
+                queue: increment(1),
+                nowServing: ''
+            });
+            addActivity('called', currentTicket.ticketNumber, 'returned to queue');
+        }
+
+        await updateDoc(doc(db, 'tickets', tNum), {
+            status: 'serving',
+            calledAt: serverTimestamp(),
+            called: true,
+            notified: true,
+            notifiedAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'departments', staffDept), { nowServing: tNum });
+
+        serveStartTime = Date.now();
+        clearInterval(timerInterval);
+        startTimer();
+        addActivity('called', tNum, tData.displayName || tData.userId || '—');
+        input.value = '';
+
+    } catch (e) {
+        console.error('[recall]', e);
+        alert('Could not recall ticket. Try again.');
+    }
 }
 
 async function markManualComplete() {
@@ -492,8 +619,8 @@ async function markManualComplete() {
 async function dailyReset(auto = false) {
   if (!auto) {
     const ok1 = await showConfirmDialog(
-      '⚠️ This will reset ALL ticket counters and clear today\'s queue. This cannot be undone.',
-      '🔄 Yes, Reset for Today', 'Cancel');
+      'This will reset ALL ticket counters and clear today\'s queue. This cannot be undone.',
+      'Yes, Reset for Today', 'Cancel');
     if (!ok1) return;
     const ok2 = await showConfirmDialog(
       'Last chance — ALL active and waiting tickets will be cleared. Proceed?',
@@ -532,7 +659,7 @@ async function dailyReset(auto = false) {
     if (sc) sc.textContent = 0;
     document.getElementById('activityLog').innerHTML = '<div class="activity-empty">No activity yet</div>';
     addActivity('called', '—', 'System reset for new day');
-    showToast('✅ System reset! Ready for today\'s queue.', 'success');
+    showToast('System reset. Ready for today\'s queue.', 'success');
 
   } catch (e) {
     console.error('[dailyReset]', e);
@@ -546,7 +673,10 @@ async function setStatusMessage() {
     const msg   = input.value.trim();
     if (!msg) { hint.textContent = 'Please type a message first.'; hint.style.color = '#dc2626'; return; }
     try {
-        await updateDoc(doc(db, 'system', 'settings'), { statusMessage: msg });
+        await updateDoc(doc(db, 'system', 'settings'), {
+            statusMessage: msg,
+            statusMessageAt: serverTimestamp()
+        });
         hint.textContent = '✅ Message set! Showing on website and monitor.';
         hint.style.color = '#16a34a';
         setTimeout(() => { hint.textContent = ''; }, 3000);
@@ -574,7 +704,11 @@ function addActivity(type, tNum, name) {
   const log   = document.getElementById('activityLog');
   const empty = log.querySelector('.activity-empty');
   if (empty) empty.remove();
-  const icons  = { called:'📣', completed:'✅', noshow:'❌' };
+  const icons = {
+    called:    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>',
+    completed: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    noshow:    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+  };
   const labels = { called:'Called', completed:'Served', noshow:'No-Show' };
   const now    = new Date().toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
   const item   = document.createElement('div');
@@ -598,4 +732,178 @@ function showToast(msg, type = 'info') {
   t.style.opacity = '1';
   clearTimeout(t._t);
   t._t = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
+
+async function exportCSV(mode = 'single') {
+    const hint = document.getElementById('exportHint');
+    hint.textContent = 'Generating report...';
+    hint.style.color = 'var(--slate-400)';
+
+    try {
+        const depts = mode === 'combined' ? ['cashier', 'registrar'] : [staffDept];
+
+        let allRows = [];
+        let lastReset = new Date();
+        lastReset.setHours(0, 0, 0, 0);
+
+        for (const dept of depts) {
+            const deptSnap = await getDoc(doc(db, 'departments', dept));
+            const deptReset = deptSnap.data()?.lastResetAt?.toDate?.();
+            const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+            const countFrom = deptReset && deptReset > startOfDay ? deptReset : startOfDay;
+            if (countFrom < lastReset) lastReset = countFrom;
+
+            const snap = await getDocs(query(
+                collection(db, 'tickets'),
+                where('department', '==', dept)
+            ));
+
+            const rows = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(t => {
+                    const issued = t.issuedAt?.toDate?.();
+                    return issued && issued >= countFrom;
+                });
+
+            allRows = allRows.concat(rows);
+        }
+
+        allRows.sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
+
+        if (allRows.length === 0) {
+            hint.textContent = 'No tickets found for today.';
+            hint.style.color = 'var(--red-600)';
+            return;
+        }
+
+        const headers = [
+            'Ticket No.',
+            'Department',
+            'Student ID',
+            'Type',
+            'Reason',
+            'Status',
+            'Issued At',
+            'Called At',
+            'Completed At',
+            'Wait Time (min)',
+            'Is Reservation'
+        ];
+
+        const csvRows = allRows.map(t => {
+            const issuedAt    = t.issuedAt?.toDate?.();
+            const calledAt    = t.calledAt?.toDate?.();
+            const completedAt = t.completedAt?.toDate?.();
+            const waitMin     = (issuedAt && calledAt)
+                ? ((calledAt - issuedAt) / 60000).toFixed(2)
+                : '—';
+            const fmt = (d) => d
+                ? d.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                : '—';
+            return [
+                t.ticketNumber,
+                t.department.toUpperCase(),
+                t.userId || '—',
+                t.isReservation ? 'Reservation' : 'Walk-in',
+                `"${(t.reason || '—').replace(/"/g, '""')}"`,
+                t.status,
+                fmt(issuedAt),
+                fmt(calledAt),
+                fmt(completedAt),
+                waitMin,
+                t.isReservation ? 'Yes' : 'No'
+            ].join(',');
+        });
+
+        const summaryLines = ['', '--- SUMMARY ---'];
+
+        for (const dept of depts) {
+            const dRows    = allRows.filter(t => t.department === dept);
+            const total    = dRows.length;
+            const served   = dRows.filter(t => t.status === 'completed').length;
+            const noshow   = dRows.filter(t => t.status === 'noshow').length;
+            const waiting  = dRows.filter(t => t.status === 'waiting' || t.status === 'serving').length;
+            const cancelled = dRows.filter(t => t.status === 'cancelled').length;
+            const walkins  = dRows.filter(t => !t.isReservation).length;
+            const reservations = dRows.filter(t => t.isReservation).length;
+            const waitTimes = dRows
+                .filter(t => t.issuedAt?.toDate?.() && t.calledAt?.toDate?.())
+                .map(t => (t.calledAt.toDate() - t.issuedAt.toDate()) / 60000);
+            const avgWait = waitTimes.length > 0
+                ? (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2)
+                : '—';
+            const maxWait = waitTimes.length > 0
+                ? Math.max(...waitTimes).toFixed(2)
+                : '—';
+
+            summaryLines.push(
+                ``,
+                `Department:,${dept.toUpperCase()}`,
+                `Total Tickets Issued:,${total}`,
+                `Served:,${served}`,
+                `No-Show:,${noshow}`,
+                `Still Waiting/Serving:,${waiting}`,
+                `Cancelled:,${cancelled}`,
+                `Walk-in:,${walkins}`,
+                `Reservation:,${reservations}`,
+                `Average Wait Time (min):,${avgWait}`,
+                `Longest Wait Time (min):,${maxWait}`
+            );
+        }
+
+        if (mode === 'combined') {
+            const total    = allRows.length;
+            const served   = allRows.filter(t => t.status === 'completed').length;
+            const noshow   = allRows.filter(t => t.status === 'noshow').length;
+            const walkins  = allRows.filter(t => !t.isReservation).length;
+            const reservations = allRows.filter(t => t.isReservation).length;
+            const waitTimes = allRows
+                .filter(t => t.issuedAt?.toDate?.() && t.calledAt?.toDate?.())
+                .map(t => (t.calledAt.toDate() - t.issuedAt.toDate()) / 60000);
+            const avgWait = waitTimes.length > 0
+                ? (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2)
+                : '—';
+
+            summaryLines.push(
+                ``,
+                `--- GRAND TOTAL ---`,
+                `Total All Departments:,${total}`,
+                `Total Served:,${served}`,
+                `Total No-Show:,${noshow}`,
+                `Total Walk-in:,${walkins}`,
+                `Total Reservation:,${reservations}`,
+                `Overall Average Wait Time (min):,${avgWait}`
+            );
+        }
+
+        const today = new Date().toLocaleDateString('en-PH', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+        summaryLines.unshift(`Date:,${today}`);
+
+        const csvContent = [
+            headers.join(','),
+            ...csvRows,
+            ...summaryLines
+        ].join('\n');
+
+        const blob    = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url     = URL.createObjectURL(blob);
+        const a       = document.createElement('a');
+        const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+        const label   = mode === 'combined' ? 'ALL' : staffDept.toUpperCase();
+        a.href        = url;
+        a.download    = `eTickette_${label}_${dateStr}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        hint.textContent = `✅ Report downloaded — ${allRows.length} tickets exported.`;
+        hint.style.color = 'var(--green-600)';
+
+    } catch (e) {
+        console.error('[exportCSV]', e);
+        hint.textContent = 'Failed to generate report.';
+        hint.style.color = 'var(--red-600)';
+    }
 }
