@@ -200,7 +200,11 @@ function listenToDept() {
 
 function listenToQueue() {
   if (unsubQueue) unsubQueue();
-  const q = query(collection(db, 'tickets'), where('department', '==', staffDept));
+  const q = query(
+    collection(db, 'tickets'),
+      where('department', '==', staffDept),
+      where('status', 'in', ['waiting', 'serving'])
+  );
   unsubQueue = onSnapshot(q, snap => {
     const all     = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const waiting = all.filter(t => t.status === 'waiting')

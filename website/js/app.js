@@ -299,8 +299,8 @@ function listenToSettings() {
             const msgTime = d.statusMessageAt?.toMillis?.();
             const DISPLAY_MS = 30000;
             const age = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
-            const remaining = DISPLAY_MS - age;
-            if (msg.trim() !== '' && remaining > 0) {
+            const msgRemaining = DISPLAY_MS - age;
+            if (msg.trim() !== '' && msgRemaining > 0) {
                 gs.style.opacity = '1';
                 gs.innerHTML = `<div class="status-live-dot"></div><span>System is LIVE</span><span class="status-banner-divider">|</span><span>${msg}</span>`;
                 window._bannerTimer = setTimeout(() => {
@@ -310,7 +310,7 @@ function listenToSettings() {
                         gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                         gs.style.opacity = '1';
                     }, 800);
-                }, remaining);
+                }, msgRemaining);
             } else {
                 gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                 gs.style.opacity = '1';
@@ -356,9 +356,12 @@ function listenToActiveReservation() {
                 return s === 'waiting' || s === 'serving';
             });
             if (activeTicket) {
-                hasActiveReservation = true;
-                setReserveButtonsLocked(true);
-                renderActiveWalkinBanner(activeTicket.data());
+                const existing = document.getElementById('activeResBanner');
+                if (!existing || existing.dataset.bannerType === 'walkin') {
+                    hasActiveReservation = true;
+                    setReserveButtonsLocked(true);
+                    renderActiveWalkinBanner(activeTicket.data());
+                }
             } else {
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'walkin') {
@@ -641,10 +644,15 @@ async function submitReserveDate() {
     } catch (e) { console.warn('[pre-check ticket]', e.code); }
 
     
-    const settingsSnap = await getDoc(doc(db, 'system', 'settings'));
-    const settingsData = settingsSnap.data();
-    if ((settingsData.ticketsIssued || 0) >= (settingsData.dailyQuota || 100)) {
-        errEl.textContent = 'Sorry, the daily quota is full. No more reservations can be made today.';
+    try {
+        const settingsSnap = await getDoc(doc(db, 'system', 'settings'));
+        const settingsData = settingsSnap.data();
+        if ((settingsData.ticketsIssued || 0) >= (settingsData.dailyQuota || 100)) {
+            errEl.textContent = 'Sorry, the daily quota is full. No more reservations can be made today.';
+            resetBtn(); return;
+        }
+    } catch (e) {
+        console.warn('[quota check]', e.code);
         resetBtn(); return;
     }
 

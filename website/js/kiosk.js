@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-    getFirestore, doc, collection, setDoc, getDoc, getDocs,
-    onSnapshot, updateDoc, increment, serverTimestamp, query, where,
+    getFirestore, doc, collection, getDoc, getDocs,
+    onSnapshot, increment, serverTimestamp, query, where,
     runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
