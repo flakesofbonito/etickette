@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getFirestore, doc, collection, onSnapshot,
   updateDoc, getDocs, query, where,
-  serverTimestamp, increment, getDoc, writeBatch
+  serverTimestamp, increment, getDoc, writeBatch, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -11,7 +11,8 @@ const firebaseConfig = {
   projectId: "etickette-78f74",
   storageBucket: "etickette-78f74.firebasestorage.app",
   messagingSenderId: "147547566302",
-  appId: "1:147547566302:web:2c7a52792b539331d8524f"
+  appId: "1:147547566302:web:2c7a52792b539331d8524f",
+  measurementId: "G-QHMMWXW7F3"
 };
 
 let STAFF_PIN = '1234';
@@ -384,7 +385,8 @@ async function callNextTicket() {
     serveStartTime = Date.now();
     clearInterval(timerInterval);
     await updateDoc(doc(db,'tickets',next.id), {
-        status:'serving', calledAt:serverTimestamp(), called:true, notified:true, notifiedAt:serverTimestamp()
+        status:'serving', calledAt:serverTimestamp(), 
+        called:true
     });
     await updateDoc(doc(db,'departments',staffDept), { nowServing: next.ticketNumber });
     addActivity('called', next.ticketNumber, next.displayName || next.userId || '—');
@@ -450,6 +452,9 @@ async function noShowTicket() {
     let secondsLeft = 3;
     let cancelled   = false;
 
+    const callNextBtn = document.getElementById('btnCallNext');
+    if (callNextBtn) callNextBtn.disabled = true;
+
     const toast = document.createElement('div');
     toast.id    = 'autoCallToast';
     toast.style.cssText = `
@@ -478,6 +483,7 @@ async function noShowTicket() {
     document.getElementById('autoCallCancel').onclick = () => {
         cancelled = true;
         toast.remove();
+        if (callNextBtn) callNextBtn.disabled = false;
     };
 
     const interval = setInterval(async () => {
@@ -490,7 +496,10 @@ async function noShowTicket() {
         if (secondsLeft <= 0) {
             clearInterval(interval);
             toast.remove();
-            if (!cancelled) await callNextTicket();
+            if (!cancelled) {
+                if (callNextBtn) callNextBtn.disabled = false;
+                await callNextTicket();
+            }
         }
     }, 1000);
 }
@@ -571,9 +580,7 @@ async function recallTicket() {
         await updateDoc(doc(db, 'tickets', tNum), {
             status: 'serving',
             calledAt: serverTimestamp(),
-            called: true,
-            notified: true,
-            notifiedAt: serverTimestamp()
+            called: true
         });
         await updateDoc(doc(db, 'departments', staffDept), { nowServing: tNum });
 
@@ -646,7 +653,7 @@ async function dailyReset(auto = false) {
 
     for (const dept of ['cashier','registrar'])
       await updateDoc(doc(db,'departments',dept), {
-        counter: 0, queue: 0, nowServing: '', lastResetAt: serverTimestamp()
+          counter: 0, queue: 0, nowServing: '', avgWaitSeconds: 0, lastResetAt: serverTimestamp()
       });
     await updateDoc(doc(db,'system','settings'), { ticketsIssued: 0 });
 
@@ -753,16 +760,12 @@ async function exportCSV(mode = 'single') {
             if (countFrom < lastReset) lastReset = countFrom;
 
             const snap = await getDocs(query(
-                collection(db, 'tickets'),
-                where('department', '==', dept)
+            collection(db, 'tickets'),
+            where('department', '==', dept),
+            where('issuedAt', '>=', Timestamp.fromDate(countFrom))
             ));
 
-            const rows = snap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(t => {
-                    const issued = t.issuedAt?.toDate?.();
-                    return issued && issued >= countFrom;
-                });
+            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
             allRows = allRows.concat(rows);
         }
@@ -771,7 +774,6 @@ async function exportCSV(mode = 'single') {
 
         if (allRows.length === 0) {
             hint.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>No tickets found for today.</span>';
-            hint.style.color = 'var(--red-600)';
             hint.style.color = 'var(--red-600)';
             return;
         }

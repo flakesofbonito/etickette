@@ -50,11 +50,6 @@ export function initMonitor() {
     db  = getFirestore(app);
     updateClock();
     setInterval(updateClock, 1000);
-    document.addEventListener('DOMContentLoaded', () => {
-    document.body.addEventListener('click', () => {}, { once: true });
-    const silentUnlock = new (window.AudioContext || window.webkitAudioContext)();
-    silentUnlock.resume().then(() => silentUnlock.close());
-    }, { once: true });
     listenToDept('cashier');
     listenToDept('registrar');
     listenToSettings();

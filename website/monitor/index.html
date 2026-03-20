@@ -139,15 +139,41 @@
     <div id="offlineBanner" style="
     display:none; position:fixed; top:0; left:0; right:0;
     background:#dc2626; color:#fff;
-    padding:10px 20px; text-align:center;
+    padding:10px 20px;
     font-size:13px; font-weight:700;
     z-index:99999; font-family:'Plus Jakarta Sans',sans-serif;
     letter-spacing:.3px;
-    "></div>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connection lost
+    flex-direction:row; align-items:center; justify-content:center; gap:6px;
+    ">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connection lost
     <script>
-        window.addEventListener('online',  () => { document.getElementById('offlineBanner').style.display = 'none'; });
-        window.addEventListener('offline', () => { document.getElementById('offlineBanner').style.display = 'block'; });
+        let _offlineTimer = null;
+
+        async function checkRealConnectivity() {
+            try {
+                await fetch('https://www.gstatic.com/generate_204', {
+                    method: 'HEAD', mode: 'no-cors', cache: 'no-store'
+                });
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        window.addEventListener('online', () => {
+            clearTimeout(_offlineTimer);
+            document.getElementById('offlineBanner').style.display = 'none';
+        });
+
+        window.addEventListener('offline', () => {
+            clearTimeout(_offlineTimer);
+            _offlineTimer = setTimeout(async () => {
+                const reallyOffline = !(await checkRealConnectivity());
+                if (reallyOffline) {
+                    document.getElementById('offlineBanner').style.display = 'flex';
+                }
+            }, 3000);
+        });
     </script>
 
     <script type="module">

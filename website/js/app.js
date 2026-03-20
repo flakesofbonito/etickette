@@ -14,37 +14,9 @@ const firebaseConfig = {
     measurementId: "G-QHMMWXW7F3"
 };
 
-const REASONS = {
-    cashier: [
-        { label: "Pay Tuition / Fees",       docs: ["Valid ID"] },
-        { label: "Request Official Receipt",  docs: ["Valid ID", "Proof of Payment"] },
-        { label: "Other",                     docs: [] }
-    ],
-    registrar: [
-        { category: "College Graduates" },
-        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-        { label: "Diploma / Authentication",         docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
-        { label: "Certificate of Graduation",        docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
+const PUBLIC_URL = 'https://etickette.web.app';
 
-        { category: "SHS Graduates" },
-        { label: "Form 137 / 138",                  docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-        { label: "Diploma",                          docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
-        { label: "CTC of Report Card",               docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-
-        { category: "Ongoing Students" },
-        { label: "Certificate of Enrollment",        docs: ["School ID or RAF", "Request Form (PAF)"] },
-        { label: "CTC of Report Card",               docs: ["School ID or RAF", "Request Form (PAF)"] },
-        { label: "Statement of Account",             docs: ["School ID or RAF"] },
-        { label: "Registration Form",                docs: ["School ID", "Official Receipt of Payment"] },
-
-        { category: "Undergraduate (Transferees)" },
-        { label: "Transcript of Records (TOR)",      docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
-        { label: "Copy of Grades",                   docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
-
-        { category: "Other" },
-        { label: "Other",                            docs: ["Valid ID or School ID", "Request Form (PAF)"] }
-    ], 
-};
+import { REASONS } from './reasons.js';
 
 let app, db;
 let currentStudentId   = null;
@@ -54,6 +26,8 @@ let currentStep        = 1;
 let hasActiveReservation = false;
 let currentUserType    = 'student';
 let currentDisplayName = null;
+let _unsubs = [];
+let _lastHistoryFetch = 0;
 
 export function initWebsite() {
     app = initializeApp(firebaseConfig);
@@ -172,16 +146,17 @@ function afterLogin() {
         <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
     `;
 
-
     setReserveButtonsLocked(true);
-
     navigate('home');
-    listenToDepts();
-    listenToSettings();
-    listenToActiveReservation();
+    _unsubs.push(listenToDepts());
+    _unsubs.push(listenToSettings());
+    _unsubs.push(listenToActiveReservation());
 }
 
 function logout() {
+    _unsubs.forEach(u => u());
+    _unsubs = [];
+    _lastHistoryFetch = 0;
     sessionStorage.removeItem('studentId');
     sessionStorage.removeItem('displayName');
     sessionStorage.removeItem('userType');
@@ -200,7 +175,13 @@ function logout() {
 }
 
 function navigate(view) {
-    if (view === 'history') loadHistory();
+    if (view === 'history') {
+        const now = Date.now();
+        if (now - _lastHistoryFetch > 30000) {
+            _lastHistoryFetch = now;
+            loadHistory();
+        }
+    }
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + view).classList.add('active');
     document.querySelectorAll('.nav-link').forEach(a =>
@@ -223,7 +204,7 @@ function toggleMenu() {
 }
 
 function listenToDepts() {
-    ['cashier', 'registrar'].forEach(dept => {
+    const unsubs = ['cashier', 'registrar'].map(dept =>
         onSnapshot(doc(db, 'departments', dept), snap => {
             if (!snap.exists()) return;
             const d   = snap.data();
@@ -245,12 +226,27 @@ function listenToDepts() {
                     ? '~' + Math.floor(avg / 60) + 'm ' + (avg % 60) + 's avg wait'
                     : 'Avg wait: —';
             }
-        });
-    });
+            const btn = document.getElementById(dept + 'Btn');
+            if (btn && st !== 'open' && !hasActiveReservation) {
+                btn.disabled = true;
+                btn.textContent = st === 'break'
+                    ? `${dept.toUpperCase()} — ON BREAK`
+                    : `${dept.toUpperCase()} — CLOSED`;
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.border = '';
+                btn.style.pointerEvents = '';
+            } else if (btn && st === 'open' && !hasActiveReservation) {
+                btn.disabled = false;
+                btn.textContent = `RESERVE ${dept.toUpperCase()} TICKET`;
+            }
+        })
+    );
+    return () => unsubs.forEach(u => u());
 }
 
 function listenToSettings() {
-    onSnapshot(doc(db, 'system', 'settings'), snap => {
+    const unsub = onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
         const d         = snap.data();
         const quota     = d.dailyQuota    || 100;
@@ -299,17 +295,14 @@ function listenToSettings() {
         const gs = document.getElementById('globalStatus');
         if (gs) {
             clearTimeout(window._bannerTimer);
-
             const msg = d.statusMessage || '';
             const msgTime = d.statusMessageAt?.toMillis?.();
             const DISPLAY_MS = 30000;
             const age = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
             const remaining = DISPLAY_MS - age;
-
             if (msg.trim() !== '' && remaining > 0) {
                 gs.style.opacity = '1';
                 gs.innerHTML = `<div class="status-live-dot"></div><span>System is LIVE</span><span class="status-banner-divider">|</span><span>${msg}</span>`;
-
                 window._bannerTimer = setTimeout(() => {
                     gs.style.transition = 'opacity .8s ease';
                     gs.style.opacity = '0';
@@ -317,24 +310,24 @@ function listenToSettings() {
                         gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                         gs.style.opacity = '1';
                     }, 800);
-                }, remaining);  
+                }, remaining);
             } else {
                 gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                 gs.style.opacity = '1';
             }
         }
     });
+    return unsub;
 }
 
 function listenToActiveReservation() {
-    onSnapshot(
+    const unsubRes = onSnapshot(
         query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)),
         snap => {
             const activeDoc = snap.docs.find(d => {
                 const s = d.data().status;
                 return s === 'pending' || s === 'active';
             });
-
             if (activeDoc) {
                 const existing = document.getElementById('activeResBanner');
                 if (!existing || existing.dataset.bannerType === 'reservation') {
@@ -355,14 +348,13 @@ function listenToActiveReservation() {
         err => console.warn('[res snapshot]', err.code)
     );
 
-    onSnapshot(
+    const unsubTicket = onSnapshot(
         query(collection(db, 'tickets'), where('userId', '==', currentStudentId)),
         snap => {
             const activeTicket = snap.docs.find(d => {
                 const s = d.data().status;
                 return s === 'waiting' || s === 'serving';
             });
-
             if (activeTicket) {
                 hasActiveReservation = true;
                 setReserveButtonsLocked(true);
@@ -379,6 +371,8 @@ function listenToActiveReservation() {
         },
         err => console.warn('[ticket snapshot]', err.code)
     );
+
+    return () => { unsubRes(); unsubTicket(); };
 }
 
 function setReserveButtonsLocked(locked) {
@@ -421,7 +415,7 @@ function renderActiveResBanner(res, rid) {
 
     let trackingCard = '';
     if (res.ticketNumber) {
-        const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
+        const trackingUrl = `${PUBLIC_URL}/tracker/?t=${encodeURIComponent(res.ticketNumber)}&d=${encodeURIComponent(res.department)}`;
         trackingCard = `
         <div class="tracking-card">
             <span class="tracking-label" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red-600);display:inline-block;flex-shrink:0;"></span> Live Queue Tracker</span>
@@ -472,7 +466,7 @@ function renderActiveWalkinBanner(ticket) {
         ? '<span class="open">Now Serving — proceed to counter</span>'
         : '<span class="break">Waiting — watch the lobby monitor</span>';
 
-    const trackingUrl = `https://etickette.web.app/tracker/?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
+    const trackingUrl = `${PUBLIC_URL}/tracker/?t=${encodeURIComponent(ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;
     const trackingCard = `
     <div class="tracking-card">
         <span class="tracking-label" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red-600);display:inline-block;flex-shrink:0;"></span> Live Queue Tracker</span>
@@ -506,11 +500,6 @@ async function cancelReservation(rid, status) {
         ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
         : 'Are you sure you want to cancel this reservation?')) return;
 
-    const banner = document.getElementById('activeResBanner');
-    if (banner) banner.remove();
-    hasActiveReservation = false;
-    setReserveButtonsLocked(false);
-
     try {
         await runTransaction(db, async (transaction) => {
             const resSnap = await transaction.get(doc(db, 'reservations', rid));
@@ -523,7 +512,7 @@ async function cancelReservation(rid, status) {
             });
 
             if (status === 'active' && resData.ticketNumber) {
-                const tNum      = resData.ticketNumber;
+                const tNum       = resData.ticketNumber;
                 const ticketSnap = await transaction.get(doc(db, 'tickets', tNum));
 
                 if (ticketSnap.exists()) {
@@ -545,11 +534,14 @@ async function cancelReservation(rid, status) {
             }
         });
 
+        const banner = document.getElementById('activeResBanner');
+        if (banner) banner.remove();
+        hasActiveReservation = false;
+        setReserveButtonsLocked(false);
         showToast('Reservation cancelled.', 'warning');
+
     } catch (e) {
         console.error('[cancelReservation]', e);
-        hasActiveReservation = true;
-        setReserveButtonsLocked(true);
         showToast('Could not cancel. Try again.', 'error');
     }
 }

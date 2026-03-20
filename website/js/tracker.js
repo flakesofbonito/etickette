@@ -10,7 +10,8 @@ const firebaseConfig = {
   projectId: "etickette-78f74",
   storageBucket: "etickette-78f74.firebasestorage.app",
   messagingSenderId: "147547566302",
-  appId: "1:147547566302:web:2c7a52792b539331d8524f"
+  appId: "1:147547566302:web:2c7a52792b539331d8524f",
+  measurementId: "G-QHMMWXW7F3"
 };
 
 let app, db;

@@ -18,37 +18,7 @@ const firebaseConfig = {
 const PUBLIC_URL  = 'https://etickette.web.app';
 const PRINTER_URL = 'http://localhost:8000/print';
 
-const REASONS = {
-    cashier: [
-        { label: "Pay Tuition / Fees",       docs: ["Valid ID"] },
-        { label: "Request Official Receipt",  docs: ["Valid ID", "Proof of Payment"] },
-        { label: "Other",                     docs: [] }
-    ],
-    registrar: [
-        { category: "College Graduates" },
-        { label: "Transcript of Records (TOR)",     docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-        { label: "Diploma / Authentication",         docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
-        { label: "Certificate of Graduation",        docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-
-        { category: "SHS Graduates" },
-        { label: "Form 137 / 138",                  docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-        { label: "Diploma",                          docs: ["Valid ID", "Claim Stub", "Graduating Clearance"] },
-        { label: "CTC of Report Card",               docs: ["Valid ID", "Request Form (PAF)", "Graduating Clearance"] },
-
-        { category: "Ongoing Students" },
-        { label: "Certificate of Enrollment",        docs: ["School ID or RAF", "Request Form (PAF)"] },
-        { label: "CTC of Report Card",               docs: ["School ID or RAF", "Request Form (PAF)"] },
-        { label: "Statement of Account",             docs: ["School ID or RAF"] },
-        { label: "Registration Form",                docs: ["School ID", "Official Receipt of Payment"] },
-
-        { category: "Undergraduate (Transferees)" },
-        { label: "Transcript of Records (TOR)",      docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
-        { label: "Copy of Grades",                   docs: ["Valid ID", "Request Form (PAF)", "Exit Clearance", "Surrender School ID"] },
-
-        { category: "Other" },
-        { label: "Other",                            docs: ["Valid ID or School ID", "Request Form (PAF)"] }
-    ],
-};
+import { REASONS } from './reasons.js';
 
 let app, db;
 let selectedDept        = 'cashier';
@@ -393,6 +363,12 @@ async function proceedIssue() {
 }
 
 async function issueTicket(userId) {
+    if (!deptStatus[selectedDept]) {
+        alert('Sorry, the ' + selectedDept + ' department just closed. Please try again later.');
+        goScreen('home');
+        return;
+    }
+
     const btn = document.querySelector('#screen-docs .kiosk-submit-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Issuing...'; }
 
@@ -593,9 +569,9 @@ async function onScanSuccess(decoded) {
 
     try {
         const resSnap = await getDoc(doc(db, 'reservations', reservationId));
-        if (!resSnap.exists()) { setScanStatus('Reservation not found.'); return; }
+        if (!resSnap.exists()) { setScanStatus('Reservation not found.', true); return; }
         const res = resSnap.data();
-        if (res.status !== 'pending') { setScanStatus('Reservation already used or cancelled.'); return; }
+        if (res.status !== 'pending') { setScanStatus('Reservation already used or cancelled.', true); return; }
 
         const now = new Date();
         const todayPH = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
@@ -674,9 +650,21 @@ async function onScanSuccess(decoded) {
     }
 }
 
-function setScanStatus(msg) {
+function setScanStatus(msg, allowRetry = false) {
     const el = document.getElementById('scanStatus');
     if (el) el.textContent = msg;
+    if (allowRetry) {
+        const existing = document.getElementById('retryBtn');
+        if (!existing) {
+            const btn = document.createElement('button');
+            btn.id = 'retryBtn';
+            btn.className = 'kiosk-submit-btn';
+            btn.style.maxWidth = '340px';
+            btn.textContent = 'Try Again';
+            btn.onclick = () => { btn.remove(); startScanner(); };
+            el.after(btn);
+        }
+    }
 }
 
 async function printTicket(tNum, dept) {
@@ -794,7 +782,7 @@ function initIdleTimeout() {
     resetIdleTimer();
 }
 
-const SS_DELAY = 10000; 
+const SS_DELAY = 60000; 
 let ssTimer;
 
 function startScreensaver() {
