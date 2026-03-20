@@ -201,7 +201,7 @@ function listenToDept() {
 function listenToQueue() {
   if (unsubQueue) unsubQueue();
   const q = query(
-    collection(db, 'tickets'),
+      collection(db, 'tickets'),
       where('department', '==', staffDept),
       where('status', 'in', ['waiting', 'serving'])
   );
@@ -575,10 +575,15 @@ async function recallTicket() {
                 calledAt: null
             });
             await updateDoc(doc(db, 'departments', staffDept), {
-                queue: increment(1),
                 nowServing: ''
             });
             addActivity('called', currentTicket.ticketNumber, 'returned to queue');
+        }
+
+        if (tData.status === 'completed' || tData.status === 'noshow') {
+            await updateDoc(doc(db, 'departments', staffDept), {
+                queue: increment(1)
+            });
         }
 
         await updateDoc(doc(db, 'tickets', tNum), {
@@ -611,7 +616,10 @@ async function markManualComplete() {
     await updateDoc(doc(db,'tickets',tNum), { status:'completed', completedAt:serverTimestamp() });
     const st = ticketData.status;
     if (st === 'waiting' || st === 'serving')
-      await updateDoc(doc(db,'departments',staffDept), { queue:increment(-1) });
+    await updateDoc(doc(db, 'departments', staffDept), {
+        queue: increment(-1),
+        ...(st === 'serving' ? { nowServing: '' } : {})
+    });
     if (ticketData.isReservation && ticketData.reservationId) {
       try {
         await updateDoc(doc(db,'reservations', ticketData.reservationId), {

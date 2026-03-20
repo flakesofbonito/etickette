@@ -428,17 +428,15 @@ async function issueTicket(userId) {
         showTicketScreen(tNum, userId, ahead);
         playBeep();
 
-    } catch (e) {
+        } catch (e) {
         console.error(e);
         if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-        alert('Error issuing ticket. Please try again.');
         if (e.message === 'QUOTA_FULL') {
-
-        if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-        alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
-        goScreen('home');
-        return;
-    }
+            alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
+            goScreen('home');
+            return;
+        }
+        alert('Error issuing ticket. Please try again.');
     }
 }
 
@@ -614,6 +612,7 @@ async function onScanSuccess(decoded) {
                 userType: res.userType || 'student',
                 displayName: res.displayName || res.studentId || 'N/A',
                 reason: res.reason || 'Reservation Check-In',
+                requiredDocs: res.requiredDocs || [],
                 status: 'waiting', issuedAt: serverTimestamp(),
                 printed: false, called: false,
                 isReservation: true, reservationId

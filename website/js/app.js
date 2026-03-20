@@ -526,7 +526,8 @@ async function cancelReservation(rid, status) {
                         const dSnap = await transaction.get(doc(db, 'departments', resData.department));
                         if (dSnap.exists()) {
                             transaction.update(doc(db, 'departments', resData.department), {
-                                queue: Math.max(0, (dSnap.data().queue || 1) - 1)
+                                queue: Math.max(0, (dSnap.data().queue || 1) - 1),
+                                ...(tStatus === 'serving' ? { nowServing: '' } : {})
                             });
                         }
                         transaction.update(doc(db, 'system', 'settings'), {
