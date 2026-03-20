@@ -166,11 +166,6 @@
           </div>
         </div>
 
-        <div class="panel-label" style="margin-top:20px">Recent Activity</div>
-        <div id="activityLog" class="activity-log">
-          <div class="activity-empty">No activity yet</div>
-        </div>
-
         <div class="panel-label" style="margin-top:20px">Recall / Override</div>
         <div class="tool-row">
           <input type="text" id="recallInput" class="tool-input" placeholder="e.g. C-05" />
@@ -232,6 +227,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
             Reset System for Today
           </button>
+        </div>
+
+        <div class="panel-label" style="margin-top:20px;cursor:pointer;user-select:none;" onclick="toggleActivity()">
+            Recent Activity
+            <span id="activityToggle" style="font-size:11px;color:var(--slate-400);margin-left:6px;">▼ show</span>
+        </div>
+        <div id="activityLog" class="activity-log" style="display:none">
+          <div class="activity-empty">No activity yet</div>
         </div>
       </div>
 

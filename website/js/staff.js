@@ -43,7 +43,13 @@ window.setDailyQuota = setDailyQuota;
 window.setStatusMessage   = setStatusMessage;
 window.clearStatusMessage = clearStatusMessage;
 window.exportCSV          = exportCSV;
-
+window.toggleActivity = function() {
+    const log = document.getElementById('activityLog');
+    const btn = document.getElementById('activityToggle');
+    const hidden = log.style.display === 'none';
+    log.style.display = hidden ? 'flex' : 'none';
+    btn.textContent = hidden ? '▲ hide' : '▼ show';
+};
 
 app = initializeApp(firebaseConfig);
 db  = getFirestore(app);
