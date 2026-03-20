@@ -103,7 +103,7 @@ async function checkAutoReset() {
     const lastReset = dSnap.data()?.lastResetAt?.toDate?.();
 
     if (now >= today8am && (!lastReset || lastReset < today8am)) {
-        await dailyReset();
+        await dailyReset(true);
     }
 }
 

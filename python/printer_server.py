@@ -12,7 +12,9 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 ID_VENDOR  = 0x0416
 ID_PRODUCT = 0x5011
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WEBSITE_DIR = os.path.join(BASE_DIR, 'website')
+KIOSK_DIR   = os.path.join(WEBSITE_DIR, 'kiosk')
 
 def get_printer():
     dll_path = os.path.join(os.getcwd(), 'libusb-1.0.dll')
@@ -30,19 +32,19 @@ def get_printer():
 
 @app.route('/')
 def serve_index():
-    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), 'index.html')
+    return send_from_directory(KIOSK_DIR, 'index.html')
 
 @app.route('/kiosk/')
 def serve_kiosk_index():
-    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), 'index.html')
+    return send_from_directory(KIOSK_DIR, 'index.html')
 
 @app.route('/kiosk/<path:path>')
 def serve_kiosk(path):
-    return send_from_directory(os.path.join(BASE_DIR, 'kiosk'), path)
+    return send_from_directory(KIOSK_DIR, path)
 
 @app.route('/<path:path>')
 def serve_static(path):
-    return send_from_directory(BASE_DIR, path)
+    return send_from_directory(WEBSITE_DIR, path)
 
 @app.route('/print', methods=['POST', 'OPTIONS'])
 def print_ticket():

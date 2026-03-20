@@ -132,7 +132,6 @@ function renderTicketCard(ticket) {
   document.getElementById('tcType').textContent   = ticket.isReservation ? 'Reservation' : 'Walk-in';
 }
 
-// REPLACE WITH
 function updatePositionInfo(all) {
   const waitingOnly = all
     .filter(t => t.status === 'waiting')
@@ -204,7 +203,7 @@ function triggerNotification(tNum) {
   if (notifGranted && Notification.permission === 'granted') {
     new Notification('It\'s Your Turn!', {
       body: 'Ticket ' + tNum + ' — Please proceed to the ' + myDept.toUpperCase() + ' counter.',
-      icon: '../assets/logo.png',
+      icon: 'https://etickette.web.app/assets/logo.png',
       tag: 'etickette-call',
       requireInteraction: true
     });
