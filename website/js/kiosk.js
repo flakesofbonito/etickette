@@ -388,15 +388,6 @@ async function issueTicket(userId) {
             where('userId', '==', userId), where('status', '==', 'waiting')
         ));
 
-        const sSnap = await getDoc(doc(db, 'system', 'settings'));
-        const sData = sSnap.data();
-        if ((sData.ticketsIssued || 0) >= (sData.dailyQuota || 100)) {
-            if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-            alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
-            goScreen('home');
-            return;
-        }
-
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
@@ -410,6 +401,10 @@ async function issueTicket(userId) {
 
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
+            const sSnap = await transaction.get(doc(db, 'system', 'settings'));
+            if ((sSnap.data().ticketsIssued || 0) >= (sSnap.data().dailyQuota || 100)) {
+                throw new Error('QUOTA_FULL');
+            }
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
@@ -437,6 +432,13 @@ async function issueTicket(userId) {
         console.error(e);
         if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
         alert('Error issuing ticket. Please try again.');
+        if (e.message === 'QUOTA_FULL') {
+
+        if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
+        alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
+        goScreen('home');
+        return;
+    }
     }
 }
 
@@ -683,6 +685,7 @@ async function printTicket(tNum, dept) {
 }
 
 async function reprintTicket() {
+    clearInterval(window._ticketCountTimer);
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
     if (!window._lastTicket) {
         alert('Nothing to reprint.');

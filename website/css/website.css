@@ -50,6 +50,8 @@
     --shadow-md: 0 6px 24px rgba(15,23,42,.10), 0 2px 6px rgba(15,23,42,.05);
     --shadow-lg: 0 16px 48px rgba(15,23,42,.14), 0 4px 12px rgba(15,23,42,.06);
 
+    --border: var(--slate-200);
+
     --font: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
 }
 

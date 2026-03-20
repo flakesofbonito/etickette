@@ -341,7 +341,7 @@ function listenToActiveReservation() {
                     banner.remove();
                     hasActiveReservation = false;
                     setReserveButtonsLocked(false);
-                    loadHistory();
+                    setTimeout(() => loadHistory(), 300);
                 }
             }
         },
@@ -368,7 +368,7 @@ function listenToActiveReservation() {
                     banner.remove();
                     hasActiveReservation = false;
                     setReserveButtonsLocked(false);
-                    loadHistory();
+                    setTimeout(() => loadHistory(), 300);
                 }
             }
         },
@@ -514,7 +514,7 @@ async function cancelReservation(rid, status) {
                 cancelledAt: serverTimestamp()
             });
 
-            if (status === 'active' && resData.ticketNumber) {
+            if (resData.status === 'active' && resData.ticketNumber) {
                 const tNum       = resData.ticketNumber;
                 const ticketSnap = await transaction.get(doc(db, 'tickets', tNum));
 
@@ -642,19 +642,6 @@ async function submitReserveDate() {
             resetBtn(); return;
         }
     } catch (e) { console.warn('[pre-check ticket]', e.code); }
-
-    
-    try {
-        const settingsSnap = await getDoc(doc(db, 'system', 'settings'));
-        const settingsData = settingsSnap.data();
-        if ((settingsData.ticketsIssued || 0) >= (settingsData.dailyQuota || 100)) {
-            errEl.textContent = 'Sorry, the daily quota is full. No more reservations can be made today.';
-            resetBtn(); return;
-        }
-    } catch (e) {
-        console.warn('[quota check]', e.code);
-        resetBtn(); return;
-    }
 
     const rid = 'RES-' + currentStudentId + '-' + Date.now();
     try {
