@@ -34,7 +34,7 @@ if errorlevel 1 (
 )
 
 echo  Opening Kiosk...
-start "" "http://localhost:8000/website/kiosk/index.html"
+start "" "http://localhost:8000/kiosk/"
 timeout /t 2 /nobreak >nul
 
 powershell -command "(New-Object -ComObject WScript.Shell).SendKeys('{F11}')"
@@ -45,7 +45,7 @@ echo    KIOSK RUNNING
 echo  =========================================
 echo.
 echo    Printer Server : http://localhost:8000
-echo    Kiosk          : http://localhost:8000/website/kiosk/index.html
+echo    Kiosk          : http://localhost:8000/kiosk
 echo.
 echo  =========================================
 echo.
