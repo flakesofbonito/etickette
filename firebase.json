@@ -1,7 +1,7 @@
 {
   "hosting": {
     "site": "etickette",
-    "public": ".",
+    "public": "website",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -14,12 +14,6 @@
       "**/*.bat",
       ".github/**",
       "**/.venv/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/",
-        "destination": "/website/index.html"
-      }
     ]
   }
 }
