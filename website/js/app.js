@@ -254,35 +254,47 @@ function listenToDepts() {
 function listenToSettings() {
     const unsub = onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d         = snap.data();
-        const quota     = d.dailyQuota    || 100;
-        const issued    = d.ticketsIssued || 0;
-        const remaining = Math.max(0, quota - issued);
-        const pct       = issued / quota;
-        const isFull    = issued >= quota;
+        const d = snap.data();
 
-        setIfChanged('quotaText', remaining + ' / ' + quota);
-        const quotaEl = document.getElementById('quotaText');
-        if (quotaEl) {
-            quotaEl.style.color      = isFull ? '#dc2626' : remaining <= 10 ? '#f97316' : '';
-            quotaEl.style.fontWeight = isFull ? '800' : '';
-        }
+        const cashierQuota    = d.cashierQuota   || d.dailyQuota || 100;
+        const registrarQuota  = d.registrarQuota || d.dailyQuota || 100;
+        const cashierIssued   = d.cashierIssued  || 0;
+        const registrarIssued = d.registrarIssued|| 0;
+        const totalQuota      = cashierQuota + registrarQuota;
+        const totalIssued     = cashierIssued + registrarIssued;
+        const totalRemaining  = Math.max(0, totalQuota - totalIssued);
+
+        setIfChanged('quotaText', totalRemaining + ' / ' + totalQuota);
+
+        const deptMap = {
+            cashier:   { quota: cashierQuota,   issued: cashierIssued },
+            registrar: { quota: registrarQuota, issued: registrarIssued }
+        };
 
         ['cashier', 'registrar'].forEach(dept => {
+            const { quota, issued } = deptMap[dept];
+            const isFull = issued >= quota;
             const btn = document.getElementById(dept + 'Btn');
             if (!btn) return;
+
+            const quotaEl = document.getElementById('quotaText');
+            if (quotaEl) {
+                quotaEl.style.color      = totalRemaining === 0 ? '#dc2626' : totalRemaining <= 10 ? '#f97316' : '';
+                quotaEl.style.fontWeight = totalRemaining === 0 ? '800' : '';
+            }
+
             if (isFull && !hasActiveReservation) {
-                btn.disabled        = true;
-                btn.title           = 'Daily quota is full. No more reservations today.';
-                btn.textContent     = 'Quota Full — No Slots Available';
+                btn.disabled            = true;
+                btn.title               = `${dept.toUpperCase()} quota is full for today.`;
+                btn.textContent         = 'Quota Full — No Slots Available';
                 btn.style.background    = 'rgba(220,38,38,.1)';
                 btn.style.color         = '#dc2626';
                 btn.style.border        = '2px solid rgba(220,38,38,.3)';
                 btn.style.pointerEvents = 'none';
             } else if (!hasActiveReservation) {
-                btn.disabled        = false;
-                btn.title           = '';
-                btn.textContent     = `RESERVE ${dept.toUpperCase()} TICKET`;
+                btn.disabled            = false;
+                btn.title               = '';
+                btn.textContent         = `RESERVE ${dept.toUpperCase()} TICKET`;
                 btn.style.background    = '';
                 btn.style.color         = '';
                 btn.style.border        = '';
@@ -290,20 +302,22 @@ function listenToSettings() {
             }
         });
 
+        const overallPct  = totalIssued / totalQuota;
+        const isTotalFull = totalIssued >= totalQuota;
         const el = document.getElementById('congestionText');
         if (el) {
-            const txt = isFull ? 'QUOTA FULL' : pct < 0.5 ? 'LOW TRAFFIC' : pct < 0.75 ? 'MODERATE' : 'HIGH TRAFFIC';
-            const cls = isFull ? 'closed' : pct < 0.5 ? 'open' : pct < 0.75 ? 'break' : 'closed';
+            const txt = isTotalFull ? 'QUOTA FULL' : overallPct < 0.5 ? 'LOW TRAFFIC' : overallPct < 0.75 ? 'MODERATE' : 'HIGH TRAFFIC';
+            const cls = isTotalFull ? 'closed' : overallPct < 0.5 ? 'open' : overallPct < 0.75 ? 'break' : 'closed';
             if (el.textContent !== txt) { el.textContent = txt; el.className = cls; }
         }
 
         const gs = document.getElementById('globalStatus');
         if (gs) {
             clearTimeout(window._bannerTimer);
-            const msg = d.statusMessage || '';
+            const msg     = d.statusMessage || '';
             const msgTime = d.statusMessageAt?.toMillis?.();
-            const DISPLAY_MS = 30000;
-            const age = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
+            const DISPLAY_MS   = 30000;
+            const age          = msgTime ? (Date.now() - msgTime) : DISPLAY_MS;
             const msgRemaining = DISPLAY_MS - age;
             if (msg.trim() !== '' && msgRemaining > 0) {
                 gs.style.opacity = '1';
