@@ -267,6 +267,21 @@ function listenToSettings() {
         setIfChanged('cashierQuotaText',   Math.max(0, cashierQuota - cashierIssued) + ' / ' + cashierQuota);
         setIfChanged('registrarQuotaText', Math.max(0, registrarQuota - registrarIssued) + ' / ' + registrarQuota);
 
+        const cashierColor   = cashierIssued >= cashierQuota   ? '#dc2626' : Math.max(0,cashierQuota-cashierIssued)   <= 5 ? '#f97316' : '';
+        const registrarColor = registrarIssued >= registrarQuota ? '#dc2626' : Math.max(0,registrarQuota-registrarIssued) <= 5 ? '#f97316' : '';
+        const cInfoEl = document.getElementById('cashierQuotaInfo');
+        const rInfoEl = document.getElementById('registrarQuotaInfo');
+        if (cInfoEl) {
+            const cRem = Math.max(0, cashierQuota - cashierIssued);
+            cInfoEl.textContent = cRem === 0 ? 'Quota Full' : `Slots: ${cRem} / ${cashierQuota}`;
+            cInfoEl.style.color = cashierColor || 'var(--slate-400)';
+        }
+        if (rInfoEl) {
+            const rRem = Math.max(0, registrarQuota - registrarIssued);
+            rInfoEl.textContent = rRem === 0 ? 'Quota Full' : `Slots: ${rRem} / ${registrarQuota}`;
+            rInfoEl.style.color = registrarColor || 'var(--slate-400)';
+        }
+
         const deptMap = {
             cashier:   { quota: cashierQuota,   issued: cashierIssued },
             registrar: { quota: registrarQuota, issued: registrarIssued }

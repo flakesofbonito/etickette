@@ -128,6 +128,18 @@ async function checkAutoReset() {
 }
 
 function startDashboard() {
+  const label = document.getElementById('quotaDeptLabel');
+  if (label) {
+    label.value = staffDept.toUpperCase();
+  }
+  const qSelect = document.getElementById('quotaDeptSelect');
+  if (qSelect) {
+    const dLabel = staffDept.charAt(0).toUpperCase() + staffDept.slice(1);
+    qSelect.innerHTML = `
+      <option value="${staffDept}">${dLabel}</option>
+      <option value="both">Both Departments</option>`;
+    qSelect.value = staffDept;
+  }
   listenToDept();
   listenToQueue();
   listenToQuota();
@@ -159,49 +171,50 @@ async function expireOldReservations() {
 }
 
 async function setDailyQuota() {
-    const dept  = document.getElementById('quotaDeptSelect').value;
     const input = document.getElementById('quotaInput');
     const val   = parseInt(input.value);
-    if (!val || val < 1 || val > 999) { alert('Enter a valid number between 1 and 999.'); return; }
-    const key = dept === 'both'
-        ? { cashierQuota: val, registrarQuota: val }
-        : { [dept + 'Quota']: val };
+
+    if (!val || val < 1 || val > 999) {
+        alert('Enter a valid number between 1 and 999.');
+        return;
+    }
+
     try {
-        await updateDoc(doc(db, 'system', 'settings'), key);
-        alert(`Quota updated.`);
+        await updateDoc(doc(db, 'system', 'settings'), {
+            [staffDept + 'Quota']: val
+        });
+
+        alert(`${staffDept.toUpperCase()} quota updated.`);
         input.value = '';
-    } catch (e) { alert('Failed to update quota.'); }
+    } catch (e) {
+        alert('Failed to update quota.');
+    }
 }
 
 function listenToQuota() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-
-        const data = snap.data();
-        const cashierQuota    = data.cashierQuota   || data.dailyQuota || 100;
-        const registrarQuota  = data.registrarQuota || data.dailyQuota || 100;
-        const cashierIssued   = data.cashierIssued  || 0;
-        const registrarIssued = data.registrarIssued|| 0;
-        const totalIssued     = cashierIssued + registrarIssued;
-        const totalQuota      = cashierQuota + registrarQuota;
-        const totalRemaining  = Math.max(0, totalQuota - totalIssued);
-        const pct             = totalQuota > 0 ? Math.min(100, Math.round((totalIssued / totalQuota) * 100)) : 0;
+        const data       = snap.data();
+        const myQuota    = data[staffDept + 'Quota']  || data.dailyQuota || 100;
+        const myIssued   = data[staffDept + 'Issued'] || 0;
+        const myRem      = Math.max(0, myQuota - myIssued);
+        const pct        = myQuota > 0 ? Math.min(100, Math.round((myIssued / myQuota) * 100)) : 0;
 
         const statIssued = document.getElementById('statIssued');
-        if (statIssued) statIssued.textContent = totalIssued;
+        if (statIssued) statIssued.textContent = myIssued;
 
         const display = document.getElementById('quotaStatusDisplay');
         const sub     = document.getElementById('quotaStatusSub');
 
         if (display) {
-            display.textContent = `C: ${cashierIssued}/${cashierQuota}  ·  R: ${registrarIssued}/${registrarQuota}`;
-            display.style.fontSize = '13px';
-            display.style.color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f97316' : '#2563eb';
+            display.textContent  = `${myIssued} / ${myQuota}`;
+            display.style.fontSize = '';
+            display.style.color  = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f97316' : '#2563eb';
         }
         if (sub) {
-            sub.textContent    = totalRemaining === 0 ? 'All Full' : `${totalRemaining} left`;
-            sub.style.fontWeight = totalRemaining === 0 ? '800' : '';
-            sub.style.color    = totalRemaining === 0 ? '#dc2626' : totalRemaining <= 10 ? '#f97316' : '#6b7280';
+            sub.textContent      = myRem === 0 ? 'Quota Full' : `${myRem} left`;
+            sub.style.fontWeight = myRem === 0 ? '800' : '';
+            sub.style.color      = myRem === 0 ? '#dc2626' : myRem <= 10 ? '#f97316' : '#6b7280';
         }
     });
 }
