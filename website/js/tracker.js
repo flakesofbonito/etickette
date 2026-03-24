@@ -19,6 +19,7 @@ let myTicket = null;
 let myDept = null;
 let lastStatus = null;
 let notifGranted = false;
+let earlyWarnFired = false;
 
 window.requestNotification = requestNotification;
 
@@ -166,6 +167,28 @@ function updatePositionInfo(all) {
   document.getElementById('posAhead').textContent  = aheadText;
   document.getElementById('estWait').textContent   = estWait;
 
+  const etaEl = document.getElementById('estClockTime');
+  if (etaEl) {
+      if (typeof estWait === 'number' && estWait > 0) {
+          const eta = new Date(Date.now() + estWait * 60 * 1000);
+          etaEl.textContent = 'Around ' + eta.toLocaleTimeString('en-PH', {
+              hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Manila'
+          });
+          etaEl.style.display = '';
+      } else if (estWait === '<1') {
+          etaEl.textContent = 'Any moment now';
+          etaEl.style.display = '';
+      } else {
+          etaEl.style.display = 'none';
+      }
+  }
+
+  if (myPos === 1 && !earlyWarnFired && lastStatus !== 'serving') {
+    earlyWarnFired = true;
+    triggerEarlyWarning();
+  }
+  if (myPos !== 1) earlyWarnFired = false;
+
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   document.getElementById('progBar').style.width        = pct + '%';
   document.getElementById('progServed').textContent     = completed + ' served';
@@ -220,6 +243,33 @@ function triggerNotification(tNum) {
     clearInterval(flashInterval);
     document.title = origTitle;
   }, 10000);
+}
+
+function triggerEarlyWarning() {
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+    if (notifGranted && Notification.permission === 'granted') {
+        new Notification('Almost Your Turn!', {
+            body: 'One person ahead of you — get ready to proceed to the ' + myDept.toUpperCase() + ' counter.',
+            icon: 'https://etickette.web.app/assets/logo.png',
+            tag: 'etickette-early'
+        });
+    }
+
+    const banner = document.getElementById('calledBanner');
+    if (banner) {
+        banner.classList.remove('hidden');
+        banner.style.background = 'linear-gradient(135deg, var(--blue-50), var(--gold-50))';
+        banner.style.borderColor = 'var(--blue-100)';
+        const strong = banner.querySelector('strong');
+        const span   = banner.querySelector('span');
+        if (strong) strong.textContent = 'Almost Your Turn!';
+        if (strong) strong.style.color = 'var(--blue-800)';
+        if (span)   span.textContent   = 'One person ahead — please make your way to the ' + myDept.toUpperCase() + ' counter.';
+        setTimeout(() => {
+            if (lastStatus !== 'serving') banner.classList.add('hidden');
+        }, 8000);
+    }
 }
 
 function playAlertSound() {

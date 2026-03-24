@@ -426,9 +426,9 @@ async function issueTicket(userId) {
             });
         });
 
-        await printTicket(tNum, selectedDept);
         showTicketScreen(tNum, userId, ahead);
         playBeep();
+        printTicket(tNum, selectedDept);
 
         } catch (e) {
         console.error(e);
@@ -627,8 +627,8 @@ async function onScanSuccess(decoded) {
             transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
         });
 
-        await printTicket(tNum, dept);
         window._lastTicket = { tNum, dept };
+        printTicket(tNum, dept);
 
         const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         set('scanDept',   dept.toUpperCase());
