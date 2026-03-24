@@ -677,10 +677,48 @@ async function printTicket(tNum, dept) {
             body: JSON.stringify({ number: tNum, dept, qr_link })
         });
         const json = await res.json();
-        if (json.status !== 'Success') console.warn('[Printer]', json.message);
+        if (json.status !== 'Success') {
+            console.warn('[Printer]', json.message);
+            showPrinterWarning();
+        }
     } catch (e) {
         console.warn('[Printer] Unreachable — is printer_server.py running?', e.message);
+        showPrinterWarning();
     }
+}
+
+function showPrinterWarning() {
+    const existing = document.getElementById('printerWarning');
+    if (existing) return;
+    const el = document.createElement('div');
+    el.id = 'printerWarning';
+    el.style.cssText = `
+        position: fixed;
+        bottom: 24px; left: 50%;
+        transform: translateX(-50%);
+        background: var(--red-600);
+        color: #fff;
+        padding: 16px 28px;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 700;
+        z-index: 9000;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.3);
+        font-family: var(--font);
+        cursor: pointer;
+    `;
+    el.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Printer offline. Tap to dismiss.
+    `;
+    el.onclick = () => el.remove();
+    document.body.appendChild(el);
 }
 
 async function reprintTicket() {
@@ -770,6 +808,13 @@ function initIdleTimeout() {
         const banner = document.getElementById('idleWarningBanner');
         if (banner) banner.remove();
         idleWarningShown = false;
+
+        selectedDept        = 'cashier';
+        selectedUserType    = 'student';
+        selectedDisplayName = null;
+        selectedReason      = null;
+        pendingUserId       = null;
+
         stopScanner();
         document.querySelectorAll('.kiosk-input, input[type="text"], input[type="number"]').forEach(el => { el.value = ''; });
         document.querySelectorAll('.kiosk-error').forEach(el => { el.textContent = ''; });
