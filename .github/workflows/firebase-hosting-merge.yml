@@ -14,9 +14,3 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ETICKETTE_78F74 }}
           channelId: live
           projectId: etickette-78f74
-      - name: Deploy Firestore Rules
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only firestore:rules
-        env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ETICKETTE_78F74 }}
