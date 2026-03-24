@@ -4,28 +4,42 @@ service cloud.firestore {
 
     match /departments/{dept} {
       allow read: if true;
-  		allow write: if false;  
-  		allow update: if true;
+      allow create: if false;
+      allow delete: if false;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['status','counter','queue','nowServing','avgWaitSeconds','lastResetAt']);
     }
 
     match /system/{doc} {
       allow read: if true;
-  		allow write: if false;
-  		allow update: if true;   
+      allow create: if false;
+      allow delete: if false;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['ticketsIssued','dailyQuota','statusMessage','statusMessageAt','staffPin','monitorPin']);
     }
 
     match /tickets/{ticketId} {
       allow read: if true;
-      allow create: if true;
-      allow update: if true;
       allow delete: if false;
+      allow create: if request.resource.data.keys().hasAll(['ticketNumber','department','userId','status','issuedAt'])
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.department in ['cashier','registrar'];
+      allow update: if resource.data.ticketNumber == request.resource.data.ticketNumber
+        && resource.data.department == request.resource.data.department
+        && resource.data.userId == request.resource.data.userId
+        && request.resource.data.status in ['waiting','serving','completed','noshow','cancelled'];
     }
 
     match /reservations/{resId} {
       allow read: if true;
-      allow create: if true;
-      allow update: if true;
       allow delete: if false;
+      allow create: if request.resource.data.keys().hasAll(['studentId','department','status','createdAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.department in ['cashier','registrar'];
+      allow update: if resource.data.studentId == request.resource.data.studentId
+        && resource.data.department == request.resource.data.department
+        && request.resource.data.status in ['pending','active','completed','cancelled','expired','noshow'];
     }
+
   }
 }
