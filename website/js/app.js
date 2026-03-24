@@ -29,6 +29,14 @@ let currentDisplayName = null;
 let _unsubs = [];
 let _lastHistoryFetch = 0;
 
+const _domCache = {};
+function setIfChanged(id, value) {
+    if (_domCache[id] === value) return;
+    _domCache[id] = value;
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
 export function initWebsite() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
@@ -207,35 +215,29 @@ function listenToDepts() {
     const unsubs = ['cashier', 'registrar'].map(dept =>
         onSnapshot(doc(db, 'departments', dept), snap => {
             if (!snap.exists()) return;
-            const d   = snap.data();
-            const st  = (d.status || 'open').toLowerCase();
-            const el  = document.getElementById(dept + 'Status');
+            const d  = snap.data();
+            const st = (d.status || 'open').toLowerCase();
             const map = { open: { t: 'OPEN', c: 'open' }, break: { t: 'ON BREAK', c: 'break' }, closed: { t: 'CLOSED', c: 'closed' } };
-            const m   = map[st] || map.open;
-            if (el) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
-            const qEl = document.getElementById(dept + 'Queue');
-            if (qEl) qEl.textContent = d.queue || 0;
-            const numEl = document.getElementById(dept + 'QueueNum');
-            if (numEl) numEl.textContent = d.queue || 0;
-            const nsEl = document.getElementById(dept + 'NowServing');
-            if (nsEl) nsEl.textContent = 'Serving: ' + (d.nowServing || '—');
-            const waitEl = document.getElementById(dept + 'AvgWait');
-            if (waitEl) {
-                const avg = d.avgWaitSeconds;
-                waitEl.textContent = avg
-                    ? '~' + Math.floor(avg / 60) + 'm ' + (avg % 60) + 's avg wait'
-                    : 'Avg wait: —';
-            }
+            const m  = map[st] || map.open;
+
+            const el = document.getElementById(dept + 'Status');
+            if (el && el.textContent !== m.t) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
+
+            setIfChanged(dept + 'Queue',      String(d.queue || 0));
+            setIfChanged(dept + 'QueueNum',   String(d.queue || 0));
+            setIfChanged(dept + 'NowServing', 'Serving: ' + (d.nowServing || '—'));
+
+            const avg = d.avgWaitSeconds;
+            setIfChanged(dept + 'AvgWait', avg
+                ? '~' + Math.floor(avg / 60) + 'm ' + (avg % 60) + 's avg wait'
+                : 'Avg wait: —');
+
             const btn = document.getElementById(dept + 'Btn');
             if (btn && st !== 'open' && !hasActiveReservation) {
                 btn.disabled = true;
                 btn.textContent = st === 'break'
                     ? `${dept.toUpperCase()} — ON BREAK`
                     : `${dept.toUpperCase()} — CLOSED`;
-                btn.style.background = '';
-                btn.style.color = '';
-                btn.style.border = '';
-                btn.style.pointerEvents = '';
             } else if (btn && st === 'open' && !hasActiveReservation) {
                 btn.disabled = false;
                 btn.textContent = `RESERVE ${dept.toUpperCase()} TICKET`;
@@ -255,10 +257,10 @@ function listenToSettings() {
         const pct       = issued / quota;
         const isFull    = issued >= quota;
 
+        setIfChanged('quotaText', remaining + ' / ' + quota);
         const quotaEl = document.getElementById('quotaText');
         if (quotaEl) {
-            quotaEl.textContent = remaining + ' / ' + quota;
-            quotaEl.style.color = isFull ? '#dc2626' : remaining <= 10 ? '#f97316' : '';
+            quotaEl.style.color      = isFull ? '#dc2626' : remaining <= 10 ? '#f97316' : '';
             quotaEl.style.fontWeight = isFull ? '800' : '';
         }
 
@@ -266,30 +268,29 @@ function listenToSettings() {
             const btn = document.getElementById(dept + 'Btn');
             if (!btn) return;
             if (isFull && !hasActiveReservation) {
-                btn.disabled = true;
-                btn.title    = 'Daily quota is full. No more reservations today.';
-                btn.textContent = 'Quota Full — No Slots Available';
-                btn.style.background = 'rgba(220,38,38,.1)';
-                btn.style.color      = '#dc2626';
-                btn.style.border     = '2px solid rgba(220,38,38,.3)';
+                btn.disabled        = true;
+                btn.title           = 'Daily quota is full. No more reservations today.';
+                btn.textContent     = 'Quota Full — No Slots Available';
+                btn.style.background    = 'rgba(220,38,38,.1)';
+                btn.style.color         = '#dc2626';
+                btn.style.border        = '2px solid rgba(220,38,38,.3)';
                 btn.style.pointerEvents = 'none';
             } else if (!hasActiveReservation) {
-                btn.disabled = false;
-                btn.title    = '';
-                btn.textContent = `RESERVE ${dept.toUpperCase()} TICKET`;
-                btn.style.background = '';
-                btn.style.color      = '';
-                btn.style.border     = '';
+                btn.disabled        = false;
+                btn.title           = '';
+                btn.textContent     = `RESERVE ${dept.toUpperCase()} TICKET`;
+                btn.style.background    = '';
+                btn.style.color         = '';
+                btn.style.border        = '';
                 btn.style.pointerEvents = '';
             }
         });
 
         const el = document.getElementById('congestionText');
         if (el) {
-            if (isFull)          { el.textContent = 'QUOTA FULL';   el.className = 'closed'; }
-            else if (pct < 0.5)  { el.textContent = 'LOW TRAFFIC';  el.className = 'open'; }
-            else if (pct < 0.75) { el.textContent = 'MODERATE';     el.className = 'break'; }
-            else                 { el.textContent = 'HIGH TRAFFIC';  el.className = 'closed'; }
+            const txt = isFull ? 'QUOTA FULL' : pct < 0.5 ? 'LOW TRAFFIC' : pct < 0.75 ? 'MODERATE' : 'HIGH TRAFFIC';
+            const cls = isFull ? 'closed' : pct < 0.5 ? 'open' : pct < 0.75 ? 'break' : 'closed';
+            if (el.textContent !== txt) { el.textContent = txt; el.className = cls; }
         }
 
         const gs = document.getElementById('globalStatus');
@@ -312,6 +313,7 @@ function listenToSettings() {
                     }, 800);
                 }, msgRemaining);
             } else {
+                setIfChanged('_gsDefault', 'y');
                 gs.innerHTML = '<div class="status-live-dot"></div><span>System is LIVE</span>';
                 gs.style.opacity = '1';
             }
