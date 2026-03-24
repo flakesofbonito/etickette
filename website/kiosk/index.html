@@ -256,5 +256,22 @@
     import { initKiosk } from '../js/kiosk.js'; initKiosk();
     </script>
 
+    <div id="offlineBanner" style="
+    display:none; position:fixed; top:0; left:0; right:0;
+    background:#dc2626; color:#fff; padding:10px 20px;
+    font-size:16px; font-weight:700; z-index:99999;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    flex-direction:row; align-items:center; justify-content:center; gap:8px;">
+    No internet connection — tickets cannot be issued
+    </div>
+    <script>
+    window.addEventListener('offline', () => {
+        document.getElementById('offlineBanner').style.display = 'flex';
+    });
+    window.addEventListener('online', () => {
+        document.getElementById('offlineBanner').style.display = 'none';
+    });
+    </script>
+
     </body>
 </html>
