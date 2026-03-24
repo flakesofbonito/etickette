@@ -28,6 +28,7 @@ let selectedReason      = null;
 let pendingUserId       = null;
 let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
+let deptAvgWait     = { cashier: 0, registrar: 0 };
 
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
@@ -109,6 +110,7 @@ function listenToQueueCounts() {
                 if (!snap.exists()) return;
                 const data = snap.data();
                 const st   = (data.status || 'open').toLowerCase();
+                deptAvgWait[dept] = data.avgWaitSeconds || 0;
                 const open = st === 'open';
                 deptStatus[dept]      = open;
                 deptStatusLabel[dept] = st;
@@ -448,7 +450,11 @@ function showTicketScreen(tNum, userId, ahead) {
     set('issuedId',     userId);
     set('issuedReason', selectedReason ? selectedReason.label : '—');
     set('issuedAhead',  ahead + ' people');
-    set('issuedWait',   '~' + (ahead * 5) + ' min');
+    const avgSec = deptAvgWait[selectedDept] || 0;
+    const waitMin = avgSec > 0
+        ? Math.ceil((ahead * avgSec) / 60)
+        : ahead * 5;
+    set('issuedWait', '~' + waitMin + ' min');
 
     const qrEl = document.getElementById('ticketQR');
     if (qrEl) {
