@@ -28,9 +28,11 @@ let currentUserType    = 'student';
 let currentDisplayName = null;
 let _unsubs = [];
 let _lastHistoryFetch = 0;
+let _modalOpen = false;
 
 const _domCache = {};
 function setIfChanged(id, value) {
+    if (_modalOpen) return;
     if (_domCache[id] === value) return;
     _domCache[id] = value;
     const el = document.getElementById(id);
@@ -559,6 +561,7 @@ async function cancelReservation(rid, status) {
 }
 
 function openReserveModal(dept) {
+    _modalOpen = true;
     const btn = document.getElementById(dept + 'Btn');
     if (btn && btn.disabled) { showToast('No slots available today.', 'error'); return; }
     if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
@@ -739,7 +742,11 @@ async function loadHistory() {
     }
 }
 
-function closeModal(id)         { document.getElementById(id).classList.remove('active'); }
+function closeModal(id) { 
+    _modalOpen = false;
+    document.getElementById(id).classList.remove('active'); 
+}
+
 function handleOverlay(e, id) {
     if (e.target !== document.getElementById(id)) return;
     if (id === 'reserveModal' && currentStep > 1) {
