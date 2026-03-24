@@ -106,7 +106,16 @@ function listenToQueue(dept) {
         }
         initialLoad[dept] = false;
         lastServing[dept] = newNum;
-        nowEl.textContent = newNum;
+        if (serving && newNum !== lastServing[dept] && !initialLoad[dept]) {
+            playCallAlert();
+            nowEl.textContent = newNum;
+            nowEl.classList.remove('flashing');
+            void nowEl.offsetWidth; 
+            nowEl.classList.add('flashing');
+            setTimeout(() => nowEl.classList.remove('flashing'), 800);
+            } else {
+            nowEl.textContent = newNum;
+        }
 
         const nextEl = document.getElementById(dept + 'Next');
         if (waiting.length === 0) {

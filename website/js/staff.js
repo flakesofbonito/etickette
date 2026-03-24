@@ -102,16 +102,29 @@ function staffLogout() {
 }
 
 async function checkAutoReset() {
-    const now = new Date();
-    const today8am = new Date();
-    today8am.setHours(8, 0, 0, 0);
+  const now = new Date();
+  const today8am = new Date();
+  today8am.setHours(8, 0, 0, 0);
 
+  if (now < today8am) return;
+
+  try {
     const dSnap = await getDoc(doc(db, 'departments', staffDept));
     const lastReset = dSnap.data()?.lastResetAt?.toDate?.();
 
-    if (now >= today8am && (!lastReset || lastReset < today8am)) {
-        await dailyReset(true);
-    }
+    if (lastReset && lastReset >= today8am) return; 
+
+    const ok = await showConfirmDialog(
+      'The system has not been reset today. Would you like to reset now to start today\'s queue?',
+      'Yes, Reset Now',
+      'No, Keep Yesterday\'s Data'
+    );
+
+    if (ok) await dailyReset(true);
+
+  } catch (e) {
+    console.warn('[checkAutoReset]', e.message);
+  }
 }
 
 function startDashboard() {

@@ -138,20 +138,36 @@
         <div class="dept-chosen-label" id="deptChosen">CASHIER</div>
 
         <div class="id-form">
-        <div id="kioskIdField">
-            <input type="text" id="idInput" class="kiosk-input"
-            placeholder="e.g. 02000385394" inputmode="numeric"
-            maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"
-            onkeydown="if(event.key==='Enter') submitId()" />
-        </div>
-        <div id="kioskNameField" style="display:none">
-            <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
-            placeholder="Your full name"
-            onkeydown="if(event.key==='Enter') submitId()" />
-        </div>
-        <p id="idError" class="kiosk-error"></p>
-        <button class="kiosk-submit-btn" onclick="submitId()">Next →</button>
-        </div>
+            <div id="kioskIdField">
+                <input type="text" id="idInput" class="kiosk-input"
+                placeholder="e.g. 02000385394" inputmode="none"
+                maxlength="11" readonly
+                onkeydown="if(event.key==='Enter') submitId()" />
+            </div>
+            <div id="kioskNameField" style="display:none">
+                <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
+                placeholder="Your full name"
+                onkeydown="if(event.key==='Enter') submitId()" />
+            </div>
+
+            <div class="numpad" id="kioskNumpad">
+                <button class="numpad-key" onclick="numpadPress('1')">1</button>
+                <button class="numpad-key" onclick="numpadPress('2')">2</button>
+                <button class="numpad-key" onclick="numpadPress('3')">3</button>
+                <button class="numpad-key" onclick="numpadPress('4')">4</button>
+                <button class="numpad-key" onclick="numpadPress('5')">5</button>
+                <button class="numpad-key" onclick="numpadPress('6')">6</button>
+                <button class="numpad-key" onclick="numpadPress('7')">7</button>
+                <button class="numpad-key" onclick="numpadPress('8')">8</button>
+                <button class="numpad-key" onclick="numpadPress('9')">9</button>
+                <button class="numpad-key key-clear" onclick="numpadClear()">CLR</button>
+                <button class="numpad-key key-zero" onclick="numpadPress('0')">0</button>
+                <button class="numpad-key key-backspace" onclick="numpadBackspace()">⌫</button>
+            </div>
+
+            <p id="idError" class="kiosk-error"></p>
+            <button class="kiosk-submit-btn" onclick="submitId()">Next →</button>
+            </div>
     </div>
 
     <div id="screen-reason" class="screen">

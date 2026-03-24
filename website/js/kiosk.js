@@ -48,6 +48,9 @@ export function initKiosk() {
     window.reprintTicket = reprintTicket;
     window.addEventListener('beforeunload', () => stopScanner());
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopScanner(); });
+    window.numpadPress     = numpadPress;
+    window.numpadBackspace = numpadBackspace;
+    window.numpadClear     = numpadClear;
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -197,6 +200,8 @@ function pickUserType(type) {
     } else if (type === 'parent') {
         if (idField)   idField.style.display   = 'block';
         if (nameField) nameField.style.display = 'block';
+        const numpad = document.getElementById('kioskNumpad');
+        if (numpad) numpad.style.display = type === 'parent' ? 'none' : 'grid';
         if (inp) { inp.placeholder = "Child's Student ID (11 digits)"; inp.inputMode = 'numeric'; }
         if (title) title.textContent = "Enter Your Child's Student ID";
 
@@ -208,6 +213,9 @@ function pickUserType(type) {
     if (idInp)   idInp.value   = '';
     if (nameInp) nameInp.value = '';
     if (errEl)   errEl.textContent = '';
+
+    const numpad = document.getElementById('kioskNumpad');
+    if (numpad) numpad.style.display = type === 'parent' ? 'none' : 'grid';
 
     goScreen('id');
 }
@@ -259,6 +267,27 @@ function buildReasonList() {
 
     const errEl = document.getElementById('reasonError');
     if (errEl) errEl.textContent = '';
+}
+
+function numpadPress(digit) {
+    const inp = document.getElementById('idInput');
+    if (!inp) return;
+    if (inp.value.length >= 11) return;
+    inp.value += digit;
+    document.getElementById('idError').textContent = '';
+}
+
+function numpadBackspace() {
+    const inp = document.getElementById('idInput');
+    if (!inp) return;
+    inp.value = inp.value.slice(0, -1);
+}
+
+function numpadClear() {
+    const inp = document.getElementById('idInput');
+    if (!inp) return;
+    inp.value = '';
+    document.getElementById('idError').textContent = '';
 }
 
 async function submitId() {

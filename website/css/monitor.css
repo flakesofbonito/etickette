@@ -717,3 +717,15 @@ body {
     white-space: nowrap;
     text-transform: uppercase;
 }
+
+@keyframes numFlash {
+  0%   { background: var(--gold-50); color: var(--gold-700); transform: scale(1.08); }
+  25%  { background: var(--gold-100); color: var(--gold-700); }
+  50%  { background: var(--gold-50); color: var(--gold-700); transform: scale(1.05); }
+  75%  { background: var(--gold-100); }
+  100% { background: linear-gradient(135deg, var(--slate-50) 0%, var(--gold-50) 100%); color: var(--blue-800); transform: scale(1); }
+}
+
+.now-serving-number.flashing {
+  animation: numFlash .8s ease forwards;
+}
