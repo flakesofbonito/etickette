@@ -637,9 +637,11 @@ async function onScanSuccess(decoded) {
 
         await runTransaction(db, async (transaction) => {
             const sSnap = await transaction.get(doc(db, 'system', 'settings'));
-            if ((sSnap.data().ticketsIssued || 0) >= (sSnap.data().dailyQuota || 100)) {
-                throw new Error('QUOTA_FULL');
-            }
+            const deptQuotaKey  = dept + 'Quota';
+            const deptIssuedKey = dept + 'Issued';
+            const deptQuota  = sSnap.data()[deptQuotaKey]  || sSnap.data().dailyQuota || 100;
+            const deptIssued = sSnap.data()[deptIssuedKey] || 0;
+            if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
@@ -659,8 +661,11 @@ async function onScanSuccess(decoded) {
                 printed: false, called: false,
                 isReservation: true, reservationId
             });
-            transaction.update(doc(db, 'system', 'settings'), { ticketsIssued: increment(1) });
-            transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
+                transaction.update(doc(db, 'system', 'settings'), {
+                    ticketsIssued: increment(1),
+                    [deptIssuedKey]: increment(1)
+                });            
+                transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
         });
 
         window._lastTicket = { tNum, dept };
