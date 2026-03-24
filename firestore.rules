@@ -29,15 +29,22 @@ service cloud.firestore {
       allow read: if true;
 
       allow update: if
+        // Normal field writes (statusMessage, dailyQuota, pins, etc.)
         request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly([
-          'ticketsIssued',
-          'dailyQuota',
-          'statusMessage',
-          'statusMessageAt',
-          'staffPin',
-          'monitorPin'
-        ]);
+          .hasOnly([
+            'ticketsIssued',
+            'dailyQuota',
+            'statusMessage',
+            'statusMessageAt',
+            'staffPin',
+            'monitorPin'
+          ])
+        ||
+        // FieldValue.increment() is a server-side transform — Firestore sends
+        // it with an empty updateMask (fieldPaths: []), so affectedKeys()
+        // returns size 0. We must allow this, otherwise issuing a ticket
+        // from the Kiosk fails with "permission-denied".
+        request.resource.data.diff(resource.data).affectedKeys().size() == 0;
 
       allow create, delete: if false;
     }
