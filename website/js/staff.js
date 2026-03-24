@@ -129,17 +129,7 @@ async function checkAutoReset() {
 
 function startDashboard() {
   const label = document.getElementById('quotaDeptLabel');
-  if (label) {
-    label.value = staffDept.toUpperCase();
-  }
-  const qSelect = document.getElementById('quotaDeptSelect');
-  if (qSelect) {
-    const dLabel = staffDept.charAt(0).toUpperCase() + staffDept.slice(1);
-    qSelect.innerHTML = `
-      <option value="${staffDept}">${dLabel}</option>
-      <option value="both">Both Departments</option>`;
-    qSelect.value = staffDept;
-  }
+  if (label) label.textContent = staffDept.toUpperCase();
   listenToDept();
   listenToQueue();
   listenToQuota();
@@ -183,11 +173,10 @@ async function setDailyQuota() {
         await updateDoc(doc(db, 'system', 'settings'), {
             [staffDept + 'Quota']: val
         });
-
-        alert(`${staffDept.toUpperCase()} quota updated.`);
+        showToast(`${staffDept.toUpperCase()} quota set to ${val}.`, 'success');
         input.value = '';
     } catch (e) {
-        alert('Failed to update quota.');
+        showToast('Failed to update quota.', 'error');
     }
 }
 

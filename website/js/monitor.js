@@ -98,22 +98,21 @@ function listenToQueue(dept) {
 
         const serving = all.find(t => t.status === 'serving');
         const waiting = all.filter(t => t.status === 'waiting');
-
         const nowEl = document.getElementById(dept + 'Now');
         const newNum = serving ? serving.ticketNumber : '—';
-        if (serving && newNum !== lastServing[dept] && !initialLoad[dept]) {
-            playCallAlert();
-        }
+        const isNewCall = serving && newNum !== lastServing[dept] && !initialLoad[dept];
+
         initialLoad[dept] = false;
         lastServing[dept] = newNum;
-        if (serving && newNum !== lastServing[dept] && !initialLoad[dept]) {
+
+        if (isNewCall) {
             playCallAlert();
             nowEl.textContent = newNum;
             nowEl.classList.remove('flashing');
-            void nowEl.offsetWidth; 
+            void nowEl.offsetWidth;
             nowEl.classList.add('flashing');
             setTimeout(() => nowEl.classList.remove('flashing'), 800);
-            } else {
+        } else {
             nowEl.textContent = newNum;
         }
 
