@@ -159,22 +159,18 @@ async function expireOldReservations() {
 }
 
 async function setDailyQuota() {
+    const dept  = document.getElementById('quotaDeptSelect').value;
     const input = document.getElementById('quotaInput');
     const val   = parseInt(input.value);
-
-    if (!val || val < 1 || val > 999) {
-        alert('Enter a valid number between 1 and 999.');
-        return;
-    }
-
+    if (!val || val < 1 || val > 999) { alert('Enter a valid number between 1 and 999.'); return; }
+    const key = dept === 'both'
+        ? { cashierQuota: val, registrarQuota: val }
+        : { [dept + 'Quota']: val };
     try {
-        await updateDoc(doc(db, 'system', 'settings'), { dailyQuota: val });
-        alert(`Quota set to ${val} tickets.`);
+        await updateDoc(doc(db, 'system', 'settings'), key);
+        alert(`Quota updated.`);
         input.value = '';
-    } catch (e) {
-        alert(`Failed to update quota.`);
-        console.error('[setQuota]', e);
-    }
+    } catch (e) { alert('Failed to update quota.'); }
 }
 
 function listenToQuota() {
@@ -686,7 +682,11 @@ async function dailyReset(auto = false) {
       await updateDoc(doc(db,'departments',dept), {
           counter: 0, queue: 0, nowServing: '', avgWaitSeconds: 0, lastResetAt: serverTimestamp()
       });
-    await updateDoc(doc(db,'system','settings'), { ticketsIssued: 0 });
+    await updateDoc(doc(db, 'system', 'settings'), {
+        ticketsIssued: 0,
+        cashierIssued: 0,   
+        registrarIssued: 0  
+    });
 
     servedToday = 0; noShowToday = 0; serveTimes = []; currentTicket = null;
     clearServing();

@@ -71,37 +71,39 @@ function updateClock() {
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d     = snap.data();
-        const quota = d.dailyQuota    || 100;
-        const issued = d.ticketsIssued || 0;
-        const rem   = Math.max(0, quota - issued);
-        const full  = issued >= quota;
+        const d = snap.data();
+
+        const cashierQuota   = d.cashierQuota   || d.dailyQuota || 100;
+        const registrarQuota = d.registrarQuota || d.dailyQuota || 100;
+        const cashierIssued   = d.cashierIssued   || 0;
+        const registrarIssued = d.registrarIssued || 0;
+        const cashierRem   = Math.max(0, cashierQuota   - cashierIssued);
+        const registrarRem = Math.max(0, registrarQuota - registrarIssued);
+        const cashierFull   = cashierIssued   >= cashierQuota;
+        const registrarFull = registrarIssued >= registrarQuota;
 
         const el = document.getElementById('quotaDisplay');
-        if (el) {
-            el.textContent = 'Slots: ' + rem + ' / ' + quota;
-            el.style.color = full ? '#dc2626' : '';
-            el.style.fontWeight = full ? '800' : '';
-        }
-
-        const issueBtn = document.getElementById('btnIssueTicket');
-        if (issueBtn) {
-            issueBtn.classList.toggle('disabled', full);
-            issueBtn.style.opacity      = full ? '0.5' : '';
-            issueBtn.style.pointerEvents = full ? 'none' : '';
-            issueBtn.title = full ? 'No more slots available today.' : '';
-        }
-
-        const resBtn = document.getElementById('btnHaveReservation');
-        if (resBtn) {
-            resBtn.classList.toggle('disabled', full);
-            resBtn.style.opacity       = full ? '0.5' : '';
-            resBtn.style.pointerEvents = full ? 'none' : '';
-            resBtn.title = full ? 'No more slots available today.' : '';
-        }
+        if (el) el.textContent =
+            `Cashier: ${cashierRem}/${cashierQuota}  |  Registrar: ${registrarRem}/${registrarQuota}`;
 
         const fullMsg = document.getElementById('quotaFullMsg');
-        if (fullMsg) fullMsg.style.display = full ? 'block' : 'none';
+        if (fullMsg) fullMsg.style.display = (cashierFull && registrarFull) ? 'block' : 'none';
+
+        const issueBtn = document.getElementById('btnIssueTicket');
+        const resBtn   = document.getElementById('btnHaveReservation');
+        const allFull  = cashierFull && registrarFull;
+        if (issueBtn) { issueBtn.classList.toggle('disabled', allFull); issueBtn.style.pointerEvents = allFull ? 'none' : ''; }
+        if (resBtn)   { resBtn.classList.toggle('disabled', allFull);   resBtn.style.pointerEvents   = allFull ? 'none' : ''; }
+
+        const cashierBtn   = document.getElementById('deptCashier');
+        const registrarBtn = document.getElementById('deptRegistrar');
+        if (cashierBtn)   cashierBtn.classList.toggle('disabled', cashierFull);
+        if (registrarBtn) registrarBtn.classList.toggle('disabled', registrarFull);
+
+        const cashierQText   = document.getElementById('cashierQueueText');
+        const registrarQText = document.getElementById('registrarQueueText');
+        if (cashierFull   && cashierQText)   cashierQText.textContent   = 'Quota Full';
+        if (registrarFull && registrarQText) registrarQText.textContent = 'Quota Full';
     });
 }
 
@@ -433,9 +435,11 @@ async function issueTicket(userId) {
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
             const sSnap = await transaction.get(doc(db, 'system', 'settings'));
-            if ((sSnap.data().ticketsIssued || 0) >= (sSnap.data().dailyQuota || 100)) {
-                throw new Error('QUOTA_FULL');
-            }
+            const deptQuotaKey  = selectedDept + 'Quota';
+            const deptIssuedKey = selectedDept + 'Issued';
+            const deptQuota  = sSnap.data()[deptQuotaKey]  || sSnap.data().dailyQuota || 100;
+            const deptIssued = sSnap.data()[deptIssuedKey] || 0;
+            if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
@@ -444,7 +448,10 @@ async function issueTicket(userId) {
             ahead = Math.max(0, newQueue - 1);
             const ticketRef  = doc(collection(db, 'tickets'), tNum);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
-            transaction.update(sRef, { ticketsIssued: increment(1) });
+            transaction.update(sRef, {
+                [deptIssuedKey]: increment(1),
+                ticketsIssued: increment(1)
+            });
             transaction.set(ticketRef, {
                 ticketNumber: tNum, department: selectedDept,
                 userId, userType: selectedUserType, displayName: selectedDisplayName,

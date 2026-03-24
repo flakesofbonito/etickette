@@ -181,9 +181,13 @@
 
         <div class="panel-label" style="margin-top:20px">Set Daily Quota</div>
         <div class="tool-row">
-          <input type="number" id="quotaInput" min="1" max="999"
-            placeholder="e.g. 100" class="tool-input" />
-          <button class="btn-tool" onclick="setDailyQuota()">Set</button>
+            <select id="quotaDeptSelect" class="tool-input" style="letter-spacing:0;font-size:13px;">
+                <option value="cashier">Cashier</option>
+                <option value="registrar">Registrar</option>
+                <option value="both">Both</option>
+            </select>
+            <input type="number" id="quotaInput" min="1" max="999" placeholder="e.g. 50" class="tool-input" />
+            <button class="btn-tool" onclick="setDailyQuota()">Set</button>
         </div>
 
         <div class="panel-label" style="margin-top:20px">System Announcement</div>
