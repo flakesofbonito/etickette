@@ -264,7 +264,8 @@ function listenToSettings() {
         const totalIssued     = cashierIssued + registrarIssued;
         const totalRemaining  = Math.max(0, totalQuota - totalIssued);
 
-        setIfChanged('quotaText', totalRemaining + ' / ' + totalQuota);
+        setIfChanged('cashierQuotaText',   Math.max(0, cashierQuota - cashierIssued) + ' / ' + cashierQuota);
+        setIfChanged('registrarQuotaText', Math.max(0, registrarQuota - registrarIssued) + ' / ' + registrarQuota);
 
         const deptMap = {
             cashier:   { quota: cashierQuota,   issued: cashierIssued },
@@ -277,10 +278,14 @@ function listenToSettings() {
             const btn = document.getElementById(dept + 'Btn');
             if (!btn) return;
 
-            const quotaEl = document.getElementById('quotaText');
-            if (quotaEl) {
-                quotaEl.style.color      = totalRemaining === 0 ? '#dc2626' : totalRemaining <= 10 ? '#f97316' : '';
-                quotaEl.style.fontWeight = totalRemaining === 0 ? '800' : '';
+            const cashierTextEl   = document.getElementById('cashierQuotaText');
+            const registrarTextEl = document.getElementById('registrarQuotaText');
+            const { quota: dQuota, issued: dIssued } = deptMap[dept];
+            const dRem = Math.max(0, dQuota - dIssued);
+            const dEl  = dept === 'cashier' ? cashierTextEl : registrarTextEl;
+            if (dEl) {
+                dEl.style.color      = dRem === 0 ? '#dc2626' : dRem <= 5 ? '#f97316' : '';
+                dEl.style.fontWeight = dRem === 0 ? '800' : '';
             }
 
             if (isFull && !hasActiveReservation) {

@@ -133,10 +133,15 @@ function listenToQueue(dept) {
 function listenToSettings() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const d   = snap.data();
-        const rem = (d.dailyQuota || 100) - (d.ticketsIssued || 0);
+        const d = snap.data();
+        const cQ  = d.cashierQuota    || d.dailyQuota || 100;
+        const rQ  = d.registrarQuota  || d.dailyQuota || 100;
+        const cI  = d.cashierIssued   || 0;
+        const rI  = d.registrarIssued || 0;
+        const cRem = Math.max(0, cQ - cI);
+        const rRem = Math.max(0, rQ - rI);
         document.getElementById('footerQuota').textContent =
-            'Slots: ' + rem + ' / ' + (d.dailyQuota || 100);
+            'C: ' + cRem + '/' + cQ + '  ·  R: ' + rRem + '/' + rQ;
 
         const msg        = d.statusMessage || '';
         const ticker     = document.getElementById('monitorTicker');

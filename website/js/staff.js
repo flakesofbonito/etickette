@@ -176,26 +176,32 @@ async function setDailyQuota() {
 function listenToQuota() {
     onSnapshot(doc(db, 'system', 'settings'), snap => {
         if (!snap.exists()) return;
-        const data      = snap.data();
-        const quota     = data.dailyQuota    || 100;
-        const issued    = data.ticketsIssued || 0;
-        const remaining = Math.max(0, quota - issued);
-        const pct       = Math.min(100, Math.round((issued / quota) * 100));
+
+        const data = snap.data();
+        const cashierQuota    = data.cashierQuota   || data.dailyQuota || 100;
+        const registrarQuota  = data.registrarQuota || data.dailyQuota || 100;
+        const cashierIssued   = data.cashierIssued  || 0;
+        const registrarIssued = data.registrarIssued|| 0;
+        const totalIssued     = cashierIssued + registrarIssued;
+        const totalQuota      = cashierQuota + registrarQuota;
+        const totalRemaining  = Math.max(0, totalQuota - totalIssued);
+        const pct             = totalQuota > 0 ? Math.min(100, Math.round((totalIssued / totalQuota) * 100)) : 0;
 
         const statIssued = document.getElementById('statIssued');
-        if (statIssued) statIssued.textContent = issued;
+        if (statIssued) statIssued.textContent = totalIssued;
 
         const display = document.getElementById('quotaStatusDisplay');
         const sub     = document.getElementById('quotaStatusSub');
 
         if (display) {
-            display.textContent = `${issued}/${quota}`;
+            display.textContent = `C: ${cashierIssued}/${cashierQuota}  ·  R: ${registrarIssued}/${registrarQuota}`;
+            display.style.fontSize = '13px';
             display.style.color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f97316' : '#2563eb';
         }
         if (sub) {
-            sub.textContent = remaining === 0 ? 'Full' : `${remaining} left`;
-            sub.style.fontWeight = remaining === 0 ? '800' : '';
-            sub.style.color = remaining === 0 ? '#dc2626' : remaining <= 10 ? '#f97316' : '#6b7280';
+            sub.textContent    = totalRemaining === 0 ? 'All Full' : `${totalRemaining} left`;
+            sub.style.fontWeight = totalRemaining === 0 ? '800' : '';
+            sub.style.color    = totalRemaining === 0 ? '#dc2626' : totalRemaining <= 10 ? '#f97316' : '#6b7280';
         }
     });
 }
