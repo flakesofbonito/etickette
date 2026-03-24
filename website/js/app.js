@@ -158,9 +158,11 @@ function afterLogin() {
 
     setReserveButtonsLocked(true);
     navigate('home');
-    _unsubs.push(listenToDepts());
-    _unsubs.push(listenToSettings());
-    _unsubs.push(listenToActiveReservation());
+    setTimeout(() => {
+        _unsubs.push(listenToDepts());
+        _unsubs.push(listenToSettings());
+        _unsubs.push(listenToActiveReservation());
+    }, 520);
 }
 
 function logout() {
@@ -572,48 +574,56 @@ function openReserveModal(dept) {
     document.getElementById('reserveTitle').textContent   = 'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
 
     const list = document.getElementById('reserveReasonList');
-    list.innerHTML = '';
-    REASONS[dept].forEach(r => {
-        if (r.category) {
-            const h = document.createElement('div');
-            h.className = 'reason-category-header';
-            h.textContent = r.category;
-            list.appendChild(h);
-            return;
-        }
-        const d        = document.createElement('div');
-        d.className    = 'reason-item';
-        d.textContent  = r.label;
-        d.onclick = () => {
-            reserveReason = r;
-            document.querySelectorAll('.reason-item').forEach(x => x.classList.remove('selected'));
-            d.classList.add('selected');
-
-            const docsDept = document.getElementById('docsForDept');
-            if (docsDept) docsDept.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
-
-            const docsList = document.getElementById('requiredDocsList');
-            docsList.innerHTML = '';
-            if (r.docs && r.docs.length > 0) {
-                r.docs.forEach(docName => {
-                    const item = document.createElement('div');
-                    item.className = 'docs-item';
-                    item.innerHTML = `<span class="docs-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>${docName}</span>`;
-                    docsList.appendChild(item);
-                });
-            } else {
-                docsList.innerHTML = '<p class="subtle">No specific documents required. Bring your Valid ID.</p>';
-            }
-            rGoStep(2);
-        };
-        list.appendChild(d);
-    });
+    list.innerHTML = '<p class="subtle" style="text-align:center;padding:16px 0">Loading...</p>';
 
     const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
     document.getElementById('reserveDate').min = todayPH;
     document.getElementById('reserveDate').value = '';
     rGoStep(1);
     document.getElementById('reserveModal').classList.add('active');
+
+    requestAnimationFrame(() => {
+        const fragment = document.createDocumentFragment();
+        REASONS[dept].forEach(r => {
+            if (r.category) {
+                const h = document.createElement('div');
+                h.className = 'reason-category-header';
+                h.textContent = r.category;
+                fragment.appendChild(h);
+                return;
+            }
+            const d = document.createElement('div');
+            d.className = 'reason-item';
+            d.textContent = r.label;
+            d.onclick = () => {
+                reserveReason = r;
+                list.querySelectorAll('.reason-item').forEach(x => x.classList.remove('selected'));
+                d.classList.add('selected');
+
+                const docsDept = document.getElementById('docsForDept');
+                if (docsDept) docsDept.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
+
+                const docsList = document.getElementById('requiredDocsList');
+                const docsFragment = document.createDocumentFragment();
+                if (r.docs && r.docs.length > 0) {
+                    r.docs.forEach(docName => {
+                        const item = document.createElement('div');
+                        item.className = 'docs-item';
+                        item.innerHTML = `<span class="docs-item-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>${docName}</span>`;
+                        docsFragment.appendChild(item);
+                    });
+                    docsList.innerHTML = '';
+                    docsList.appendChild(docsFragment);
+                } else {
+                    docsList.innerHTML = '<p class="subtle">No specific documents required. Bring your Valid ID.</p>';
+                }
+                rGoStep(2);
+            };
+            fragment.appendChild(d);
+        });
+        list.innerHTML = '';
+        list.appendChild(fragment);
+    });
 }
 
 function rGoStep(n) {

@@ -451,19 +451,17 @@ svg {
 .app-shell {
     display: flex;
     min-height: 100vh;
-    transition: filter .4s ease, opacity .4s ease;
+    transition: opacity .4s ease;
 }
 
 .app-shell.locked {
     pointer-events: none;
     user-select: none;
-    filter: blur(8px);
     opacity: 0;
 }
 
 .app-shell.unlocked {
     pointer-events: all;
-    filter: none;
     opacity: 1;
 }
 
@@ -1277,8 +1275,7 @@ svg {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,.52);
-    backdrop-filter: blur(4px);
+    background: rgba(15,23,42,.72);
     z-index: 2000;
     align-items: center;
     justify-content: center;
