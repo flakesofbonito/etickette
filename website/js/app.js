@@ -330,10 +330,13 @@ function listenToActiveReservation() {
             });
             if (activeDoc) {
                 const existing = document.getElementById('activeResBanner');
-                if (!existing || existing.dataset.bannerType === 'reservation') {
+                if (!existing) {
                     hasActiveReservation = true;
                     setReserveButtonsLocked(true);
                     renderActiveResBanner(activeDoc.data(), activeDoc.id);
+                } else {
+                    hasActiveReservation = true;
+                    setReserveButtonsLocked(true);
                 }
             } else {
                 const banner = document.getElementById('activeResBanner');
@@ -357,10 +360,13 @@ function listenToActiveReservation() {
             });
             if (activeTicket) {
                 const existing = document.getElementById('activeResBanner');
-                if (!existing || existing.dataset.bannerType === 'walkin') {
+                if (!existing) {
                     hasActiveReservation = true;
                     setReserveButtonsLocked(true);
                     renderActiveWalkinBanner(activeTicket.data());
+                } else {
+                    hasActiveReservation = true;
+                    setReserveButtonsLocked(true);
                 }
             } else {
                 const banner = document.getElementById('activeResBanner');

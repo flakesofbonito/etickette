@@ -657,9 +657,11 @@
                     var dateStr = toDateStr(calState.year, calState.month, d);
 
                     var isWeekend = thisDate.getDay() === 0 || thisDate.getDay() === 6;
-                        var now = new Date();
-                        var cutoffHour = 17;
-                        var isTodayPastCutoff = thisDate.toDateString() === today.toDateString() && now.getHours() >= cutoffHour;
+                        var phHour = new Date(
+                            new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })
+                        ).getHours();
+                        var cutoffHour = 20; 
+                        var isTodayPastCutoff = thisDate.toDateString() === today.toDateString() && phHour >= cutoffHour;
                         if (thisDate < today || isWeekend || isTodayPastCutoff) {
                         cell.classList.add("cal-day-disabled");
                         if (isWeekend) cell.classList.add("cal-day-weekend");
