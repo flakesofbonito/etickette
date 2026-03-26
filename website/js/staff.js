@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getFirestore, doc, collection, onSnapshot,
   updateDoc, getDocs, query, where,
-  serverTimestamp, increment, getDoc, writeBatch, Timestamp
+  serverTimestamp, increment, getDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -799,12 +799,15 @@ async function exportCSV(mode = 'single') {
             if (countFrom < lastReset) lastReset = countFrom;
 
             const snap = await getDocs(query(
-            collection(db, 'tickets'),
-            where('department', '==', dept),
-            where('issuedAt', '>=', Timestamp.fromDate(countFrom))
+                collection(db, 'tickets'),
+                where('department', '==', dept)
             ));
-
-            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const rows = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(t => {
+                    const issuedAt = t.issuedAt?.toDate?.();
+                    return issuedAt && issuedAt >= countFrom;
+                });
 
             allRows = allRows.concat(rows);
         }

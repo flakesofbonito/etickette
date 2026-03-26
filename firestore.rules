@@ -4,57 +4,28 @@ service cloud.firestore {
 
     match /departments/{dept} {
       allow read: if true;
-      allow update: if
-        request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['status','counter','queue','nowServing','avgWaitSeconds','lastResetAt']);
-      allow create, delete: if false;
+  		allow write: if false;  
+  		allow update: if true;
     }
 
     match /system/{doc} {
       allow read: if true;
-      allow create, delete: if false;
-
-      allow update: if request.auth != null && doc == 'settings' &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly([
-            'ticketsIssued',
-            'cashierIssued',
-            'registrarIssued',
-            'cashierQuota',
-            'registrarQuota',
-            'dailyQuota',
-            'statusMessage',
-            'statusMessageAt'
-          ]);
+  		allow write: if false;
+  		allow update: if true;   
     }
 
     match /tickets/{ticketId} {
       allow read: if true;
+      allow create: if true;
+      allow update: if true;
       allow delete: if false;
-      allow create: if
-        request.resource.data.ticketNumber is string &&
-        request.resource.data.department in ['cashier','registrar'] &&
-        request.resource.data.userId is string &&
-        request.resource.data.status == 'waiting';
-      allow update: if
-        request.resource.data.ticketNumber == resource.data.ticketNumber &&
-        request.resource.data.department == resource.data.department &&
-        request.resource.data.userId == resource.data.userId &&
-        request.resource.data.status in ['waiting','serving','completed','noshow','cancelled'];
     }
 
     match /reservations/{resId} {
       allow read: if true;
+      allow create: if true;
+      allow update: if true;
       allow delete: if false;
-      allow create: if
-        request.resource.data.department in ['cashier','registrar'] &&
-        request.resource.data.status == 'pending' &&
-        request.resource.data.studentId is string;
-      allow update: if
-        request.resource.data.department == resource.data.department &&
-        request.resource.data.studentId == resource.data.studentId &&
-        request.resource.data.status in ['pending','active','completed','cancelled','expired','noshow'];
     }
-
   }
 }

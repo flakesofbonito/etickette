@@ -25,6 +25,7 @@ let reserveReason      = null;
 let currentStep        = 1;
 let hasActiveReservation = false;
 let deptStatuses = { cashier: null, registrar: null };
+let deptQuotas   = { cashier: { quota: 100, issued: 0 }, registrar: { quota: 100, issued: 0 } };
 let currentUserType    = 'student';
 let currentDisplayName = null;
 let _unsubs = [];
@@ -225,7 +226,6 @@ function listenToDepts() {
             const st = (d.status || 'open').toLowerCase();
             const map = { open: { t: 'OPEN', c: 'open' }, break: { t: 'ON BREAK', c: 'break' }, closed: { t: 'CLOSED', c: 'closed' } };
             const m  = map[st] || map.open;
-            deptStatuses[dept] = st;
 
             const el = document.getElementById(dept + 'Status');
             if (el && el.textContent !== m.t) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
@@ -239,17 +239,8 @@ function listenToDepts() {
                 ? '~' + Math.floor(avg / 60) + 'm ' + (avg % 60) + 's avg wait'
                 : 'Avg wait: —');
 
-            const btn = document.getElementById(dept + 'Btn');
-            if (btn && st !== 'open' && !hasActiveReservation) {
-                btn.disabled            = true;
-                btn.style.background    = '';
-                btn.style.color         = '';
-                btn.style.border        = '';
-                btn.style.pointerEvents = 'none';
-                btn.textContent = st === 'break'
-                    ? `${dept.toUpperCase()} — ON BREAK`
-                    : `${dept.toUpperCase()} — CLOSED`;
-            }
+            deptStatuses[dept] = st;
+            updateReserveButton(dept);
         })
     );
     return () => unsubs.forEach(u => u());
@@ -293,37 +284,16 @@ function listenToSettings() {
 
         ['cashier', 'registrar'].forEach(dept => {
             const { quota, issued } = deptMap[dept];
-            const isFull = issued >= quota;
-            const btn = document.getElementById(dept + 'Btn');
-            if (!btn) return;
+            deptQuotas[dept] = { quota, issued };
 
-            const cashierTextEl   = document.getElementById('cashierQuotaText');
-            const registrarTextEl = document.getElementById('registrarQuotaText');
-            const { quota: dQuota, issued: dIssued } = deptMap[dept];
-            const dRem = Math.max(0, dQuota - dIssued);
+            const dRem = Math.max(0, quota - issued);
             const dEl  = dept === 'cashier' ? cashierTextEl : registrarTextEl;
             if (dEl) {
                 dEl.style.color      = dRem === 0 ? '#dc2626' : dRem <= 5 ? '#f97316' : '';
                 dEl.style.fontWeight = dRem === 0 ? '800' : '';
             }
 
-            if (isFull && !hasActiveReservation) {
-                btn.disabled            = true;
-                btn.title               = `${dept.toUpperCase()} quota is full for today.`;
-                btn.textContent         = 'Quota Full — No Slots Available';
-                btn.style.background    = 'rgba(220,38,38,.1)';
-                btn.style.color         = '#dc2626';
-                btn.style.border        = '2px solid rgba(220,38,38,.3)';
-                btn.style.pointerEvents = 'none';
-            } else if (!hasActiveReservation && deptStatuses[dept] === 'open') {
-                btn.disabled            = false;
-                btn.title               = '';
-                btn.textContent         = `RESERVE ${dept.toUpperCase()} TICKET`;
-                btn.style.background    = '';
-                btn.style.color         = '';
-                btn.style.border        = '';
-                btn.style.pointerEvents = '';
-            }
+            updateReserveButton(dept);
         });
 
         const overallPct  = totalIssued / totalQuota;
@@ -362,6 +332,46 @@ function listenToSettings() {
         }
     });
     return unsub;
+}
+
+function updateReserveButton(dept) {
+    const btn = document.getElementById(dept + 'Btn');
+    if (!btn) return;
+
+    if (hasActiveReservation) {
+        btn.disabled            = true;
+        btn.title               = 'Cancel your current reservation first.';
+        return;
+    }
+
+    const st     = deptStatuses[dept];
+    const isFull = deptQuotas[dept].issued >= deptQuotas[dept].quota;
+
+    if (st && st !== 'open') {
+        btn.disabled            = true;
+        btn.title               = '';
+        btn.textContent         = st === 'break' ? `${dept.toUpperCase()} — ON BREAK` : `${dept.toUpperCase()} — CLOSED`;
+        btn.style.background    = '';
+        btn.style.color         = '';
+        btn.style.border        = '';
+        btn.style.pointerEvents = 'none';
+    } else if (isFull) {
+        btn.disabled            = true;
+        btn.title               = `${dept.toUpperCase()} quota is full for today.`;
+        btn.textContent         = 'Quota Full — No Slots Available';
+        btn.style.background    = 'rgba(220,38,38,.1)';
+        btn.style.color         = '#dc2626';
+        btn.style.border        = '2px solid rgba(220,38,38,.3)';
+        btn.style.pointerEvents = 'none';
+    } else {
+        btn.disabled            = false;
+        btn.title               = '';
+        btn.textContent         = `RESERVE ${dept.toUpperCase()} TICKET`;
+        btn.style.background    = '';
+        btn.style.color         = '';
+        btn.style.border        = '';
+        btn.style.pointerEvents = '';
+    }
 }
 
 function listenToActiveReservation() {
@@ -423,12 +433,9 @@ function listenToActiveReservation() {
 }
 
 function setReserveButtonsLocked(locked) {
+    hasActiveReservation = locked;
     ['cashier', 'registrar'].forEach(dept => {
-        const btn = document.getElementById(dept + 'Btn');
-        if (btn) {
-            btn.disabled = locked;
-            btn.title    = locked ? 'Cancel your current reservation first.' : '';
-        }
+        updateReserveButton(dept);
     });
 }
 
