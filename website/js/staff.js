@@ -566,8 +566,13 @@ async function recallTicket() {
     if (!tNum) return;
 
     try {
-        const snap = await getDoc(doc(db, 'tickets', tNum));
-        if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+        const tSnap = await getDocs(query(
+            collection(db, 'tickets'),
+            where('ticketNumber', '==', tNum),
+            where('department', '==', staffDept)
+        ));
+        if (tSnap.empty) { alert('Ticket not found: ' + tNum); return; }
+        const snap  = tSnap.docs[0];
         const tData = snap.data();
 
         if (tData.status === 'cancelled') {
@@ -610,7 +615,7 @@ async function recallTicket() {
             });
         }
 
-        await updateDoc(doc(db, 'tickets', tNum), {
+        await updateDoc(doc(db, 'tickets', snap.id), {
             status: 'serving',
             calledAt: serverTimestamp(),
             called: true
@@ -634,10 +639,15 @@ async function markManualComplete() {
   const tNum  = input.value.trim().toUpperCase();
   if (!tNum) return;
   try {
-    const snap = await getDoc(doc(db,'tickets',tNum));
-    if (!snap.exists()) { alert('Ticket not found: ' + tNum); return; }
+    const tSnap = await getDocs(query(
+      collection(db, 'tickets'),
+      where('ticketNumber', '==', tNum),
+      where('department', '==', staffDept)
+    ));
+    if (tSnap.empty) { alert('Ticket not found: ' + tNum); return; }
+    const snap = tSnap.docs[0];
     const ticketData = snap.data();
-    await updateDoc(doc(db,'tickets',tNum), { status:'completed', completedAt:serverTimestamp() });
+    await updateDoc(doc(db,'tickets', snap.id), { status:'completed', completedAt:serverTimestamp() });
     const st = ticketData.status;
     if (st === 'waiting' || st === 'serving')
     await updateDoc(doc(db, 'departments', staffDept), {

@@ -30,12 +30,6 @@ let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
 
-function getTodayMMDD() {
-    const ph = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-    const [, mm, dd] = ph.split('-');
-    return mm + dd;
-}
-
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
@@ -447,7 +441,6 @@ async function issueTicket(userId) {
         }
 
         const prefix = selectedDept === 'cashier' ? 'C' : 'R';
-        const mmdd   = getTodayMMDD();                              
         const dRef   = doc(db, 'departments', selectedDept);
 
         let tNum, ahead;
@@ -463,16 +456,18 @@ async function issueTicket(userId) {
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
-            tNum  = prefix + mmdd + '-' + String(newCounter).padStart(2, '0');
+            tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
+            const firestoreId = tNum + '-' + todayStr;
             ahead = Math.max(0, newQueue - 1);
-            const ticketRef  = doc(collection(db, 'tickets'), tNum);
+            const ticketRef  = doc(collection(db, 'tickets'), firestoreId);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.update(sRef, {
-                [deptIssuedKey]: increment(1),
-                ticketsIssued: increment(1)
+                ticketsIssued: increment(1),
+                [selectedDept + 'Issued']: increment(1)
             });
             transaction.set(ticketRef, {
-                ticketNumber: tNum, department: selectedDept,
+                ticketNumber: tNum, ticketId: firestoreId, department: selectedDept,
                 userId, userType: selectedUserType, displayName: selectedDisplayName,
                 reason: selectedReason ? selectedReason.label : '—',
                 requiredDocs: selectedReason ? selectedReason.docs : [],
@@ -481,9 +476,9 @@ async function issueTicket(userId) {
             });
         });
 
-        showTicketScreen(tNum, userId, ahead);
+        showTicketScreen(tNum, firestoreId, userId, ahead);
         playBeep();
-        printTicket(tNum, selectedDept);
+        printTicket(tNum, selectedDept, firestoreId);
 
     } catch (e) {
         console.error(e);
@@ -497,8 +492,8 @@ async function issueTicket(userId) {
     }
 }
 
-function showTicketScreen(tNum, userId, ahead) {
-    window._lastTicket = { tNum, dept: selectedDept };
+function showTicketScreen(tNum, firestoreId, userId, ahead) {
+    window._lastTicket = { tNum, firestoreId, dept: selectedDept };
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     set('issuedDept',   selectedDept.toUpperCase());
     set('issuedNumber', tNum);
@@ -515,7 +510,7 @@ function showTicketScreen(tNum, userId, ahead) {
     if (qrEl) {
         qrEl.innerHTML = '';
         new QRCode(qrEl, {
-            text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + selectedDept,
+            text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + selectedDept,
             width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
         });
     }
@@ -657,7 +652,6 @@ async function onScanSuccess(decoded) {
         }
 
         const prefix = dept === 'cashier' ? 'C' : 'R';
-        const mmdd   = getTodayMMDD();                              
         const dRef   = doc(db, 'departments', dept);
         const resRef = doc(db, 'reservations', reservationId);
 
@@ -674,12 +668,14 @@ async function onScanSuccess(decoded) {
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
-            tNum  = prefix + mmdd + '-' + String(newCounter).padStart(2, '0');
+            tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
+            const firestoreId = tNum + '-' + todayStr;
             ahead = Math.max(0, newQueue - 1);
-            const ticketRef  = doc(collection(db, 'tickets'), tNum);
+            const ticketRef  = doc(collection(db, 'tickets'), firestoreId);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
             transaction.set(ticketRef, {
-                ticketNumber: tNum, department: dept,
+                ticketNumber: tNum, ticketId: firestoreId, department: dept,
                 userId: res.studentId || res.userId || 'N/A',
                 userType: res.userType || 'student',
                 displayName: res.displayName || res.studentId || 'N/A',
@@ -693,11 +689,11 @@ async function onScanSuccess(decoded) {
                 ticketsIssued: increment(1),
                 [deptIssuedKey]: increment(1)
             });
-            transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
+            transaction.update(resRef, { status: 'active', ticketNumber: tNum, ticketId: firestoreId, activatedAt: serverTimestamp() });
         });
 
-        window._lastTicket = { tNum, dept };
-        printTicket(tNum, dept);
+        window._lastTicket = { tNum, firestoreId, dept };
+        printTicket(tNum, dept, firestoreId);
 
         const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         set('scanDept',   dept.toUpperCase());
@@ -710,7 +706,7 @@ async function onScanSuccess(decoded) {
         if (scanQREl) {
             scanQREl.innerHTML = '';
             new QRCode(scanQREl, {
-                text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + dept,
+                text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + dept,
                 width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
             });
         }
@@ -743,8 +739,8 @@ function setScanStatus(msg, allowRetry = false) {
     }
 }
 
-async function printTicket(tNum, dept) {
-    const qr_link = PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(tNum) + '&d=' + dept;
+async function printTicket(tNum, dept, firestoreId) {
+    const qr_link = PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId || tNum) + '&d=' + dept;
     try {
         const res = await fetch(PRINTER_URL, {
             method: 'POST', mode: 'cors',
@@ -804,7 +800,7 @@ async function reprintTicket() {
     }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
     try {
-        await printTicket(window._lastTicket.tNum, window._lastTicket.dept);
+        await printTicket(window._lastTicket.tNum, window._lastTicket.dept, window._lastTicket.firestoreId);
         if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
         playBeep();
     } catch (e) {
