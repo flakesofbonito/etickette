@@ -595,8 +595,6 @@ async function cancelReservation(rid, status) {
 
         const banner = document.getElementById('activeResBanner');
         if (banner) banner.remove();
-        hasActiveReservation = false;
-        setReserveButtonsLocked(false);
         _hasActiveRes    = false;
         _hasActiveTicket = false;
         showToast('Reservation cancelled.', 'warning');

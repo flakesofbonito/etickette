@@ -145,7 +145,8 @@
     letter-spacing:.3px;
     flex-direction:row; align-items:center; justify-content:center; gap:6px;
     ">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connection lost </div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connection lost
+    </div>
     <script>
         let _offlineTimer = null;
 
@@ -182,53 +183,55 @@
         import { getFirestore, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-        apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-        authDomain: "etickette-78f74.firebaseapp.com",
-        projectId: "etickette-78f74",
-        storageBucket: "etickette-78f74.firebasestorage.app",
-        messagingSenderId: "147547566302",
-        appId: "1:147547566302:web:2c7a52792b539331d8524f"
+            apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
+            authDomain: "etickette-78f74.firebaseapp.com",
+            projectId: "etickette-78f74",
+            storageBucket: "etickette-78f74.firebasestorage.app",
+            messagingSenderId: "147547566302",
+            appId: "1:147547566302:web:2c7a52792b539331d8524f"
         };
 
+
         let monitorPin = '4321';
+
         try {
-        const app = initializeApp(firebaseConfig, 'gate');
-        const db = getFirestore(app);
-        const snap = await getDoc(doc(db, 'system', 'settings'));
-        if (snap.exists() && snap.data().monitorPin) monitorPin = snap.data().monitorPin;
+            const app = initializeApp(firebaseConfig, 'gate');
+            const db = getFirestore(app);
+            const snap = await getDoc(doc(db, 'system', 'settings'));
+            if (snap.exists() && snap.data().monitorPin) monitorPin = snap.data().monitorPin;
         } catch (e) {
-        console.warn('[Monitor gate] Using default PIN');
+            console.warn('[Monitor gate] Using default PIN');
         }
 
         function unlockMonitor() {
-        const pin = document.getElementById('gatePinInput').value.trim();
-        const err = document.getElementById('gateErr');
-        const input = document.getElementById('gatePinInput');
+            const pin   = document.getElementById('gatePinInput').value.trim();
+            const err   = document.getElementById('gateErr');
+            const input = document.getElementById('gatePinInput');
 
-        if (pin !== monitorPin) {
-            err.textContent = 'Incorrect PIN. Try again.';
-            input.value = '';
-            input.classList.remove('shake');
-            void input.offsetWidth;
-            input.classList.add('shake');
-            return;
-        }
+            if (pin !== monitorPin) {
+                err.textContent = 'Incorrect PIN. Try again.';
+                input.value = '';
+                input.classList.remove('shake');
+                void input.offsetWidth;
+                input.classList.add('shake');
+                return;
+            }
 
-        document.getElementById('monitorGate').style.display = 'none';
-        document.getElementById('monitorContent').classList.add('unlocked');
-        sessionStorage.setItem('monitorUnlocked', '1');
-        initMonitor();
+            document.getElementById('monitorGate').style.display = 'none';
+            document.getElementById('monitorContent').classList.add('unlocked');
+            sessionStorage.setItem('monitorUnlocked', '1');
+            initMonitor();
         }
 
         document.getElementById('gateBtn').addEventListener('click', unlockMonitor);
         document.getElementById('gatePinInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') unlockMonitor();
+            if (e.key === 'Enter') unlockMonitor();
         });
 
         if (sessionStorage.getItem('monitorUnlocked') === '1') {
-        document.getElementById('monitorGate').style.display = 'none';
-        document.getElementById('monitorContent').classList.add('unlocked');
-        initMonitor();
+            document.getElementById('monitorGate').style.display = 'none';
+            document.getElementById('monitorContent').classList.add('unlocked');
+            initMonitor();
         }
     </script>
 </body>

@@ -30,6 +30,12 @@ let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
 
+function getTodayMMDD() {
+    const ph = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    const [, mm, dd] = ph.split('-');
+    return mm + dd;
+}
+
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
     db  = getFirestore(app);
@@ -359,6 +365,7 @@ async function submitId() {
     buildReasonList();
     goScreen('reason');
 }
+
 function selectReason(idx) {
     const item = REASONS[selectedDept][idx];
     if (!item || item.category) return;
@@ -429,7 +436,7 @@ async function issueTicket(userId) {
 
         const activeCheck = await getDocs(query(
             collection(db, 'tickets'),
-            where('userId', '==', userId), where('status', '==', 'waiting')
+            where('userId', '==', userId), where('status', 'in', ['waiting', 'serving'])
         ));
 
         if (!activeCheck.empty) {
@@ -440,11 +447,13 @@ async function issueTicket(userId) {
         }
 
         const prefix = selectedDept === 'cashier' ? 'C' : 'R';
+        const mmdd   = getTodayMMDD();                              
         const dRef   = doc(db, 'departments', selectedDept);
 
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
-            const sSnap = await transaction.get(doc(db, 'system', 'settings'));
+            const sRef  = doc(db, 'system', 'settings');
+            const sSnap = await transaction.get(sRef);
             const deptQuotaKey  = selectedDept + 'Quota';
             const deptIssuedKey = selectedDept + 'Issued';
             const deptQuota  = sSnap.data()[deptQuotaKey]  || sSnap.data().dailyQuota || 100;
@@ -454,7 +463,7 @@ async function issueTicket(userId) {
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
-            tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
+            tNum  = prefix + mmdd + '-' + String(newCounter).padStart(2, '0');
             ahead = Math.max(0, newQueue - 1);
             const ticketRef  = doc(collection(db, 'tickets'), tNum);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
@@ -476,7 +485,7 @@ async function issueTicket(userId) {
         playBeep();
         printTicket(tNum, selectedDept);
 
-        } catch (e) {
+    } catch (e) {
         console.error(e);
         if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
         if (e.message === 'QUOTA_FULL') {
@@ -648,6 +657,7 @@ async function onScanSuccess(decoded) {
         }
 
         const prefix = dept === 'cashier' ? 'C' : 'R';
+        const mmdd   = getTodayMMDD();                              
         const dRef   = doc(db, 'departments', dept);
         const resRef = doc(db, 'reservations', reservationId);
 
@@ -664,7 +674,7 @@ async function onScanSuccess(decoded) {
             if (!dSnap.exists()) throw new Error('Department doc missing');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
-            tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
+            tNum  = prefix + mmdd + '-' + String(newCounter).padStart(2, '0');
             ahead = Math.max(0, newQueue - 1);
             const ticketRef  = doc(collection(db, 'tickets'), tNum);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
@@ -679,11 +689,11 @@ async function onScanSuccess(decoded) {
                 printed: false, called: false,
                 isReservation: true, reservationId
             });
-                transaction.update(doc(db, 'system', 'settings'), {
-                    ticketsIssued: increment(1),
-                    [deptIssuedKey]: increment(1)
-                });            
-                transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
+            transaction.update(doc(db, 'system', 'settings'), {
+                ticketsIssued: increment(1),
+                [deptIssuedKey]: increment(1)
+            });
+            transaction.update(resRef, { status: 'active', ticketNumber: tNum, activatedAt: serverTimestamp() });
         });
 
         window._lastTicket = { tNum, dept };

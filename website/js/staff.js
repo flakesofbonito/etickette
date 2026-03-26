@@ -522,10 +522,11 @@ async function noShowTicket() {
 
         if (secondsLeft <= 0) {
             clearInterval(interval);
-            toast.remove();
             if (!cancelled) {
                 if (callNextBtn) callNextBtn.disabled = false;
-                await callNextTicket();
+                if (!currentTicket) {
+                  await callNextTicket();
+                }
             }
         }
     }, 1000);
@@ -788,15 +789,12 @@ async function exportCSV(mode = 'single') {
         const depts = mode === 'combined' ? ['cashier', 'registrar'] : [staffDept];
 
         let allRows = [];
-        let lastReset = new Date();
-        lastReset.setHours(0, 0, 0, 0);
 
         for (const dept of depts) {
             const deptSnap = await getDoc(doc(db, 'departments', dept));
             const deptReset = deptSnap.data()?.lastResetAt?.toDate?.();
             const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
             const countFrom = deptReset && deptReset > startOfDay ? deptReset : startOfDay;
-            if (countFrom < lastReset) lastReset = countFrom;
 
             const snap = await getDocs(query(
                 collection(db, 'tickets'),

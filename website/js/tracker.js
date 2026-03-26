@@ -43,6 +43,7 @@ async function loadTicket(tNum) {
     const snap = await getDoc(doc(db, 'tickets', tNum));
     if (!snap.exists()) { showState('error'); return; }
     myTicket = { id: snap.id, ...snap.data() };
+    myDept = myDept || myTicket.department || '';
     renderTicketCard(myTicket);
     checkAndShowState(myTicket);
     startListeners(tNum);
