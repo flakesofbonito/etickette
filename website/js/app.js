@@ -31,6 +31,8 @@ let currentDisplayName = null;
 let _unsubs = [];
 let _lastHistoryFetch = 0;
 let _modalOpen = false;
+let _hasActiveRes    = false;
+let _hasActiveTicket = false;
 
 const _domCache = {};
 function setIfChanged(id, value) {
@@ -178,6 +180,9 @@ function logout() {
     currentUserType      = 'student';
     currentStudentId     = null;
     hasActiveReservation = false;
+    _hasActiveRes    = false;
+    _hasActiveTicket = false;
+    deptQuotas = { cashier: { quota: 100, issued: 0 }, registrar: { quota: 100, issued: 0 } };
     deptStatuses = { cashier: null, registrar: null };
     document.getElementById('userDisplay').style.display = 'none';
     const ov = document.getElementById('loginOverlay');
@@ -285,14 +290,6 @@ function listenToSettings() {
         ['cashier', 'registrar'].forEach(dept => {
             const { quota, issued } = deptMap[dept];
             deptQuotas[dept] = { quota, issued };
-
-            const dRem = Math.max(0, quota - issued);
-            const dEl  = dept === 'cashier' ? cashierTextEl : registrarTextEl;
-            if (dEl) {
-                dEl.style.color      = dRem === 0 ? '#dc2626' : dRem <= 5 ? '#f97316' : '';
-                dEl.style.fontWeight = dRem === 0 ? '800' : '';
-            }
-
             updateReserveButton(dept);
         });
 
@@ -383,18 +380,17 @@ function listenToActiveReservation() {
                 return s === 'pending' || s === 'active';
             });
             if (activeDoc) {
-                hasActiveReservation = true;
-                setReserveButtonsLocked(true);
+                _hasActiveRes = true;
                 renderActiveResBanner(activeDoc.data(), activeDoc.id);
             } else {
+                _hasActiveRes = false;
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'reservation') {
                     banner.remove();
-                    hasActiveReservation = false;
-                    setReserveButtonsLocked(false);
                     setTimeout(() => loadHistory(), 300);
                 }
             }
+            syncActiveState();
         },
         err => console.warn('[res snapshot]', err.code)
     );
@@ -407,29 +403,30 @@ function listenToActiveReservation() {
                 return s === 'waiting' || s === 'serving';
             });
             if (activeTicket) {
+                _hasActiveTicket = true;
                 const existingBanner = document.getElementById('activeResBanner');
                 if (!existingBanner || existingBanner.dataset.bannerType === 'walkin') {
-                    hasActiveReservation = true;
-                    setReserveButtonsLocked(true);
                     renderActiveWalkinBanner(activeTicket.data());
-                } else {
-                    hasActiveReservation = true;
-                    setReserveButtonsLocked(true);
                 }
             } else {
+                _hasActiveTicket = false;
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'walkin') {
                     banner.remove();
-                    hasActiveReservation = false;
-                    setReserveButtonsLocked(false);
                     setTimeout(() => loadHistory(), 300);
                 }
             }
+            syncActiveState();
         },
         err => console.warn('[ticket snapshot]', err.code)
     );
 
     return () => { unsubRes(); unsubTicket(); };
+}
+
+function syncActiveState() {
+    hasActiveReservation = _hasActiveRes || _hasActiveTicket;
+    ['cashier', 'registrar'].forEach(dept => updateReserveButton(dept));
 }
 
 function setReserveButtonsLocked(locked) {
@@ -601,6 +598,8 @@ async function cancelReservation(rid, status) {
         if (banner) banner.remove();
         hasActiveReservation = false;
         setReserveButtonsLocked(false);
+        _hasActiveRes    = false;
+        _hasActiveTicket = false;
         showToast('Reservation cancelled.', 'warning');
         setTimeout(() => loadHistory(), 300);
 
