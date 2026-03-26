@@ -443,7 +443,7 @@ async function issueTicket(userId) {
         const prefix = selectedDept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', selectedDept);
 
-        let tNum, ahead;
+        let tNum, firestoreId, ahead;
         await runTransaction(db, async (transaction) => {
             const sRef  = doc(db, 'system', 'settings');
             const sSnap = await transaction.get(sRef);
@@ -458,7 +458,7 @@ async function issueTicket(userId) {
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
             const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
-            const firestoreId = tNum + '-' + todayStr;
+            firestoreId = tNum + '-' + todayStr;
             ahead = Math.max(0, newQueue - 1);
             const ticketRef  = doc(collection(db, 'tickets'), firestoreId);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
@@ -655,8 +655,7 @@ async function onScanSuccess(decoded) {
         const dRef   = doc(db, 'departments', dept);
         const resRef = doc(db, 'reservations', reservationId);
 
-        let tNum, ahead;
-
+        let tNum, firestoreId, ahead;
         await runTransaction(db, async (transaction) => {
             const sSnap = await transaction.get(doc(db, 'system', 'settings'));
             const deptQuotaKey  = dept + 'Quota';
@@ -670,7 +669,7 @@ async function onScanSuccess(decoded) {
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
             const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
-            const firestoreId = tNum + '-' + todayStr;
+            firestoreId = tNum + '-' + todayStr;
             ahead = Math.max(0, newQueue - 1);
             const ticketRef  = doc(collection(db, 'tickets'), firestoreId);
             transaction.update(dRef, { counter: newCounter, queue: newQueue });
