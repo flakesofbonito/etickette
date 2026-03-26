@@ -196,30 +196,71 @@ function updatePositionInfo(all) {
 }
 
 async function requestNotification() {
-  const btn = document.getElementById('btnNotif');
-  if (!('Notification' in window)) {
-    btn.textContent = 'Not supported';
-    btn.classList.add('denied');
-    return;
-  }
-  if (Notification.permission === 'granted') {
-    notifGranted = true;
-    btn.textContent = 'Enabled';
-    btn.classList.add('done');
-    document.getElementById('notifCard').classList.add('granted');
-    return;
-  }
-  const result = await Notification.requestPermission();
-  if (result === 'granted') {
-    notifGranted = true;
-    btn.textContent = 'Enabled';
-    btn.classList.add('done');
-    document.getElementById('notifCard').classList.add('granted');
-  } else {
-    btn.textContent = 'Denied';
-    btn.classList.add('denied');
-  }
+    const btn = document.getElementById('btnNotif');
+    const card = document.getElementById('notifCard');
+    const notifText = card?.querySelector('.notif-text span');
+
+    const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+    const isIOSPWA = isIOS && window.navigator.standalone === true;
+
+    if (!('Notification' in window)) {
+        if (isIOS && !isIOSPWA) {
+            if (notifText) notifText.textContent = 
+                'Add this page to your Home Screen first, then re-open it to enable notifications.';
+            btn.textContent = 'Not available';
+            btn.classList.add('denied');
+        } else {
+            if (notifText) notifText.textContent = 
+                'Your browser does not support notifications.';
+            btn.textContent = 'Not supported';
+            btn.classList.add('denied');
+        }
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        notifGranted = true;
+        btn.textContent = 'Enabled';
+        btn.classList.add('done');
+        card?.classList.add('granted');
+        return;
+    }
+
+    if (Notification.permission === 'denied') {
+        if (notifText) notifText.textContent = 
+            'Notifications are blocked. Please enable them in your browser settings.';
+        btn.textContent = 'Blocked';
+        btn.classList.add('denied');
+        return;
+    }
+
+    try {
+        const result = await new Promise((resolve) => {
+            const perm = Notification.requestPermission(resolve); 
+            if (perm && typeof perm.then === 'function') {
+                perm.then(resolve); 
+            }
+        });
+
+        if (result === 'granted') {
+            notifGranted = true;
+            btn.textContent = 'Enabled';
+            btn.classList.add('done');
+            card?.classList.add('granted');
+            if (notifText) notifText.textContent = "You'll be alerted when it's your turn.";
+        } else {
+            btn.textContent = 'Denied';
+            btn.classList.add('denied');
+            if (notifText) notifText.textContent = 
+                'Notification permission was denied. Check your browser settings.';
+        }
+    } catch (e) {
+        console.warn('[Notification] Permission request failed:', e);
+        btn.textContent = 'Failed';
+        btn.classList.add('denied');
+    }
 }
+
 
 function triggerNotification(tNum) {
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);

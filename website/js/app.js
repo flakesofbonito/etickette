@@ -369,15 +369,9 @@ function listenToActiveReservation() {
                 return s === 'pending' || s === 'active';
             });
             if (activeDoc) {
-                const existing = document.getElementById('activeResBanner');
-                if (!existing) {
-                    hasActiveReservation = true;
-                    setReserveButtonsLocked(true);
-                    renderActiveResBanner(activeDoc.data(), activeDoc.id);
-                } else {
-                    hasActiveReservation = true;
-                    setReserveButtonsLocked(true);
-                }
+                hasActiveReservation = true;
+                setReserveButtonsLocked(true);
+                renderActiveResBanner(activeDoc.data(), activeDoc.id);
             } else {
                 const banner = document.getElementById('activeResBanner');
                 if (banner && banner.dataset.bannerType === 'reservation') {
@@ -399,8 +393,8 @@ function listenToActiveReservation() {
                 return s === 'waiting' || s === 'serving';
             });
             if (activeTicket) {
-                const existing = document.getElementById('activeResBanner');
-                if (!existing) {
+                const existingBanner = document.getElementById('activeResBanner');
+                if (!existingBanner || existingBanner.dataset.bannerType === 'walkin') {
                     hasActiveReservation = true;
                     setReserveButtonsLocked(true);
                     renderActiveWalkinBanner(activeTicket.data());
@@ -551,44 +545,53 @@ async function cancelReservation(rid, status) {
 
     try {
         await runTransaction(db, async (transaction) => {
-            const resSnap = await transaction.get(doc(db, 'reservations', rid));
-            if (!resSnap.exists()) throw new Error('Reservation not found');
-            const resData = resSnap.data();
+        const resSnap = await transaction.get(doc(db, 'reservations', rid));
+        if (!resSnap.exists()) throw new Error('Reservation not found');
+        const resData = resSnap.data();
 
-            transaction.update(doc(db, 'reservations', rid), {
-                status: 'cancelled',
-                cancelledAt: serverTimestamp()
-            });
+        let ticketSnap = null;
+        let dSnap = null;
 
-            if (resData.status === 'active' && resData.ticketNumber) {
-                const tNum       = resData.ticketNumber;
-                const ticketSnap = await transaction.get(doc(db, 'tickets', tNum));
-
-                if (ticketSnap.exists()) {
-                    const tStatus = ticketSnap.data().status;
-                    transaction.update(doc(db, 'tickets', tNum), { status: 'cancelled' });
-
-                    if (tStatus === 'waiting' || tStatus === 'serving') {
-                        const dSnap = await transaction.get(doc(db, 'departments', resData.department));
-                        if (dSnap.exists()) {
-                            transaction.update(doc(db, 'departments', resData.department), {
-                                queue: Math.max(0, (dSnap.data().queue || 1) - 1),
-                                ...(tStatus === 'serving' ? { nowServing: '' } : {})
-                            });
-                        }
-                        transaction.update(doc(db, 'system', 'settings'), {
-                            ticketsIssued: increment(-1)
-                        });
-                    }
+        if (resData.status === 'active' && resData.ticketNumber) {
+            ticketSnap = await transaction.get(doc(db, 'tickets', resData.ticketNumber));
+            if (ticketSnap.exists()) {
+                const tStatus = ticketSnap.data().status;
+                if (tStatus === 'waiting' || tStatus === 'serving') {
+                    dSnap = await transaction.get(doc(db, 'departments', resData.department));
                 }
             }
+        }
+
+        transaction.update(doc(db, 'reservations', rid), {
+            status: 'cancelled',
+            cancelledAt: serverTimestamp()
         });
+
+        if (ticketSnap && ticketSnap.exists()) {
+            const tStatus = ticketSnap.data().status;
+            transaction.update(doc(db, 'tickets', resData.ticketNumber), { status: 'cancelled' });
+
+            if (tStatus === 'waiting' || tStatus === 'serving') {
+                if (dSnap && dSnap.exists()) {
+                    transaction.update(doc(db, 'departments', resData.department), {
+                        queue: Math.max(0, (dSnap.data().queue || 1) - 1),
+                        ...(tStatus === 'serving' ? { nowServing: '' } : {})
+                    });
+                }
+                transaction.update(doc(db, 'system', 'settings'), {
+                    ticketsIssued: increment(-1),
+                    [resData.department + 'Issued']: increment(-1)
+                });
+            }
+        }
+    });
 
         const banner = document.getElementById('activeResBanner');
         if (banner) banner.remove();
         hasActiveReservation = false;
         setReserveButtonsLocked(false);
         showToast('Reservation cancelled.', 'warning');
+        setTimeout(() => loadHistory(), 300);
 
     } catch (e) {
         console.error('[cancelReservation]', e);

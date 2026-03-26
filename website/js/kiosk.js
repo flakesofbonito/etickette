@@ -143,9 +143,12 @@ function listenToQueueCounts() {
                     chip.className   = cls;
                 }
 
-                const ssId = dept === 'cashier' ? 'ssCashier' : 'ssRegistrar';
-                const ssEl = document.getElementById(ssId);
-                if (ssEl) ssEl.textContent = open ? 'OPEN' : st === 'break' ? 'BREAK' : 'CLOSED';
+                const resBtn = document.getElementById('btnHaveReservation');
+                if (resBtn) {
+                    const allUnavailable = !deptStatus['cashier'] && !deptStatus['registrar'];
+                    resBtn.classList.toggle('disabled', allUnavailable);
+                    resBtn.style.pointerEvents = allUnavailable ? 'none' : '';
+                }
             },
             err => console.error('[listenToQueueCounts] ' + dept + ':', err.code, err.message)
         );
@@ -203,10 +206,13 @@ function pickUserType(type) {
         if (idField)   idField.style.display   = 'block';
         if (nameField) nameField.style.display = 'block';
         const numpad = document.getElementById('kioskNumpad');
-        if (numpad) numpad.style.display = type === 'parent' ? 'none' : 'grid';
-        if (inp) { inp.placeholder = "Child's Student ID (11 digits)"; inp.inputMode = 'numeric'; }
+        if (numpad) numpad.style.display = 'grid';
+        if (inp) { 
+            inp.placeholder = "Child's Student ID (11 digits)"; 
+            inp.inputMode = 'numeric';
+            inp.readOnly = false;
+        }
         if (title) title.textContent = "Enter Your Child's Student ID";
-
     }
 
     const idInp = document.getElementById('idInput');
@@ -629,6 +635,14 @@ async function onScanSuccess(decoded) {
         }
 
         const dept   = res.department;
+
+        if (!deptStatus[dept]) {
+            const st  = deptStatusLabel[dept];
+            const msg = st === 'break' ? 'currently on break' : 'currently closed';
+            setScanStatus(`The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is ${msg}. Please try again later.`);
+            return;
+        }
+
         const prefix = dept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', dept);
         const resRef = doc(db, 'reservations', reservationId);
