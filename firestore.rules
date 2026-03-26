@@ -14,7 +14,7 @@ service cloud.firestore {
       allow read: if true;
       allow create, delete: if false;
 
-      allow update: if doc == 'settings' &&
+      allow update: if request.auth != null && doc == 'settings' &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly([
             'ticketsIssued',

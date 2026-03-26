@@ -20,6 +20,7 @@ let myDept = null;
 let lastStatus = null;
 let notifGranted = false;
 let earlyWarnFired = false;
+let deptAvgWait = 0;
 
 window.requestNotification = requestNotification;
 
@@ -68,9 +69,10 @@ function startListeners(tNum) {
   );
 
   onSnapshot(doc(db, 'departments', myDept), snap => {
-    if (!snap.exists()) return;
-    const d = snap.data();
-    document.getElementById('nowServingNum').textContent = d.nowServing || '—';
+      if (!snap.exists()) return;
+      const d = snap.data();
+      document.getElementById('nowServingNum').textContent = d.nowServing || '—';
+      deptAvgWait = d.avgWaitSeconds || 0;
   });
 }
 
@@ -156,7 +158,8 @@ function updatePositionInfo(all) {
     const ahead = myPos;
     posDisplay  = myPos + 1;
     aheadText   = ahead > 0 ? ahead + ' ahead of you' : "You're next!";
-    estWait     = ahead > 0 ? Math.round(ahead * 5) : '<1';
+    const minsPerTicket = deptAvgWait > 0 ? Math.ceil(deptAvgWait / 60) : 5;
+    estWait = ahead > 0 ? Math.round(ahead * minsPerTicket) : '<1';
   } else {
     posDisplay = '—';
     aheadText  = '—';

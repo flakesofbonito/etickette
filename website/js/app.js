@@ -24,6 +24,7 @@ let reserveDept        = null;
 let reserveReason      = null;
 let currentStep        = 1;
 let hasActiveReservation = false;
+let deptStatuses = { cashier: null, registrar: null };
 let currentUserType    = 'student';
 let currentDisplayName = null;
 let _unsubs = [];
@@ -176,6 +177,7 @@ function logout() {
     currentUserType      = 'student';
     currentStudentId     = null;
     hasActiveReservation = false;
+    deptStatuses = { cashier: null, registrar: null };
     document.getElementById('userDisplay').style.display = 'none';
     const ov = document.getElementById('loginOverlay');
     ov.style.display = 'flex';
@@ -223,6 +225,7 @@ function listenToDepts() {
             const st = (d.status || 'open').toLowerCase();
             const map = { open: { t: 'OPEN', c: 'open' }, break: { t: 'ON BREAK', c: 'break' }, closed: { t: 'CLOSED', c: 'closed' } };
             const m  = map[st] || map.open;
+            deptStatuses[dept] = st;
 
             const el = document.getElementById(dept + 'Status');
             if (el && el.textContent !== m.t) { el.textContent = m.t; el.className = 'dept-status ' + m.c; }
@@ -238,13 +241,14 @@ function listenToDepts() {
 
             const btn = document.getElementById(dept + 'Btn');
             if (btn && st !== 'open' && !hasActiveReservation) {
-                btn.disabled = true;
+                btn.disabled            = true;
+                btn.style.background    = '';
+                btn.style.color         = '';
+                btn.style.border        = '';
+                btn.style.pointerEvents = 'none';
                 btn.textContent = st === 'break'
                     ? `${dept.toUpperCase()} — ON BREAK`
                     : `${dept.toUpperCase()} — CLOSED`;
-            } else if (btn && st === 'open' && !hasActiveReservation) {
-                btn.disabled = false;
-                btn.textContent = `RESERVE ${dept.toUpperCase()} TICKET`;
             }
         })
     );
@@ -311,7 +315,7 @@ function listenToSettings() {
                 btn.style.color         = '#dc2626';
                 btn.style.border        = '2px solid rgba(220,38,38,.3)';
                 btn.style.pointerEvents = 'none';
-            } else if (!hasActiveReservation) {
+            } else if (!hasActiveReservation && deptStatuses[dept] === 'open') {
                 btn.disabled            = false;
                 btn.title               = '';
                 btn.textContent         = `RESERVE ${dept.toUpperCase()} TICKET`;

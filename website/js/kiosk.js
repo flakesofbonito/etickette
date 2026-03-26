@@ -205,8 +205,6 @@ function pickUserType(type) {
     } else if (type === 'parent') {
         if (idField)   idField.style.display   = 'block';
         if (nameField) nameField.style.display = 'block';
-        const numpad = document.getElementById('kioskNumpad');
-        if (numpad) numpad.style.display = 'grid';
         if (inp) { 
             inp.placeholder = "Child's Student ID (11 digits)"; 
             inp.inputMode = 'numeric';
@@ -783,7 +781,6 @@ function showPrinterWarning() {
 }
 
 async function reprintTicket() {
-    clearInterval(window._ticketCountTimer);
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
     if (!window._lastTicket) {
         alert('Nothing to reprint.');
