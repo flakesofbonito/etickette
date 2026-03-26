@@ -262,7 +262,6 @@ function listenToSettings() {
         const registrarIssued = d.registrarIssued|| 0;
         const totalQuota      = cashierQuota + registrarQuota;
         const totalIssued     = cashierIssued + registrarIssued;
-        const totalRemaining  = Math.max(0, totalQuota - totalIssued);
 
         setIfChanged('cashierQuotaText',   Math.max(0, cashierQuota - cashierIssued) + ' / ' + cashierQuota);
         setIfChanged('registrarQuotaText', Math.max(0, registrarQuota - registrarIssued) + ' / ' + registrarQuota);

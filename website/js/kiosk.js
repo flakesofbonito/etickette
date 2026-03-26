@@ -149,6 +149,13 @@ function listenToQueueCounts() {
                     resBtn.classList.toggle('disabled', allUnavailable);
                     resBtn.style.pointerEvents = allUnavailable ? 'none' : '';
                 }
+
+                const ssId = dept === 'cashier' ? 'ssCashier' : 'ssRegistrar';
+                const ssEl = document.getElementById(ssId);
+                if (ssEl) {
+                    ssEl.textContent = open ? 'OPEN' : st === 'break' ? 'ON BREAK' : 'CLOSED';
+                    ssEl.style.color = open ? '#4ade80' : st === 'break' ? '#fbbf24' : '#f87171';
+                }
             },
             err => console.error('[listenToQueueCounts] ' + dept + ':', err.code, err.message)
         );
@@ -434,7 +441,6 @@ async function issueTicket(userId) {
 
         const prefix = selectedDept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', selectedDept);
-        const sRef   = doc(db, 'system', 'settings');
 
         let tNum, ahead;
         await runTransaction(db, async (transaction) => {
