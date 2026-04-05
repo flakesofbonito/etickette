@@ -223,7 +223,7 @@ function pickUserType(type) {
     const idInp = document.getElementById('idInput');
     const nameInp = document.getElementById('nameInput');
     const errEl = document.getElementById('idError');
-    if (idInp)   idInp.value   = '';
+    if (idInp) idInp.value = (type === 'student' || type === 'parent' || type =='teacher') ? '02000' : '';
     if (nameInp) nameInp.value = '';
     if (errEl)   errEl.textContent = '';
 
@@ -322,8 +322,11 @@ async function submitId() {
         const name    = (document.getElementById('nameInput')?.value || '').trim();
         if (!/^\d{11}$/.test(childId)) { if (errEl) errEl.textContent = "Enter a valid 11-digit Student ID."; return; }
         if (name.length < 2)           { if (errEl) errEl.textContent = 'Please enter your full name.'; return; }
+        if (!/^[a-zA-ZÀ-ÿñÑ\s\-'.]+$/.test(name)) {
+            if (errEl) errEl.textContent = 'Full name must contain letters only — no numbers or symbols.';
+            return;
+        }
         userId = childId; displayName = name + ' (Parent)';
-
     }
 
     const submitBtn = document.querySelector('#screen-id .kiosk-submit-btn');
@@ -637,7 +640,7 @@ async function onScanSuccess(decoded) {
         } else {
             resDateStr = res.reservationDate || '';
         }
-        if (resDateStr && resDateStr !== todayPH) {
+        if (!resDateStr || resDateStr !== todayPH) {
             setScanStatus('This reservation is not for today. (Reserved: ' + resDateStr + ')');
             return;
         }

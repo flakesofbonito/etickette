@@ -59,6 +59,9 @@ export function initWebsite() {
     window.cancelReservation = cancelReservation;
     window.selectUserType    = selectUserType;
 
+    const loginIdEl = document.getElementById('loginId');
+    if (loginIdEl && !loginIdEl.value) loginIdEl.value = '02000';
+
     const saved = sessionStorage.getItem('studentId');
     if (saved) {
         currentStudentId = saved;
@@ -87,17 +90,21 @@ function selectUserType(type) {
         inputId.style.display = 'block';
         idLabel.textContent   = 'Student ID Number';
         loginId.placeholder   = 'e.g. 02000385394';
+        if (!loginId.value) loginId.value = '02000';
         loginHint.textContent = '11-digit Student ID required';
     } else if (type === 'teacher') {
         inputId.style.display = 'block';
         idLabel.textContent   = 'Employee ID Number';
         loginId.placeholder   = 'e.g. 02000385394';
+        if (!loginId.value) loginId.value = '02000';
         loginHint.textContent = '11-digit Employee ID required';
     } else if (type === 'parent') {
         inputChildId.style.display = 'block';
         inputName.style.display    = 'block';
         nameLabel.textContent      = 'Your Full Name';
         loginHint.textContent      = "Enter your child's Student ID and your name";
+        const childIdEl = document.getElementById('loginChildId');
+        if (childIdEl && !childIdEl.value) childIdEl.value = '02000';
     }
 }
 
@@ -129,6 +136,10 @@ function loginStudent() {
         }
         if (name.length < 2) {
             err.textContent = 'Please enter your full name.';
+            return;
+        }
+        if (!/^[a-zA-ZÀ-ÿñÑ\s\-'.]+$/.test(name)) {
+            err.textContent = 'Full name must contain letters only — no numbers or symbols.';
             return;
         }
         userId      = childId;
@@ -188,7 +199,7 @@ function logout() {
     const ov = document.getElementById('loginOverlay');
     ov.style.display = 'flex';
     ov.classList.remove('dismissed');
-    document.getElementById('loginId').value      = '';
+    document.getElementById('loginId').value = '02000';
     document.getElementById('loginError').textContent = '';
     document.getElementById('appShell').classList.add('locked');
     document.getElementById('appShell').classList.remove('unlocked');
@@ -442,15 +453,37 @@ function renderQR(el, text, size) {
         colorDark: '#1f3c88', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
     });
-    setTimeout(() => {
-        el.querySelectorAll('canvas').forEach(c => c.style.cssText = 'display:none!important;');
-        el.querySelectorAll('img').forEach(img => {
-            img.style.cssText = 'display:block!important; margin:0 auto!important; max-width:100%!important;';
-        });
+
+    function applyQRFix() {
+        const canvas = el.querySelector('canvas');
+        const img    = el.querySelector('img');
+
+        if (img && img.src && img.src !== window.location.href && !img.src.endsWith('/')) {
+            if (canvas) canvas.style.cssText = 'display:none!important;';
+            img.style.cssText = `display:block!important;margin:0 auto!important;max-width:100%!important;width:${size}px;height:${size}px;`;
+        } else if (canvas) {
+            try {
+                const dataUrl = canvas.toDataURL('image/png');
+                if (dataUrl && dataUrl !== 'data:,') {
+                    el.innerHTML = '';
+                    const newImg = document.createElement('img');
+                    newImg.src = dataUrl;
+                    newImg.style.cssText = `display:block!important;margin:0 auto!important;max-width:100%!important;width:${size}px;height:${size}px;`;
+                    el.appendChild(newImg);
+                } else {
+                    canvas.style.cssText = 'display:block!important;margin:0 auto!important;max-width:100%!important;';
+                }
+            } catch (e) {
+                canvas.style.cssText = 'display:block!important;margin:0 auto!important;max-width:100%!important;';
+            }
+        }
         el.querySelectorAll('div').forEach(d => {
-            d.style.cssText = 'display:flex!important; justify-content:center!important; align-items:center!important;';
+            d.style.cssText = 'display:flex!important;justify-content:center!important;align-items:center!important;';
         });
-    }, 80);
+    }
+
+    setTimeout(applyQRFix, 150);
+    setTimeout(applyQRFix, 600); 
 }
 
 function renderActiveResBanner(res, rid) {
@@ -691,6 +724,18 @@ async function submitReserveDate() {
     const errEl   = document.getElementById('dateError');
     if (!dateVal) { errEl.textContent = 'Please pick a date.'; resetBtn(); return; }
     errEl.textContent = '';
+
+    const [_y, _m, _d] = dateVal.split('-').map(Number);
+    const pickedDay = new Date(_y, _m - 1, _d).getDay();
+    if (pickedDay === 0 || pickedDay === 6) {
+        errEl.textContent = 'Reservations are not available on weekends.';
+        resetBtn(); return;
+    }
+    const todayStrPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    if (dateVal < todayStrPH) {
+        errEl.textContent = 'Please select today or a future date.';
+        resetBtn(); return;
+    }
 
     try {
         const snap = await getDocs(query(collection(db, 'reservations'), where('studentId', '==', currentStudentId)));
