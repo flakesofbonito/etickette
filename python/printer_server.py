@@ -122,7 +122,7 @@ def print_ticket():
         # QR
         dev.write(1, CENTER)
         dev.write(1, b'\x1b\x33\x18')
-        dev.write(1, b'\x1b\x5a\x00\x01\x03')
+        dev.write(1, b'\x1b\x5a\x00\x01\x04')
         dev.write(1,
             bytes([len(qr_link) % 256, len(qr_link) // 256]) +
             qr_link.encode()
