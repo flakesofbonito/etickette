@@ -50,7 +50,7 @@ def serve_static(path):
 def print_ticket():
     if request.method == 'OPTIONS':
         return '', 204
-    
+
     data    = request.json or {}
     dept    = data.get('dept', '').strip()
     number  = data.get('number', '').strip()
@@ -60,7 +60,7 @@ def print_ticket():
         return jsonify({"status": "Error", "message": "Missing required fields: dept, number, qr_link"}), 400
 
     dev = get_printer()
-    
+
     if not dev:
         return jsonify({"status": "Error", "message": "Printer not found"}), 500
 
@@ -87,8 +87,6 @@ def print_ticket():
 
         dev.write(1, dt_str.encode() + b'\n')
 
-        qr_link = data['qr_link']
-        
         dev.write(1, b'\x1b\x5a\x00\x01\x04')
         dev.write(1,
             bytes([len(qr_link) % 256, len(qr_link) // 256]) +

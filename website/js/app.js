@@ -614,6 +614,7 @@ async function cancelReservation(rid, status) {
         if (banner) banner.remove();
         _hasActiveRes    = false;
         _hasActiveTicket = false;
+        syncActiveState();
         showToast('Reservation cancelled.', 'warning');
         setTimeout(() => loadHistory(), 300);
 
@@ -814,7 +815,9 @@ async function loadHistory() {
     resDocs.forEach(d => {
         const r = d.data();
         if (r.status === 'pending' || r.status === 'active') return;
-        const cls = r.status === 'cancelled' ? 'closed' : 'open';
+        const cls = r.status === 'cancelled'                        ? 'closed'
+        : (r.status === 'expired' || r.status === 'noshow') ? 'break'
+        : 'open';
         el.innerHTML += `<div class="history-item">
             <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
             <span class="subtle">Reservation · ${r.reservationDate}</span></div>
