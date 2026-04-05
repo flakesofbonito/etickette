@@ -122,7 +122,7 @@ def print_ticket():
         # QR
         dev.write(1, CENTER)
         dev.write(1, b'\x1b\x33\x18')
-        dev.write(1, b'\x1b\x5a\x00\x01\x04')
+        dev.write(1, b'\x1b\x5a\x00\x01\x05')
         dev.write(1,
             bytes([len(qr_link) % 256, len(qr_link) // 256]) +
             qr_link.encode()
@@ -161,8 +161,111 @@ def health():
         "status": "ok",
         "printer": "connected" if printer_ok else "not found"
     })
+    
+@app.route('/setup')
+def setup_page():
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        local_ip = "127.0.0.1"
+
+    tablet_url = f"http://{local_ip}:8000/kiosk/"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>eTickette Tablet Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{{ box-sizing:border-box; margin:0; padding:0; }}
+    body{{ font-family:'Plus Jakarta Sans',sans-serif; background:#0d1f4e;
+          display:flex; align-items:center; justify-content:center;
+          min-height:100vh; padding:24px; }}
+    .card{{ background:#fff; border-radius:24px; padding:40px 48px;
+            max-width:520px; width:100%; text-align:center;
+            box-shadow:0 24px 80px rgba(0,0,0,.4); }}
+    .badge{{ display:inline-block; background:#e3cf57; color:#0d1f4e;
+             font-size:11px; font-weight:800; letter-spacing:1.5px;
+             padding:5px 14px; border-radius:20px; margin-bottom:20px;
+             text-transform:uppercase; }}
+    h1{{ font-size:26px; font-weight:800; color:#1f3c88; margin-bottom:8px; }}
+    p{{ font-size:14px; color:#64748b; margin-bottom:24px; line-height:1.6; }}
+    .qr-wrap{{ background:#f1f5f9; border-radius:16px; padding:24px;
+               display:inline-block; margin-bottom:20px;
+               border:2px solid #e2e8f0; }}
+    .url-box{{ background:#eff6ff; border:2px solid #bfdbfe;
+               border-radius:12px; padding:14px 20px; margin-bottom:24px;
+               font-size:17px; font-weight:700; color:#1d4ed8;
+               word-break:break-all; }}
+    .steps{{ text-align:left; background:#f8fafc; border-radius:12px;
+             padding:18px 22px; border:1px solid #e2e8f0; }}
+    .steps h3{{ font-size:12px; font-weight:800; letter-spacing:1px;
+                text-transform:uppercase; color:#94a3b8; margin-bottom:12px; }}
+    .step{{ display:flex; gap:12px; align-items:flex-start;
+            margin-bottom:10px; font-size:14px; color:#334155; }}
+    .step:last-child{{ margin-bottom:0; }}
+    .num{{ width:24px; height:24px; background:#1f3c88; color:#e3cf57;
+           border-radius:50%; display:flex; align-items:center;
+           justify-content:center; font-size:11px; font-weight:800;
+           flex-shrink:0; margin-top:1px; }}
+    .status{{ display:flex; align-items:center; gap:8px; justify-content:center;
+              margin-top:20px; font-size:13px; font-weight:600; color:#16a34a; }}
+    .dot{{ width:8px; height:8px; border-radius:50%; background:#16a34a;
+           animation:pulse 2s infinite; }}
+    @keyframes pulse{{
+      0%,100%{{ box-shadow:0 0 0 0 rgba(22,163,74,.4); }}
+      50%{{ box-shadow:0 0 0 6px rgba(22,163,74,0); }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">Tablet Setup</div>
+    <h1>eTickette Kiosk</h1>
+    <p>Scan the QR code below on your tablet,<br/>or type the URL into any browser.</p>
+
+    <div class="qr-wrap">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={tablet_url}&color=1f3c88"
+           alt="Tablet QR Code" width="180" height="180" />
+    </div>
+
+    <div class="url-box">{tablet_url}</div>
+
+    <div class="steps">
+      <h3>How to Connect Tablet</h3>
+      <div class="step">
+        <div class="num">1</div>
+        <span>Connect the tablet to the <strong>same WiFi</strong> as this laptop</span>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <span>Scan the QR code above or type the URL into Chrome / Safari</span>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <span>The kiosk will open — printing goes through this laptop automatically</span>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <span>Bookmark or add to home screen for one-tap launch next time</span>
+      </div>
+    </div>
+
+    <div class="status">
+      <div class="dot"></div>
+      Server running — printer ready
+    </div>
+  </div>
+</body>
+</html>"""
+    return html
 
 if __name__ == '__main__':
     print("[eTickette] Printer server running on http://localhost:8000")
     print("[eTickette] Kiosk available at http://localhost:8000/kiosk/")
-    app.run(port=8000, debug=False)
+    app.run(host='0.0.0.0', port=8000, debug=False)

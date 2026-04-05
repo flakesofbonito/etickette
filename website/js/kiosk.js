@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 const PUBLIC_URL  = 'https://etickette.web.app';
-const PRINTER_URL = 'http://localhost:8000/print';
+const PRINTER_URL = window.location.origin + '/print';
 
 import { REASONS } from './reasons.js';
 
