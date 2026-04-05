@@ -146,6 +146,9 @@ function listenToSettings() {
         const ticker     = document.getElementById('monitorTicker');
         const tickerText = document.getElementById('tickerText');
 
+        if (msg === window._lastTickerMsg) return;
+        window._lastTickerMsg = msg;
+
         clearTimeout(window._tickerTimer);
         clearInterval(window._tickerScroll);
 

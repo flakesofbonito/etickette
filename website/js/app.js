@@ -639,11 +639,12 @@ async function cancelReservation(rid, status) {
 }
 
 function openReserveModal(dept) {
-    _modalOpen = true;
     const btn = document.getElementById(dept + 'Btn');
     if (btn && btn.disabled) { showToast('No slots available today.', 'error'); return; }
     if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
+
+    _modalOpen = true;
 
     reserveDept = dept;
     document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
@@ -847,7 +848,7 @@ function closeModal(id) {
 
 function handleOverlay(e, id) {
     if (e.target !== document.getElementById(id)) return;
-    if (id === 'reserveModal' && currentStep > 1) {
+    if (id === 'reserveModal' && currentStep > 1 && currentStep < 4) {
         if (!confirm('Close reservation? Your progress will be lost.')) return;
     }
     closeModal(id);

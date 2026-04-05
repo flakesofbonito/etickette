@@ -29,6 +29,7 @@ let pendingUserId       = null;
 let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
+let allQuotaFull = false;
 
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
@@ -104,6 +105,8 @@ function listenToSettings() {
         const registrarQText = document.getElementById('registrarQueueText');
         if (cashierFull   && cashierQText)   cashierQText.textContent   = 'Quota Full';
         if (registrarFull && registrarQText) registrarQText.textContent = 'Quota Full';
+
+        allQuotaFull = cashierFull && registrarFull;
     });
 }
 
@@ -145,7 +148,7 @@ function listenToQueueCounts() {
 
                 const resBtn = document.getElementById('btnHaveReservation');
                 if (resBtn) {
-                    const allUnavailable = !deptStatus['cashier'] && !deptStatus['registrar'];
+                    const allUnavailable = (!deptStatus['cashier'] && !deptStatus['registrar']) || allQuotaFull;
                     resBtn.classList.toggle('disabled', allUnavailable);
                     resBtn.style.pointerEvents = allUnavailable ? 'none' : '';
                 }
@@ -200,13 +203,21 @@ function pickUserType(type) {
     if (type === 'student') {
         if (idField)   idField.style.display   = 'block';
         if (nameField) nameField.style.display = 'none';
-        if (inp) { inp.placeholder = 'e.g. 02000385394'; inp.inputMode = 'numeric'; }
+        if (inp) { 
+            inp.readOnly = true;
+            inp.placeholder = 'e.g. 02000385394'; 
+            inp.inputMode = 'numeric'; 
+        }
         if (title) title.textContent = 'Enter Your Student ID';
 
     } else if (type === 'teacher') {
         if (idField)   idField.style.display   = 'block';
         if (nameField) nameField.style.display = 'none';
-        if (inp) { inp.placeholder = 'Employee ID (11 digits)'; inp.inputMode = 'numeric'; }
+        if (inp) { 
+            inp.readOnly = true;
+            inp.placeholder = 'Employee ID (11 digits)'; 
+            inp.inputMode = 'numeric'; 
+        }
         if (title) title.textContent = 'Enter Your Employee ID';
 
     } else if (type === 'parent') {

@@ -522,6 +522,7 @@ async function noShowTicket() {
 
         if (secondsLeft <= 0) {
             clearInterval(interval);
+            toast.remove();
             if (!cancelled) {
                 if (callNextBtn) callNextBtn.disabled = false;
                 if (!currentTicket) {

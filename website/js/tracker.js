@@ -146,8 +146,8 @@ function updatePositionInfo(all) {
   const completed = all.filter(t => t.status === 'completed' || t.status === 'noshow').length;
   const total     = all.filter(t => t.status !== 'cancelled').length;
 
-  const iAmServing = serving && serving.ticketNumber === ticketNum;
-  const myPos      = waitingOnly.findIndex(t => t.ticketNumber === ticketNum);
+  const iAmServing = serving && (serving.ticketId === ticketNum || serving.ticketNumber === ticketNum);
+  const myPos      = waitingOnly.findIndex(t => t.ticketId === ticketNum || t.ticketNumber === ticketNum);
 
   let posDisplay, aheadText, estWait;
 
