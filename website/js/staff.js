@@ -590,8 +590,13 @@ async function recallTicket() {
         }
 
         if (currentTicket && currentTicket.status === 'serving') {
+            if (currentTicket.ticketNumber === tNum) {          
+                alert(`Ticket ${tNum} is already being served.`); 
+                input.value = '';                                
+                return;                                          
+            }                                                    
             const ok = await showConfirmDialog(
-                `Ticket ${currentTicket.ticketNumber} is currently being served. Put it back in queue and recall ${tNum}?`,
+                `Put it back in queue and recall ${tNum}?`,
                 'Yes, Put Back & Recall', 'Cancel'
             );
             if (!ok) return;

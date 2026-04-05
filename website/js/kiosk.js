@@ -764,12 +764,16 @@ async function printTicket(tNum, dept, firestoreId) {
         if (json.status !== 'Success') {
             console.warn('[Printer]', json.message);
             showPrinterWarning();
+            return false;
         }
+        return true;
     } catch (e) {
         console.warn('[Printer] Unreachable — is printer_server.py running?', e.message);
         showPrinterWarning();
+        return false;
     }
 }
+
 
 function showPrinterWarning() {
     const existing = document.getElementById('printerWarning');
@@ -807,19 +811,11 @@ function showPrinterWarning() {
 
 async function reprintTicket() {
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
-    if (!window._lastTicket) {
-        alert('Nothing to reprint.');
-        return;
-    }
+    if (!window._lastTicket) { alert('Nothing to reprint.'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
-    try {
-        await printTicket(window._lastTicket.tNum, window._lastTicket.dept, window._lastTicket.firestoreId);
-        if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
-        playBeep();
-    } catch (e) {
-        if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
-        alert('Reprint failed. Check if printer is connected.');
-    }
+    const success = await printTicket(window._lastTicket.tNum, window._lastTicket.dept, window._lastTicket.firestoreId);
+    if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
+    if (success) playBeep();
 }
 
 function playBeep() {

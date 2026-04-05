@@ -277,21 +277,6 @@ function listenToSettings() {
         setIfChanged('cashierQuotaText',   Math.max(0, cashierQuota - cashierIssued) + ' / ' + cashierQuota);
         setIfChanged('registrarQuotaText', Math.max(0, registrarQuota - registrarIssued) + ' / ' + registrarQuota);
 
-        const cashierColor   = cashierIssued >= cashierQuota   ? '#dc2626' : Math.max(0,cashierQuota-cashierIssued)   <= 5 ? '#f97316' : '';
-        const registrarColor = registrarIssued >= registrarQuota ? '#dc2626' : Math.max(0,registrarQuota-registrarIssued) <= 5 ? '#f97316' : '';
-        const cInfoEl = document.getElementById('cashierQuotaInfo');
-        const rInfoEl = document.getElementById('registrarQuotaInfo');
-        if (cInfoEl) {
-            const cRem = Math.max(0, cashierQuota - cashierIssued);
-            cInfoEl.textContent = cRem === 0 ? 'Quota Full' : `Slots: ${cRem} / ${cashierQuota}`;
-            cInfoEl.style.color = cashierColor || 'var(--slate-400)';
-        }
-        if (rInfoEl) {
-            const rRem = Math.max(0, registrarQuota - registrarIssued);
-            rInfoEl.textContent = rRem === 0 ? 'Quota Full' : `Slots: ${rRem} / ${registrarQuota}`;
-            rInfoEl.style.color = registrarColor || 'var(--slate-400)';
-        }
-
         const deptMap = {
             cashier:   { quota: cashierQuota,   issued: cashierIssued },
             registrar: { quota: registrarQuota, issued: registrarIssued }
@@ -645,8 +630,9 @@ function openReserveModal(dept) {
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
 
     _modalOpen = true;
-
     reserveDept = dept;
+    reserveReason = null;
+
     document.getElementById('reserveDeptTag').textContent = dept.toUpperCase();
     document.getElementById('reserveTitle').textContent   = 'Reserve – ' + dept.charAt(0).toUpperCase() + dept.slice(1);
 
@@ -709,7 +695,10 @@ function rGoStep(n) {
     currentStep = n;
     for (let i = 1; i <= 4; i++) {
         const dot = document.getElementById('rdot' + i);
-        if (dot) dot.classList.toggle('active', i <= n);
+        if (!dot) continue;
+        dot.classList.remove('active', 'done');
+        if (i < n)       dot.classList.add('done');
+        else if (i === n) dot.classList.add('active');
     }
 }
 

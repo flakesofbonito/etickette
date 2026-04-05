@@ -44,6 +44,7 @@ async function loadTicket(tNum) {
     if (!snap.exists()) { showState('error'); return; }
     myTicket = { id: snap.id, ...snap.data() };
     myDept = myDept || myTicket.department || '';
+    lastStatus = myTicket.status; 
     renderTicketCard(myTicket);
     checkAndShowState(myTicket);
     startListeners(tNum);
@@ -52,6 +53,7 @@ async function loadTicket(tNum) {
     showState('error');
   }
 }
+
 
 function startListeners(tNum) {
   onSnapshot(doc(db, 'tickets', tNum), snap => {
