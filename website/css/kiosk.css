@@ -126,11 +126,11 @@ html, body {
 .screen {
   display: none;
   height: calc(100vh - var(--header-h) - var(--banner-h));
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 32px 40px 40px;
+  overflow: hidden;
+  padding: clamp(8px, 1.8vh, 32px) clamp(14px, 3vw, 40px);
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 .screen.active {
   display: flex;
@@ -473,10 +473,10 @@ html, body {
 }
 
 #screen-ticket {
-  overflow-y: auto;
-  justify-content: flex-start;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  overflow: hidden;
+  justify-content: center;
+  padding-top: clamp(6px, 1.2vh, 10px);
+  padding-bottom: clamp(6px, 1.2vh, 10px);
 }
 .ticket-card {
   width: 100%; max-width: 440px;
@@ -671,3 +671,192 @@ html, body {
 .numpad-key.key-zero {
   grid-column: 2;
 }
+
+html, body {
+  -webkit-touch-callout: none;
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
+}
+
+button, .big-btn, .back-btn, .numpad-key,
+.reason-btn, .kiosk-submit-btn, .kiosk-cancel-btn {
+  touch-action: manipulation;
+}
+
+.screen-title {
+  font-size: clamp(16px, 3.5vw, 26px);
+  margin-bottom: clamp(2px, 0.5vh, 8px);
+}
+.screen-subtitle {
+  font-size: clamp(11px, 1.8vw, 15px);
+  margin-bottom: clamp(10px, 2vh, 32px);
+}
+
+.back-btn {
+  font-size: clamp(11px, 1.8vw, 14px);
+  padding: clamp(6px, 1vh, 10px) clamp(10px, 1.8vw, 18px);
+  margin-bottom: clamp(8px, 1.5vh, 24px);
+}
+
+.dept-chosen-label {
+  font-size: clamp(9px, 1.5vw, 12px);
+  padding: clamp(3px, 0.5vh, 5px) clamp(8px, 1.2vw, 14px);
+  margin-bottom: clamp(8px, 1.5vh, 24px);
+}
+
+.big-btn-grid {
+  gap: clamp(6px, 1.2vh, 16px);
+  margin-bottom: clamp(8px, 1.5vh, 28px);
+}
+.big-btn {
+  padding: clamp(12px, 2.8vh, 36px) clamp(10px, 2vw, 32px);
+}
+.big-btn-icon {
+  width: clamp(34px, 5.5vw, 56px);
+  height: clamp(34px, 5.5vw, 56px);
+  margin-bottom: clamp(6px, 1.2vh, 16px);
+}
+.big-btn-icon svg {
+  width: clamp(16px, 3vw, 28px);
+  height: clamp(16px, 3vw, 28px);
+}
+.big-btn-label {
+  font-size: clamp(13px, 2.4vw, 20px);
+  margin-bottom: clamp(2px, 0.4vh, 6px);
+}
+.big-btn-sub {
+  font-size: clamp(10px, 1.6vw, 13px);
+}
+
+.usertype-grid .big-btn {
+  padding: clamp(10px, 2.2vh, 28px) clamp(8px, 1.4vw, 20px);
+}
+.usertype-grid .big-btn-icon {
+  width: clamp(28px, 4.5vw, 48px);
+  height: clamp(28px, 4.5vw, 48px);
+  margin-bottom: clamp(5px, 1vh, 12px);
+}
+.usertype-grid .big-btn-icon svg {
+  width: clamp(14px, 2.5vw, 24px);
+  height: clamp(14px, 2.5vw, 24px);
+}
+.usertype-grid .big-btn-label {
+  font-size: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(2px, 0.3vh, 4px);
+}
+.usertype-grid .big-btn-sub {
+  font-size: clamp(9px, 1.4vw, 11px);
+}
+
+.id-form {
+  gap: clamp(4px, 0.8vh, 12px);
+}
+.kiosk-input {
+  padding: clamp(9px, 1.8vh, 20px) 14px;
+  font-size: clamp(18px, 3.8vw, 28px);
+}
+.kiosk-name-input {
+  font-size: clamp(15px, 3vw, 22px) !important;
+}
+.kiosk-error {
+  font-size: clamp(11px, 1.8vw, 14px);
+  min-height: 16px;
+}
+
+.numpad {
+  gap: clamp(5px, 1vh, 10px);
+  margin-top: clamp(2px, 0.4vh, 4px);
+}
+.numpad-key {
+  padding: clamp(10px, 2vh, 22px) 0;
+  font-size: clamp(15px, 2.8vw, 24px);
+  border-radius: var(--radius-sm);
+}
+.numpad-key.key-clear,
+.numpad-key.key-backspace {
+  font-size: clamp(12px, 2.2vw, 20px);
+}
+
+.kiosk-submit-btn {
+  padding: clamp(11px, 2vh, 20px);
+  font-size: clamp(13px, 2.2vw, 17px);
+  margin-top: clamp(2px, 0.4vh, 4px);
+}
+.kiosk-cancel-btn {
+  padding: clamp(9px, 1.6vh, 16px);
+  font-size: clamp(12px, 2vw, 15px);
+  margin-top: clamp(2px, 0.4vh, 4px);
+}
+
+.reason-dropdown-wrap {
+  margin-bottom: clamp(6px, 1.2vh, 12px);
+}
+.reason-dropdown-trigger {
+  padding: clamp(12px, 2vh, 18px) clamp(12px, 2vw, 20px);
+  font-size: clamp(13px, 2.2vw, 16px);
+}
+.reason-dropdown-list {
+  max-height: clamp(180px, 32vh, 340px);
+}
+
+.docs-checklist-wrap {
+  max-height: clamp(130px, 32vh, 260px);
+  overflow-y: auto;
+  padding: clamp(12px, 2vh, 22px) clamp(12px, 2vw, 26px);
+  margin-bottom: clamp(6px, 1.2vh, 20px);
+}
+.docs-action-row {
+  gap: clamp(5px, 1vh, 8px);
+}
+
+.ticket-card {
+  padding: clamp(6px, 1.2vh, 12px) clamp(10px, 1.8vw, 18px);
+  margin-bottom: clamp(4px, 0.8vh, 8px);
+}
+.ticket-big-num {
+  font-size: clamp(30px, 5.5vw, 48px);
+  margin-bottom: clamp(4px, 0.7vh, 8px);
+}
+.ticket-details {
+  padding: clamp(4px, 0.8vh, 6px) clamp(8px, 1.5vw, 12px);
+  margin-bottom: clamp(4px, 0.8vh, 8px);
+}
+.ticket-detail-row {
+  padding: clamp(2px, 0.5vh, 4px) 0;
+  font-size: clamp(11px, 1.8vw, 13px);
+}
+.ticket-school {
+  font-size: clamp(9px, 1.5vw, 11px);
+  margin-bottom: clamp(6px, 1.2vh, 12px);
+  margin-top: clamp(3px, 0.5vh, 6px);
+}
+.ticket-dept-tag {
+  font-size: clamp(9px, 1.5vw, 11px);
+  padding: clamp(3px, 0.5vh, 5px) clamp(10px, 1.5vw, 16px);
+  margin-bottom: clamp(8px, 1.5vh, 16px);
+}
+.ticket-qr {
+  padding: clamp(2px, 0.4vh, 4px);
+  margin-bottom: clamp(1px, 0.3vh, 2px);
+}
+.ticket-qr-hint {
+  font-size: clamp(10px, 1.6vw, 12px);
+}
+
+.status-row {
+  gap: clamp(6px, 1.2vw, 12px);
+}
+.status-chip {
+  font-size: clamp(12px, 2vw, 14px);
+  padding: clamp(7px, 1.2vh, 10px) clamp(14px, 2.5vw, 20px);
+}
+
+.ss-title { font-size: clamp(28px, 6vw, 42px); }
+.ss-sub   { font-size: clamp(12px, 2vw, 16px); }
+.ss-tap   { font-size: clamp(11px, 1.8vw, 14px); }
+.ss-logo  { width: clamp(60px, 10vw, 100px); height: clamp(60px, 10vw, 100px); }
+.ss-chip  { font-size: clamp(11px, 1.8vw, 14px); padding: clamp(6px, 1vh, 8px) clamp(14px, 2.5vw, 22px); }
