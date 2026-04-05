@@ -492,7 +492,7 @@ async function issueTicket(userId) {
 
         showTicketScreen(tNum, firestoreId, userId, ahead);
         playBeep();
-        printTicket(tNum, selectedDept, firestoreId);
+        printTicket(tNum, selectedDept, firestoreId, pendingUserId, selectedReason?.label || '—', 'Walk-in');
 
     } catch (e) {
         console.error(e);
@@ -706,7 +706,7 @@ async function onScanSuccess(decoded) {
         });
 
         window._lastTicket = { tNum, firestoreId, dept };
-        printTicket(tNum, dept, firestoreId);
+        printTicket(tNum, dept, firestoreId, res.studentId || '—', res.reason || '—', 'Reservation');
 
         const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         set('scanDept',   dept.toUpperCase());
@@ -752,13 +752,13 @@ function setScanStatus(msg, allowRetry = false) {
     }
 }
 
-async function printTicket(tNum, dept, firestoreId) {
+async function printTicket(tNum, dept, firestoreId, userId = '—', reason = '—', type = 'Walk-in') {
     const qr_link = PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId || tNum) + '&d=' + dept;
     try {
         const res = await fetch(PRINTER_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: tNum, dept, qr_link })
+            body: JSON.stringify({ number: tNum, dept, qr_link, userId, reason, type })
         });
         const json = await res.json();
         if (json.status !== 'Success') {
@@ -768,7 +768,7 @@ async function printTicket(tNum, dept, firestoreId) {
         }
         return true;
     } catch (e) {
-        console.warn('[Printer] Unreachable — is printer_server.py running?', e.message);
+        console.warn('[Printer] Unreachable:', e.message);
         showPrinterWarning();
         return false;
     }

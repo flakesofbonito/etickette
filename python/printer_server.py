@@ -51,52 +51,94 @@ def print_ticket():
     if request.method == 'OPTIONS':
         return '', 204
 
-    data    = request.json or {}
-    dept    = data.get('dept', '').strip()
-    number  = data.get('number', '').strip()
-    qr_link = data.get('qr_link', '').strip()
+    data     = request.json or {}
+    dept     = data.get('dept', '').strip()
+    number   = data.get('number', '').strip()
+    qr_link  = data.get('qr_link', '').strip()
+    user_id  = data.get('userId', '—').strip()
+    reason   = data.get('reason', '—').strip()
+    tktype   = data.get('type', 'Walk-in').strip()
 
     if not dept or not number or not qr_link:
-        return jsonify({"status": "Error", "message": "Missing required fields: dept, number, qr_link"}), 400
+        return jsonify({"status": "Error", "message": "Missing required fields"}), 400
 
     dev = get_printer()
-
     if not dev:
         return jsonify({"status": "Error", "message": "Printer not found"}), 500
 
     try:
         now    = datetime.now()
-        dt_str = now.strftime("Date: %Y-%m-%d  Time: %I:%M%p")
+        date_s = now.strftime("%Y-%m-%d")
+        time_s = now.strftime("%I:%M %p")
 
-        dev.write(1, b'\x1b\x40')
-        dev.write(1, b'\x1b\x42\x02\x01')
-        dev.write(1, b'\x1b\x61\x01')
-        dev.write(1, b'\x1c\x70\x01\x00')
+        ESC_INIT    = b'\x1b\x40'
+        CENTER      = b'\x1b\x61\x01'
+        LEFT        = b'\x1b\x61\x00'
+        BOLD_ON     = b'\x1b\x45\x01'
+        BOLD_OFF    = b'\x1b\x45\x00'
+        INVERT_ON   = b'\x1d\x42\x01'
+        INVERT_OFF  = b'\x1d\x42\x00'
+        SIZE_NORMAL = b'\x1d\x21\x00'
+        SIZE_2X     = b'\x1d\x21\x11'
+        FEED_2      = b'\x1b\x64\x02'
+        DIV_SOLID   = b'================================\n'
+        DIV_DASH    = b'--------------------------------\n'
 
-        dev.write(1,
-            b'\x1b\x45\x01'
-            b'DEPARTMENT: ' + dept.upper().encode() +
-            b'\x1b\x45\x00\n'
-        )
+        def padded(label, value, width=32):
+            value = (value[:20] + '..') if len(value) > 22 else value
+            gap   = width - len(label) - len(value)
+            if gap < 1: gap = 1
+            return (label + ' ' * gap + value + '\n').encode()
 
-        dev.write(1,
-            b'\x1d\x21\x33'
-            b'#' + number.encode() + b'\n'
-            b'\x1d\x21\x00'
-        )
+        dev.write(1, ESC_INIT)
 
-        dev.write(1, dt_str.encode() + b'\n')
+        # Logo
+        try:
+            dev.write(1, CENTER)
+            dev.write(1, b'\x1c\x70\x01\x00')
+        except Exception:
+            pass
 
-        dev.write(1, b'\x1b\x5a\x00\x01\x04')
+        # Department
+        dev.write(1, CENTER + BOLD_ON)
+        dev.write(1, b'================================\n')
+        dev.write(1, b'>> ' + dept.upper().encode() + b' <<\n')
+        dev.write(1, b'================================\n')
+        dev.write(1, BOLD_OFF)
+
+        # Queue number
+        dev.write(1, CENTER + SIZE_2X + BOLD_ON)
+        dev.write(1, number.encode() + b'\n')
+        dev.write(1, BOLD_OFF + SIZE_NORMAL)
+        dev.write(1, DIV_SOLID)
+
+        # Details
+        dev.write(1, LEFT)
+        dev.write(1, padded('ID  :', user_id))
+        dev.write(1, padded('For :', reason))
+        dev.write(1, padded('Date:', date_s + '  ' + time_s))
+        dev.write(1, DIV_DASH)
+
+        # QR
+        dev.write(1, CENTER)
+        dev.write(1, b'\x1b\x33\x18')
+        dev.write(1, b'\x1b\x5a\x00\x01\x03')
         dev.write(1,
             bytes([len(qr_link) % 256, len(qr_link) // 256]) +
-            qr_link.encode() + b'\x0a'
+            qr_link.encode()
         )
+        dev.write(1, b'\x1b\x33\x00')
+        dev.write(1, b'Scan to track your queue live\n')
+        dev.write(1, b'\x1b\x32')
+        dev.write(1, DIV_DASH)
 
-        dev.write(1, b'Scan to track digitally\n')
-        dev.write(1, b'Please wait for your number\n')
-        dev.write(1, b'on the lobby monitor.\n')
-        dev.write(1, b'\x1b\x64\x02')
+        # Footer
+        dev.write(1, CENTER + BOLD_ON)
+        dev.write(1, b'WAIT FOR YOUR NUMBER\n')
+        dev.write(1, BOLD_OFF)
+        dev.write(1, b'Watch the lobby monitor.\n')
+        dev.write(1, b'Proceed when called.\n')
+        dev.write(1, FEED_2)
 
         return jsonify({"status": "Success"})
 
