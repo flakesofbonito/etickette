@@ -192,7 +192,7 @@
         };
 
 
-        let monitorPin = '4321';
+        let monitorPin = '';
 
         try {
             const app = initializeApp(firebaseConfig, 'gate');
@@ -207,6 +207,11 @@
             const pin   = document.getElementById('gatePinInput').value.trim();
             const err   = document.getElementById('gateErr');
             const input = document.getElementById('gatePinInput');
+
+            if (!monitorPin) {
+                err.textContent = 'PIN not loaded — check your connection and refresh.';
+                return;
+            }
 
             if (pin !== monitorPin) {
                 err.textContent = 'Incorrect PIN. Try again.';

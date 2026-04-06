@@ -15,7 +15,7 @@ const firebaseConfig = {
   measurementId: "G-QHMMWXW7F3"
 };
 
-let STAFF_PIN = '1234';
+let STAFF_PIN = '';
 let app, db;
 let staffDept      = 'cashier';
 let currentTicket  = null;
@@ -78,16 +78,19 @@ function selectDept(dept) {
 function staffLogin() {
   const pin = document.getElementById('pinInput').value.trim();
   const err = document.getElementById('loginErr');
+  if (!STAFF_PIN) {
+      err.textContent = 'PIN not loaded yet — check your connection and refresh.';
+      return;
+  }
   if (pin !== STAFF_PIN) {
-    err.textContent = 'Incorrect PIN. Try again.';
-    document.getElementById('pinInput').value = '';
-    return;
+      err.textContent = 'Incorrect PIN. Please try again.';
+      return;
   }
   err.textContent = '';
-  document.getElementById('loginOverlay').style.display = 'none';
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('deptTag').textContent = staffDept.toUpperCase();
-  startDashboard();
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('deptTag').textContent = staffDept.toUpperCase();
+    startDashboard();
 }
 
 function staffLogout() {
@@ -143,7 +146,7 @@ async function expireOldReservations() {
         const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
         const snap = await getDocs(query(
             collection(db, 'reservations'),
-            where('status', '==', 'pending')
+            where('status', 'in', ['pending', 'active'])
         ));
         const expired = snap.docs.filter(d => {
             const date = d.data().reservationDate;
@@ -524,11 +527,9 @@ async function noShowTicket() {
             clearInterval(interval);
             toast.remove();
             if (!cancelled) {
-                if (callNextBtn) callNextBtn.disabled = false;
-                if (!currentTicket) {
-                  await callNextTicket();
-                }
-            }
+              if (callNextBtn) callNextBtn.disabled = false;
+              await callNextTicket();
+          }
         }
     }, 1000);
 }

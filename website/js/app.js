@@ -36,7 +36,6 @@ let _hasActiveTicket = false;
 
 const _domCache = {};
 function setIfChanged(id, value) {
-    if (_modalOpen) return;
     if (_domCache[id] === value) return;
     _domCache[id] = value;
     const el = document.getElementById(id);
@@ -401,7 +400,7 @@ function listenToActiveReservation() {
                 _hasActiveTicket = true;
                 const existingBanner = document.getElementById('activeResBanner');
                 if (!existingBanner || existingBanner.dataset.bannerType === 'walkin') {
-                    renderActiveWalkinBanner(activeTicket.data());
+                    renderActiveWalkinBanner(activeTicket.data(), activeTicket.id);
                 }
             } else {
                 _hasActiveTicket = false;
@@ -534,7 +533,8 @@ function renderActiveWalkinBanner(ticket) {
         ? '<span class="open">Now Serving — proceed to counter</span>'
         : '<span class="break">Waiting — watch the lobby monitor</span>';
 
-    const trackingUrl = `${PUBLIC_URL}/tracker/?t=${encodeURIComponent(ticket.ticketId || ticket.ticketNumber)}&d=${encodeURIComponent(ticket.department)}`;    const trackingCard = `
+    const trackingUrl = `${PUBLIC_URL}/tracker/?t=${encodeURIComponent(ticket.ticketId || docId)}&d=${encodeURIComponent(ticket.department)}`;
+    const trackingCard = `
     <div class="tracking-card">
         <span class="tracking-label" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red-600);display:inline-block;flex-shrink:0;"></span> Live Queue Tracker</span>
         <div class="tracking-actions">
@@ -576,8 +576,8 @@ async function cancelReservation(rid, status) {
         let ticketSnap = null;
         let dSnap = null;
 
-        if (resData.status === 'active' && resData.ticketNumber) {
-            ticketSnap = await transaction.get(doc(db, 'tickets', resData.ticketId || resData.ticketNumber));
+        if (resData.status === 'active' && resData.ticketId) {
+            ticketSnap = await transaction.get(doc(db, 'tickets', resData.ticketId));
             if (ticketSnap.exists()) {
                 const tStatus = ticketSnap.data().status;
                 if (tStatus === 'waiting' || tStatus === 'serving') {

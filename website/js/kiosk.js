@@ -30,6 +30,7 @@ let deptStatus      = { cashier: true, registrar: true };
 let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
 let allQuotaFull = false;
+let scanProcessing = false;
 
 export function initKiosk() {
     app = initializeApp(firebaseConfig);
@@ -346,13 +347,13 @@ async function submitId() {
     try {
         const [resSnap, ticketSnap] = await Promise.all([
             getDocs(query(collection(db, 'reservations'),
-                where('studentId', '==', userId), where('status', 'in', ['pending', 'active']))),
+                where('studentId', '==', userId), where('department', '==', selectedDept), where('status', 'in', ['pending', 'active']))),
             getDocs(query(collection(db, 'tickets'),
                 where('userId', '==', userId), where('status', 'in', ['waiting', 'serving'])))
         ]);
 
         if (!resSnap.empty) {
-            if (errEl) errEl.textContent = 'You have a pending reservation. Please scan your QR code instead.';
+            if (errEl) errEl.textContent = 'You have a pending ${selectedDept} reservation. Please scan your QR code instead.';
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
             return;
         }
@@ -584,7 +585,8 @@ function startScanner() {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code && code.data) {
+                if (code && code.data && !scanProcessing) {
+                    scanProcessing = true;
                     onScanSuccess(code.data);
                 }
             }
@@ -609,6 +611,7 @@ function stopScanner() {
     clearInterval(scanLoop);
     scanLoop = null;
     scannerActive = false;
+    scanProcessing = false;
 
     if (rawStream) {
         rawStream.getTracks().forEach(t => t.stop());
@@ -725,6 +728,18 @@ async function onScanSuccess(decoded) {
         }
         goScreen('scan-success');
         playBeep();
+        let scanSuccessCount = 20;
+        const scanSuccessEl = document.getElementById('scanSuccessCountdown');
+        if (scanSuccessEl) scanSuccessEl.textContent = scanSuccessCount;
+        clearInterval(window._scanSuccessTimer);
+        window._scanSuccessTimer = setInterval(() => {
+            scanSuccessCount--;
+            if (scanSuccessEl) scanSuccessEl.textContent = scanSuccessCount;
+            if (scanSuccessCount <= 0) {
+                clearInterval(window._scanSuccessTimer);
+                goScreen('home');
+            }
+        }, 1000);
     } catch (e) {
         if (e.message === 'QUOTA_FULL') {
             setScanStatus('Daily quota is full. Please come back tomorrow or ask staff.');
@@ -810,6 +825,7 @@ function showPrinterWarning() {
 }
 
 async function reprintTicket() {
+    clearInterval(window._ticketCountTimer);
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
     if (!window._lastTicket) { alert('Nothing to reprint.'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }

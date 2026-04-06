@@ -154,7 +154,7 @@ function updatePositionInfo(all) {
   let posDisplay, aheadText, estWait;
 
   if (iAmServing) {
-    posDisplay = '#';
+    posDisplay = 'NOW';
     aheadText  = "You're being served!";
     estWait    = '<1';
   } else if (myPos >= 0) {
