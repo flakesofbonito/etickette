@@ -47,264 +47,287 @@
         if (e.pointerType === 'touch') e.target.releasePointerCapture?.(e.pointerId);
     });
     </script>
-    <div id="screensaver" onclick="dismissScreensaver()">
-        <img src="../assets/logo.png" class="ss-logo" alt="eTickette" />
-        <div class="ss-title">e<span>Tickette</span></div>
-        <div class="ss-sub">STI College Fairview — Queue System</div>
-    <div class="ss-status-row">
-        <div class="ss-chip">Cashier: <span id="ssCashier">OPEN</span></div>
-        <div class="ss-chip">Registrar: <span id="ssRegistrar">OPEN</span></div>
-    </div>
+    <div id="screensaver" class="screensaver" onclick="dismissScreensaver()">
+        <div class="ss-logo">
+            <img src="../assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <div class="ss-name"><span>e</span>Tickette</div>
+        <div class="ss-sub">STI College Fairview — Queue Management System</div>
+        <div class="ss-chips">
+            <div class="ss-chip"><div class="ss-dot" id="ssDotCashier"></div>Cashier: <span id="ssCashier">Open</span></div>
+            <div class="ss-chip"><div class="ss-dot" id="ssDotRegistrar"></div>Registrar: <span id="ssRegistrar">Open</span></div>
+        </div>
         <div class="ss-tap">Tap anywhere to begin</div>
     </div>
 
-    <div class="kiosk-header">
-        <div class="kiosk-header-brand">
-        <img src="../assets/logo.png" class="kiosk-logo" alt="eTickette" />
-        <div style="margin-left:12px">
-            <h1><span style="color:var(--white)">e</span>Tickette</h1>
-            <div class="kiosk-header-sub">STI College Fairview</div>
-        </div>
-        </div>
-        <div class="kiosk-time" id="kioskTime">00:00</div>
-    </div>
-
-    <div class="kiosk-banner" id="kioskBanner">
-        <div class="kiosk-banner-dot"></div>
-        Kiosk is Ready
-    </div>
-
-    <div id="screen-home" class="screen active">
-        <p class="screen-subtitle" style="margin-bottom:28px">Welcome! What would you like to do?</p>
-
-        <div class="big-btn-grid">
-        <div class="big-btn btn-blue" id="btnIssueTicket" onclick="goScreen('dept')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9h18"/><path d="M8 13h2M14 13h2M8 16h2"/></svg>
+    <header class="kiosk-header">
+        <div class="header-brand">
+            <div class="logo-mark">
+                <img src="../assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
-            <div class="big-btn-label">Issue a Ticket</div>
-            <div class="big-btn-sub">Walk-in — get your number now</div>
-        </div>
-
-        <div class="big-btn btn-gold" id="btnHaveReservation" onclick="goScreen('scan'); startScanner()">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h.01M17 14h.01M14 17h.01M17 17h.01"/></svg>
+            <div class="brand-text">
+                <h1><span>e</span>Tickette</h1>
+                <p>STI College Fairview</p>
             </div>
-            <div class="big-btn-label">I Have a Reservation</div>
-            <div class="big-btn-sub">Scan your QR to activate</div>
         </div>
+        <div class="header-right">
+            <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+            <div class="kiosk-time" id="kioskTime">00:00</div>
         </div>
+    </header>
 
-        <div class="status-row">
-        <div class="status-chip">
-            Cashier: <span id="cashierStatus" class="chip-open">OPEN</span>
-        </div>
-        <div class="status-chip">
-            Registrar: <span id="registrarStatus" class="chip-open">OPEN</span>
-        </div>
-        </div>
-
-        <div id="quotaDisplay" style="font-size:13px;font-weight:600;color:var(--slate-500);margin-top:8px;"></div>
-
-        <div id="quotaFullMsg" style="display:none">
+    <div class="status-strip" style="justify-content: center;">
+        <div class="strip-right" id="quotaDisplay" style="font-size: 14px; color: rgba(255,255,255,.8);">Slots — C: --/-- · R: --/--</div>
+    </div>
+    
+    <div id="quotaFullMsg" style="display:none; color:var(--red-600); text-align:center; padding:10px; background:var(--red-100); font-weight:700;">
         All slots are full for today. Please come back tomorrow.
+    </div>
+
+    <div class="screen active" id="screen-home">
+        <div class="home-greeting">
+            <h2>Welcome to eTickette</h2>
+            <p>Reserve your slot or scan your QR code to get started</p>
+        </div>
+        
+        <div class="dept-cards">
+            <div class="dept-card cashier" id="deptCashier" onclick="pickDept('cashier')">
+                <div class="dc-inner">
+                    <div class="dc-icon">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4M14 15h4"/></svg>
+                    </div>
+                    <div class="dc-name">Cashier</div>
+                    <div class="dc-tag" id="cashierTag"><div class="dc-tag-dot"></div><span id="cashierTagText">Open Now</span></div>
+                </div>
+                <div class="dc-stats">
+                    <div class="dc-stat"><div class="dc-stat-num" id="cashierQueueText">0</div><div class="dc-stat-lbl">In Queue</div></div>
+                    <div class="dc-stat-div"></div>
+                    <div class="dc-stat"><div class="dc-stat-num" id="cashierServingText">—</div><div class="dc-stat-lbl">Serving</div></div>
+                    <div class="dc-stat-div"></div>
+                    <div class="dc-stat"><div class="dc-stat-num" id="cashierWaitText">—</div><div class="dc-stat-lbl">Avg Wait</div></div>
+                </div>
+                <button class="dc-btn">GET A CASHIER TICKET</button>
+            </div>
+            
+            <div class="dept-card registrar" id="deptRegistrar" onclick="pickDept('registrar')">
+                <div class="dc-inner">
+                    <div class="dc-icon">
+                        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                    </div>
+                    <div class="dc-name">Registrar</div>
+                    <div class="dc-tag" id="registrarTag"><div class="dc-tag-dot"></div><span id="registrarTagText">Open Now</span></div>
+                </div>
+                <div class="dc-stats">
+                    <div class="dc-stat"><div class="dc-stat-num" id="registrarQueueText">0</div><div class="dc-stat-lbl">In Queue</div></div>
+                    <div class="dc-stat-div"></div>
+                    <div class="dc-stat"><div class="dc-stat-num" id="registrarServingText">—</div><div class="dc-stat-lbl">Serving</div></div>
+                    <div class="dc-stat-div"></div>
+                    <div class="dc-stat"><div class="dc-stat-num" id="registrarWaitText">—</div><div class="dc-stat-lbl">Avg Wait</div></div>
+                </div>
+                <button class="dc-btn">GET A REGISTRAR TICKET</button>
+            </div>
+        </div>
+
+        <div class="or-divider">or</div>
+        
+        <div class="action-row">
+            <div class="action-card" id="btnHaveReservation" onclick="goScreen('scan'); startScanner()">
+                <div class="ac-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h.01M17 14h.01M14 17h.01M17 17h.01"/></svg>
+                </div>
+                <div class="ac-text">
+                    <strong>I Have a Reservation</strong>
+                    <span>Scan your QR code</span>
+                </div>
+            </div>
+            <div class="action-card">
+                <div class="ac-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                </div>
+                <div class="ac-text">
+                    <strong>Need Help?</strong>
+                    <span>Call a staff member</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="screen-dept" class="screen">
+    <div class="screen" id="screen-usertype">
         <button class="back-btn" onclick="goScreen('home')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
         </button>
-        <p class="screen-title">Pick a Department</p>
-        <div class="big-btn-grid">
-        <div class="big-btn btn-blue" id="deptCashier" onclick="pickDept('cashier')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4M14 15h4"/></svg>
-            </div>
-            <div class="big-btn-label">Cashier</div>
-            <div class="big-btn-sub" id="cashierQueueText">0 in queue</div>
-        </div>
-        <div class="big-btn btn-blue" id="deptRegistrar" onclick="pickDept('registrar')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-            </div>
-            <div class="big-btn-label">Registrar</div>
-            <div class="big-btn-sub" id="registrarQueueText">0 in queue</div>
-        </div>
-        </div>
-    </div>
-
-    <div id="screen-usertype" class="screen">
-        <button class="back-btn" onclick="goScreen('dept')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back
-        </button>
-        <p class="screen-title">Who Are You?</p>
-        <p class="screen-subtitle">Select your visitor type to continue</p>
+        <div class="screen-title">Who Are You?</div>
+        <div class="screen-sub">Select your visitor type to continue</div>
         <div class="usertype-grid">
-        <div class="big-btn btn-blue" onclick="pickUserType('student')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <div class="ut-card" onclick="pickUserType('student')">
+                <div class="ut-icon"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+                <div class="ut-name">Student</div>
+                <div class="ut-sub">Enter your Student ID</div>
             </div>
-            <div class="big-btn-label">Student</div>
-            <div class="big-btn-sub">Enter your Student ID</div>
-        </div>
-        <div class="big-btn btn-blue" onclick="pickUserType('teacher')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <div class="ut-card" onclick="pickUserType('teacher')">
+                <div class="ut-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+                <div class="ut-name">Teacher / Staff</div>
+                <div class="ut-sub">Enter your Employee ID</div>
             </div>
-            <div class="big-btn-label">Teacher / Staff</div>
-            <div class="big-btn-sub">Enter your Employee ID</div>
-        </div>
-        <div class="big-btn btn-blue" onclick="pickUserType('parent')">
-            <div class="big-btn-icon">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            <div class="ut-card" onclick="pickUserType('parent')">
+                <div class="ut-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+                <div class="ut-name">Parent</div>
+                <div class="ut-sub">Enter your child's Student ID</div>
             </div>
-            <div class="big-btn-label">Parent</div>
-            <div class="big-btn-sub">Enter your child's Student ID</div>
-        </div>
         </div>
     </div>
 
-    <div id="screen-id" class="screen">
+    <div class="screen" id="screen-id">
         <button class="back-btn" onclick="goScreen('usertype')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
         </button>
-        <p class="screen-title" id="idScreenTitle">Enter Your ID</p>
-        <div class="dept-chosen-label" id="deptChosen">CASHIER</div>
-
+        <div class="screen-title" id="idScreenTitle">Enter Your ID</div>
+        <div class="dept-chosen-badge" id="deptChosen">CASHIER</div>
+        
         <div class="id-form">
             <div id="kioskIdField">
-                <input type="text" id="idInput" class="kiosk-input"
-                placeholder="e.g. 02000385394" inputmode="none"
-                maxlength="11" readonly
-                onkeydown="if(event.key==='Enter') submitId()" />
+                <input type="text" id="idInput" class="kiosk-input" placeholder="e.g. 02000385394" inputmode="none" maxlength="11" readonly onkeydown="if(event.key==='Enter') submitId()" />
             </div>
             <div id="kioskNameField" style="display:none">
-                <input type="text" id="nameInput" class="kiosk-input kiosk-name-input"
-                placeholder="Your full name"
-                onkeydown="if(event.key==='Enter') submitId()" />
+                <input type="text" id="nameInput" class="kiosk-input kiosk-name-input" placeholder="Your full name" onkeydown="if(event.key==='Enter') submitId()" />
             </div>
-
+            
             <div class="numpad" id="kioskNumpad">
-                <button class="numpad-key" onclick="numpadPress('1')">1</button>
-                <button class="numpad-key" onclick="numpadPress('2')">2</button>
-                <button class="numpad-key" onclick="numpadPress('3')">3</button>
-                <button class="numpad-key" onclick="numpadPress('4')">4</button>
-                <button class="numpad-key" onclick="numpadPress('5')">5</button>
-                <button class="numpad-key" onclick="numpadPress('6')">6</button>
-                <button class="numpad-key" onclick="numpadPress('7')">7</button>
-                <button class="numpad-key" onclick="numpadPress('8')">8</button>
-                <button class="numpad-key" onclick="numpadPress('9')">9</button>
-                <button class="numpad-key key-clear" onclick="numpadClear()">CLR</button>
-                <button class="numpad-key key-zero" onclick="numpadPress('0')">0</button>
-                <button class="numpad-key key-backspace" onclick="numpadBackspace()">⌫</button>
+                <div class="np-key" onclick="numpadPress('1')">1</div>
+                <div class="np-key" onclick="numpadPress('2')">2</div>
+                <div class="np-key" onclick="numpadPress('3')">3</div>
+                <div class="np-key" onclick="numpadPress('4')">4</div>
+                <div class="np-key" onclick="numpadPress('5')">5</div>
+                <div class="np-key" onclick="numpadPress('6')">6</div>
+                <div class="np-key" onclick="numpadPress('7')">7</div>
+                <div class="np-key" onclick="numpadPress('8')">8</div>
+                <div class="np-key" onclick="numpadPress('9')">9</div>
+                <div class="np-key key-clr" onclick="numpadClear()">CLR</div>
+                <div class="np-key key-zero" onclick="numpadPress('0')">0</div>
+                <div class="np-key key-del" onclick="numpadBackspace()">⌫</div>
             </div>
-
+            
             <p id="idError" class="kiosk-error"></p>
-            <button class="kiosk-submit-btn" onclick="submitId()">Next →</button>
-            </div>
+            <button class="btn-primary kiosk-submit-btn" onclick="submitId()" style="margin-top:4px;">Next — Select Reason →</button>
+        </div>
     </div>
 
-    <div id="screen-reason" class="screen">
+    <div class="screen" id="screen-reason">
         <button class="back-btn" onclick="goScreen('id')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
         </button>
-        <p class="screen-title">Why Are You Here?</p>
-        <p class="screen-subtitle" id="reasonDeptLabel">CASHIER</p>
-
-        <div class="reason-dropdown-wrap">
-        <div class="reason-dropdown-trigger" id="reasonTrigger" onclick="toggleReasonDropdown()">
+        <div class="screen-title">Why Are You Here?</div>
+        <div class="screen-sub" id="reasonDeptLabel">CASHIER</div>
+        
+        
+        <div class="reason-trigger" id="reasonTrigger" onclick="toggleReasonDropdown()">
             <span id="reasonTriggerText">— Please Select a Reason —</span>
-            <span class="reason-dropdown-arrow" id="reasonArrow">▼</span>
+            <span class="rt-arrow" id="reasonArrow">▼</span>
         </div>
-        <div class="reason-dropdown-list hidden" id="reasonDropdownList"></div>
-        </div>
-
+        <div class="reason-list hidden" id="reasonDropdownList"></div>
+        
         <p id="reasonError" class="kiosk-error-reason"></p>
         <div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;margin-top:8px">
-        <button class="kiosk-submit-btn" onclick="submitReason()">Next — Check Documents →</button>
-        <button class="kiosk-cancel-btn" onclick="goScreen('home')">Cancel — Go Back to Home</button>
+            <button class="btn-primary kiosk-submit-btn" onclick="submitReason()">Next — Check Documents →</button>
+            <button class="btn-danger kiosk-cancel-btn" onclick="goScreen('home')">Cancel — Return to Home</button>
         </div>
     </div>
 
-    <div id="screen-docs" class="screen">
-        <p class="screen-title">Documents Required</p>
-        <p class="screen-subtitle" id="docsReasonLabel">—</p>
-
-        <div class="docs-checklist-wrap">
-        <p class="docs-intro">Please make sure you have <strong>ALL</strong> of the following before proceeding:</p>
-        <div id="kioskDocsList" class="kiosk-docs-list"></div>
-        </div>
-
-        <div class="docs-action-row">
-        <button class="kiosk-submit-btn" onclick="proceedIssue()">I Have All Documents — Get Ticket</button>
-        <button class="kiosk-cancel-btn" onclick="goScreen('home')">I Don't Have Them — Cancel</button>
-        </div>
-    </div>
-
-    <div id="screen-ticket" class="screen">
-        <div class="ticket-card">
-        <p style="margin-top:18px;font-size:14px;color:var(--slate-500);text-align:center;">
-        Returning to home in <strong id="ticketCountdown" style="color:var(--blue-800);">15</strong> seconds...
-        </p>
-        <div class="ticket-school">STI College Fairview</div>
-        <div class="ticket-dept-tag" id="issuedDept">CASHIER</div>
-        <div class="ticket-big-num" id="issuedNumber">C-01</div>
-        <div class="ticket-details">
-            <div class="ticket-detail-row"><span>ID</span><strong id="issuedId">—</strong></div>
-            <div class="ticket-detail-row"><span>Reason</span><strong id="issuedReason">—</strong></div>
-            <div class="ticket-detail-row"><span>Ahead</span><strong id="issuedAhead">—</strong></div>
-            <div class="ticket-detail-row"><span>Est. Wait</span><strong id="issuedWait">—</strong></div>
-        </div>
-        <div id="ticketQR" class="ticket-qr"></div>
-        <p class="ticket-qr-hint">Scan to track on your phone</p>
-        <p style="margin-top:12px;font-size:14px;color:var(--slate-500);text-align:center;">
-            Returning to home in <strong id="scanSuccessCountdown" style="color:var(--blue-800);">20</strong> seconds...
-        </p>
-        </div>
-        <button class="kiosk-submit-btn" style="max-width:440px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="reprintTicket()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Reprint Ticket
+    <div class="screen" id="screen-docs">
+        <button class="back-btn" onclick="goScreen('reason')">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
         </button>
-        <button class="kiosk-submit-btn" style="max-width:440px" onclick="clearInterval(window._ticketCountTimer); goScreen('home')">Done</button>    
+        <div class="screen-title">Documents Required</div>
+        <div class="screen-sub" id="docsReasonLabel">—</div>
+        
+        <div class="docs-box">
+            <p class="docs-intro">Please make sure you have <strong>ALL</strong> of the following before proceeding:</p>
+            <div id="kioskDocsList" class="kiosk-docs-list"></div>
         </div>
+        
+        <div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="btn-primary kiosk-submit-btn" onclick="proceedIssue()">I Have All Documents — Get Ticket</button>
+            <button class="btn-danger kiosk-cancel-btn" onclick="goScreen('home')">I Don't Have Them — Cancel</button>
+        </div>
+    </div>
 
-    <div id="screen-scan" class="screen">
+    <div class="screen" id="screen-ticket">
+        <div class="ticket-wrap">
+            <div class="ticket-left">
+                <div class="ticket-school">STI COLLEGE FAIRVIEW</div>
+                <div class="ticket-dept" id="issuedDept">CASHIER</div>
+                <div class="ticket-number" id="issuedNumber">C-01</div>
+                <div class="ticket-details">
+                    <div class="t-row"><span>ID / Name</span><strong id="issuedId">—</strong></div>
+                    <div class="t-row"><span>Reason</span><strong id="issuedReason">—</strong></div>
+                    <div class="t-row"><span>Ahead</span><strong id="issuedAhead">—</strong></div>
+                    <div class="t-row"><span>Est. Wait</span><strong id="issuedWait">—</strong></div>
+                </div>
+            </div>
+            <div class="ticket-right">
+                <div class="qr-placeholder">
+                    <div id="ticketQR" class="qr-grid"></div>
+                    <div class="qr-hint">Scan to track your queue online</div>
+                </div>
+            </div>
+        </div>
+                
+        <div class="countdown-bar">
+            Returning to home in <strong id="ticketCountdown">15</strong> seconds…
+        </div>
+        <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="btn-primary" style="background:var(--slate-100); color:var(--blue-900); border:1px solid var(--slate-200);" onclick="reprintTicket()">Reprint Ticket</button>
+            <button class="btn-primary kiosk-submit-btn" onclick="clearInterval(window._ticketCountTimer); goScreen('home')">Done — Return to Home</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screen-scan">
         <button class="back-btn" onclick="goScreen('home'); stopScanner()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
         </button>
-        <p class="screen-title">Scan Your QR Code</p>
-        <p class="screen-subtitle">Point the camera at your reservation QR</p>
-        <div id="qr-reader" class="kiosk-qr-box"></div>
-        <p id="scanStatus" class="scan-status">Initializing camera…</p>
-        <div id="scanResult" style="display:none"></div>
-        <button class="kiosk-back-btn" onclick="goScreen('home'); stopScanner()">Cancel</button>
+        <div class="screen-title">Scan Your QR Code</div>
+        <div class="screen-sub">Point the camera at your reservation QR</div>
+        
+        <div class="scan-box">
+            <div class="scan-corners">
+                <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
+                <div class="scan-corner bl"></div><div class="scan-corner br"></div>
+            </div>
+            <div class="scan-line"></div>
+            <div id="qr-reader" style="position: absolute; inset: 0; z-index: 1; width:100%; height:100%; overflow:hidden; border-radius:12px;"></div>
+        </div>
+
+        <div class="scan-status" id="scanStatus">Initializing camera…</div>
+        <button class="btn-danger kiosk-cancel-btn" onclick="goScreen('home'); stopScanner()">Cancel</button>
     </div>
 
-    <div id="screen-scan-success" class="screen">
-        <div class="ticket-card">
-        <div class="ticket-school">STI College Fairview</div>
-        <div class="success-badge" style="display:flex;align-items:center;gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Reservation Activated!
+    <div class="screen" id="screen-scan-success">
+        <div class="ticket-wrap">
+            <div class="ticket-left">
+                <div class="ticket-school">STI COLLEGE FAIRVIEW</div>
+                <div style="font-size:12px; font-weight:700; color:var(--green-600); background:var(--green-100); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:10px;">✓ Reservation Activated!</div>
+                <div class="ticket-dept" id="scanDept">REGISTRAR</div>
+                <div class="ticket-number" id="scanNumber">R-01</div>
+                <div class="ticket-details">
+                    <div class="t-row"><span>Student ID</span><strong id="scanId">—</strong></div>
+                    <div class="t-row"><span>Reason</span><strong id="scanReason">—</strong></div>
+                    <div class="t-row"><span>Ahead</span><strong id="scanAhead">—</strong></div>
+                </div>
+            </div>
+            <div class="ticket-right">
+                <div class="qr-placeholder">
+                    <div id="scanTicketQR" class="qr-grid"></div>
+                    <div class="qr-hint">Scan to track your queue online</div>
+                </div>
+            </div>
         </div>
-        <div class="ticket-dept-tag" id="scanDept">REGISTRAR</div>
-        <div class="ticket-big-num" id="scanNumber">R-01</div>
-        <div class="ticket-details">
-            <div class="ticket-detail-row"><span>Student ID</span><strong id="scanId">—</strong></div>
-            <div class="ticket-detail-row"><span>Reason</span><strong id="scanReason">—</strong></div>
-            <div class="ticket-detail-row"><span>Ahead</span><strong id="scanAhead">—</strong></div>
+        <div class="countdown-bar">
+            Returning to home in <strong id="scanSuccessCountdown">20</strong> seconds…
         </div>
-        <div id="scanTicketQR" class="ticket-qr"></div>
-        <p class="ticket-qr-hint">Scan to track your queue online</p>
+        <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="btn-primary" style="background:var(--slate-100); color:var(--blue-900); border:1px solid var(--slate-200);" onclick="reprintTicket()">Reprint Ticket</button>
+            <button class="btn-primary kiosk-submit-btn" onclick="clearInterval(window._scanSuccessTimer); goScreen('home')">Done — Return to Home</button>
         </div>
-        <button class="kiosk-submit-btn" style="max-width:440px;margin-bottom:10px" onclick="reprintTicket()">Reprint Ticket</button>
-        <button class="kiosk-submit-btn" style="max-width:440px" onclick="clearInterval(window._scanSuccessTimer); goScreen('home')">Done</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>

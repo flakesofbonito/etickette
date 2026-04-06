@@ -41,6 +41,7 @@ export function initKiosk() {
     window.pickUserType        = pickUserType;   
     window.submitId            = submitId;
     window.submitReason        = submitReason;  
+    window.buildReasonList = buildReasonList;
     window.toggleReasonDropdown = toggleReasonDropdown; 
     window.proceedIssue        = proceedIssue;
     window.startScanner = startScanner;
@@ -85,27 +86,19 @@ function listenToSettings() {
         const registrarFull = registrarIssued >= registrarQuota;
 
         const el = document.getElementById('quotaDisplay');
-        if (el) el.textContent =
-            `Cashier: ${cashierRem}/${cashierQuota}  |  Registrar: ${registrarRem}/${registrarQuota}`;
+        if (el) el.textContent = `Slots — C: ${cashierRem}/${cashierQuota} · R: ${registrarRem}/${registrarQuota}`;
 
         const fullMsg = document.getElementById('quotaFullMsg');
         if (fullMsg) fullMsg.style.display = (cashierFull && registrarFull) ? 'block' : 'none';
-
-        const issueBtn = document.getElementById('btnIssueTicket');
-        const resBtn   = document.getElementById('btnHaveReservation');
-        const allFull  = cashierFull && registrarFull;
-        if (issueBtn) { issueBtn.classList.toggle('disabled', allFull); issueBtn.style.pointerEvents = allFull ? 'none' : ''; }
-        if (resBtn)   { resBtn.classList.toggle('disabled', allFull);   resBtn.style.pointerEvents   = allFull ? 'none' : ''; }
 
         const cashierBtn   = document.getElementById('deptCashier');
         const registrarBtn = document.getElementById('deptRegistrar');
         if (cashierBtn)   cashierBtn.classList.toggle('disabled', cashierFull);
         if (registrarBtn) registrarBtn.classList.toggle('disabled', registrarFull);
 
-        const cashierQText   = document.getElementById('cashierQueueText');
-        const registrarQText = document.getElementById('registrarQueueText');
-        if (cashierFull   && cashierQText)   cashierQText.textContent   = 'Quota Full';
-        if (registrarFull && registrarQText) registrarQText.textContent = 'Quota Full';
+        const resBtn   = document.getElementById('btnHaveReservation');
+        const allFull  = cashierFull && registrarFull;
+        if (resBtn)   { resBtn.classList.toggle('disabled', allFull);   resBtn.style.pointerEvents   = allFull ? 'none' : ''; }
 
         allQuotaFull = cashierFull && registrarFull;
     });
@@ -124,27 +117,33 @@ function listenToQueueCounts() {
                 deptStatus[dept]      = open;
                 deptStatusLabel[dept] = st;
 
-                const key = dept === 'cashier' ? 'cashierQueueText' : 'registrarQueueText';
-                const qEl = document.getElementById(key);
-                if (qEl) qEl.textContent = open
-                    ? (data.queue || 0) + ' in queue'
-                    : st === 'break' ? 'On Break' : 'Closed';
+                const qEl = document.getElementById(dept + 'QueueText');
+                if (qEl) qEl.textContent = data.queue || 0;
+                
+                const sEl = document.getElementById(dept + 'ServingText');
+                if (sEl) sEl.textContent = data.nowServing || '—';
 
-                const btnId = dept === 'cashier' ? 'deptCashier' : 'deptRegistrar';
-                const btn   = document.getElementById(btnId);
-                if (btn) btn.classList.toggle('disabled', !open);
+                const wEl = document.getElementById(dept + 'WaitText');
+                if (wEl) {
+                    const avg = data.avgWaitSeconds || 0;
+                    wEl.textContent = avg ? `~${Math.floor(avg / 60)}m` : '—';
+                }
 
-                const chipId = dept === 'cashier' ? 'cashierStatus' : 'registrarStatus';
-                const chip   = document.getElementById(chipId);
-                if (chip) {
-                    const map = {
-                        open:   ['OPEN',     'chip-open'],
-                        break:  ['ON BREAK', 'chip-break'],
-                        closed: ['CLOSED',   'chip-closed']
-                    };
-                    const [label, cls] = map[st] || map.open;
-                    chip.textContent = label;
-                    chip.className   = cls;
+                const tag = document.getElementById(dept + 'Tag');
+                const tagText = document.getElementById(dept + 'TagText');
+                if (tag && tagText) {
+                    tag.className = 'dc-tag ' + (st === 'break' ? 'break-status' : st === 'closed' ? 'closed-status' : '');
+                    tagText.textContent = open ? 'Open Now' : st === 'break' ? 'On Break' : 'Closed';
+                }
+
+                const ssEl = document.getElementById('ss' + dept.charAt(0).toUpperCase() + dept.slice(1));
+                const ssDot = document.getElementById('ssDot' + dept.charAt(0).toUpperCase() + dept.slice(1));
+                if (ssEl) {
+                    ssEl.textContent = open ? 'OPEN' : st === 'break' ? 'ON BREAK' : 'CLOSED';
+                    ssEl.style.color = open ? '#4ade80' : st === 'break' ? 'var(--gold-400)' : 'var(--red-600)';
+                }
+                if (ssDot) {
+                    ssDot.className = 'ss-dot ' + (open ? 'open' : st === 'break' ? 'break' : 'closed');
                 }
 
                 const resBtn = document.getElementById('btnHaveReservation');
@@ -152,13 +151,6 @@ function listenToQueueCounts() {
                     const allUnavailable = (!deptStatus['cashier'] && !deptStatus['registrar']) || allQuotaFull;
                     resBtn.classList.toggle('disabled', allUnavailable);
                     resBtn.style.pointerEvents = allUnavailable ? 'none' : '';
-                }
-
-                const ssId = dept === 'cashier' ? 'ssCashier' : 'ssRegistrar';
-                const ssEl = document.getElementById(ssId);
-                if (ssEl) {
-                    ssEl.textContent = open ? 'OPEN' : st === 'break' ? 'ON BREAK' : 'CLOSED';
-                    ssEl.style.color = open ? '#4ade80' : st === 'break' ? '#fbbf24' : '#f87171';
                 }
             },
             err => console.error('[listenToQueueCounts] ' + dept + ':', err.code, err.message)
@@ -247,12 +239,16 @@ function pickUserType(type) {
 
 
 function toggleReasonDropdown() {
-    const list  = document.getElementById('reasonDropdownList');
-    const arrow = document.getElementById('reasonArrow');
-    if (!list) return;
-    const isHidden = list.classList.contains('hidden');
-    list.classList.toggle('hidden', !isHidden);
-    if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+    const trigger = document.getElementById('reasonTrigger');
+    const dropdown = document.getElementById('reasonDropdownList');
+    
+    const isHidden = dropdown.classList.toggle('hidden');
+    
+    if (!isHidden) {
+        trigger.classList.add('open-active');
+    } else {
+        trigger.classList.remove('open-active');
+    }
 }
 
 function buildReasonList() {
@@ -280,7 +276,7 @@ function buildReasonList() {
             return;
         }
         const btn = document.createElement('button');
-        btn.className   = 'reason-btn';
+        btn.className   = 'reason-item';
         btn.textContent = r.label;
         btn.onclick     = () => {
             selectReason(i);
@@ -523,7 +519,7 @@ function showTicketScreen(tNum, firestoreId, userId, ahead) {
 
     const qrEl = document.getElementById('ticketQR');
     if (qrEl) {
-        qrEl.innerHTML = '';
+        qrEl.replaceChildren();
         new QRCode(qrEl, {
             text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + selectedDept,
             width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
@@ -547,71 +543,75 @@ function showTicketScreen(tNum, firestoreId, userId, ahead) {
 
 let scannerActive = false;
 let rawStream = null;
-let scanLoop = null;
 
 function startScanner() {
     if (scannerActive) return;
+    scannerActive = true; 
     setScanStatus('Starting camera...');
 
     navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: 640, height: 480 }
+        video: { facingMode: { ideal: 'environment' } }
     })
     .then(stream => {
+        if (!scannerActive) {
+            stream.getTracks().forEach(t => t.stop());
+            return;
+        }
+        
         rawStream = stream;
-        scannerActive = true;
 
         const container = document.getElementById('qr-reader');
         container.innerHTML = '';
 
         const video = document.createElement('video');
         video.id = 'qr-video';
-        video.setAttribute('playsinline', '');
-        video.setAttribute('muted', '');
-        video.style.cssText = 'width:100%;border-radius:12px;';
+        video.setAttribute('playsinline', 'true');
+        video.muted = true;
+        video.autoplay = true;
+        
         container.appendChild(video);
 
         video.srcObject = stream;
-        video.play();
+        video.onloadedmetadata = () => {
+            video.play();
+            setScanStatus('Ready — point at QR code');
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        setScanStatus('Ready — point at QR code');
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
-        scanLoop = setInterval(() => {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width  = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code && code.data && !scanProcessing) {
-                    scanProcessing = true;
-                    onScanSuccess(code.data);
+            function scan() {
+                if (!scannerActive) return;
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code && code.data && !scanProcessing) {
+                        scanProcessing = true;
+                        onScanSuccess(code.data);
+                        return; 
+                    }
                 }
+                requestAnimationFrame(scan);
             }
-        }, 200);
+            requestAnimationFrame(scan);
+        };
     })
     .catch(e => {
         scannerActive = false;
-        console.error('[Camera]', e.name, e.message);
-        if (e.name === 'NotReadableError' || e.name === 'AbortError') {
-            setScanStatus('Camera is in use by another app. Close it and try again.');
-        } else if (e.name === 'NotAllowedError') {
-            setScanStatus('Camera permission denied. Please allow camera access.');
-        } else if (e.name === 'NotFoundError') {
-            setScanStatus('No camera found on this device.');
-        } else {
-            setScanStatus('Camera error: ' + e.message);
-        }
+        setScanStatus('Camera error: ' + e.message);
     });
 }
 
 function stopScanner() {
-    clearInterval(scanLoop);
-    scanLoop = null;
     scannerActive = false;
     scanProcessing = false;
+
+    if (window._scanAnim) {
+        cancelAnimationFrame(window._scanAnim);
+    }
 
     if (rawStream) {
         rawStream.getTracks().forEach(t => t.stop());
@@ -622,6 +622,7 @@ function stopScanner() {
     if (video) {
         video.pause();
         video.srcObject = null;
+        video.remove(); 
     }
 
     const container = document.getElementById('qr-reader');
@@ -720,7 +721,7 @@ async function onScanSuccess(decoded) {
 
         const scanQREl = document.getElementById('scanTicketQR');
         if (scanQREl) {
-            scanQREl.innerHTML = '';
+            scanQREl.replaceChildren();
             new QRCode(scanQREl, {
                 text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + dept,
                 width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'

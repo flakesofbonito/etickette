@@ -127,7 +127,7 @@ function showState(state) {
     if (el) el.classList.toggle('hidden', s !== state);
   });
   if (state === 'completed') {
-    document.getElementById('doneTicketNum').textContent = ticketNum;
+    document.getElementById('doneTicketNum').textContent = myTicket?.ticketNumber || ticketNum;
   }
 }
 
