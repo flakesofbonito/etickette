@@ -525,7 +525,7 @@ function renderActiveResBanner(res, rid) {
     }
 }
 
-function renderActiveWalkinBanner(ticket) {
+function renderActiveWalkinBanner(ticket, docId) {
     const old = document.getElementById('activeResBanner');
     if (old) old.remove();
 
@@ -593,7 +593,7 @@ async function cancelReservation(rid, status) {
 
         if (ticketSnap && ticketSnap.exists()) {
             const tStatus = ticketSnap.data().status;
-                transaction.update(doc(db, 'tickets', resData.ticketId || resData.ticketNumber), { status: 'cancelled' });
+                transaction.update(doc(db, 'tickets', resData.ticketId), { status: 'cancelled' });
 
             if (tStatus === 'waiting' || tStatus === 'serving') {
                 if (dSnap && dSnap.exists()) {

@@ -353,13 +353,13 @@ async function submitId() {
         ]);
 
         if (!resSnap.empty) {
-            if (errEl) errEl.textContent = 'You have a pending ${selectedDept} reservation. Please scan your QR code instead.';
+            if (errEl) errEl.textContent = `You have a pending ${selectedDept} reservation. Please scan your QR code instead.`;
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
             return;
         }
         if (!ticketSnap.empty) {
             const t = ticketSnap.docs[0].data();
-            if (errEl) errEl.textContent = 'You already have ticket ' + t.ticketNumber + ' in the ' + t.department.toUpperCase() + ' queue.';
+            if (errEl) errEl.textContent = `You already have ticket ${t.ticketNumber} in the ${t.department.toUpperCase()} queue.`;
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Next →'; }
             return;
         }
@@ -439,7 +439,7 @@ async function issueTicket(userId) {
         ));
         if (!resCheck.empty) {
             if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-            alert('You have a pending reservation. Please scan your QR code instead.');
+            alert(`You have a pending reservation. Please scan your QR code instead.`);
             goScreen('home'); return;
         }
 
@@ -451,7 +451,7 @@ async function issueTicket(userId) {
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-            alert('You already have ticket ' + t.ticketNumber + ' in the queue.');
+            alert(`You already have ticket ${t.ticketNumber} in the queue.`);
             goScreen('home'); return;
         }
 
