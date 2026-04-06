@@ -101,6 +101,8 @@ function checkAndShowState(ticket) {
     label.textContent = "It's Your Turn!";
     sub.textContent   = 'Please proceed to the ' + myDept.toUpperCase() + ' counter now';
     calledBanner.classList.remove('hidden');
+    calledBanner.style.background  = ''; 
+    calledBanner.style.borderColor = ''; 
     document.getElementById('calledDept').textContent = myDept.toUpperCase();
     document.getElementById('positionCard').style.opacity = '0.5';
 

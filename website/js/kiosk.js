@@ -827,6 +827,7 @@ function showPrinterWarning() {
 
 async function reprintTicket() {
     clearInterval(window._ticketCountTimer);
+    clearInterval(window._scanSuccessTimer);
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
     if (!window._lastTicket) { alert('Nothing to reprint.'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
