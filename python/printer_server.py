@@ -174,7 +174,7 @@ def setup_page():
     except Exception:
         local_ip = "127.0.0.1"
 
-    tablet_url = f"http://{local_ip}:8000/kiosk/"
+    tablet_url = f"https://{local_ip}:8000/kiosk/"
 
     html = f"""<!DOCTYPE html>
 <html>

@@ -114,21 +114,21 @@ echo  =========================================
 echo    KIOSK READY
 echo  =========================================
 echo.
-echo    Local Kiosk  :  http://localhost:8000/kiosk/
-echo    Tablet URL   :  http://!LOCAL_IP!:8000/kiosk/
-echo    Setup Page   :  http://localhost:8000/setup
-echo    Printer Test :  http://localhost:8000/health
+echo    Local Kiosk  :  https://localhost:8000/kiosk/
+echo    Tablet URL   :  https://!LOCAL_IP!:8000/kiosk/
+echo    Setup Page   :  https://localhost:8000/setup
+echo    Printer Test :  https://localhost:8000/health
 echo.
 echo  =========================================
 echo.
 
 :: ── Open Setup Page then Kiosk ────────────────────────────────────────────
 echo  Opening Setup Page (has QR code for tablet)...
-start "" "http://localhost:8000/setup"
+start "" "https://localhost:8000/setup"
 timeout /t 2 /nobreak >nul
 
 echo  Opening Local Kiosk...
-start "" "http://localhost:8000/kiosk/"
+start "" "https://localhost:8000/kiosk/"
 
 echo.
 echo  All done! The server window must stay open while kiosk is in use.
