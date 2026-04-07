@@ -551,10 +551,14 @@ function startScanner() {
     setScanStatus('Starting camera…');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        scannerActive = false;
+    scannerActive = false;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        setScanStatus('Camera requires a secure connection. Open this page via the laptop (localhost) or ask staff to enable HTTPS.');
+    } else {
         setScanStatus('Camera not supported on this browser. Try Chrome or Safari.');
-        return;
     }
+    return;
+}
 
     const constraints = [
         { video: { facingMode: { exact: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },

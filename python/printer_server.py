@@ -5,6 +5,7 @@ import usb.core
 import usb.util
 import usb.backend.libusb1
 import os
+import ssl
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -266,6 +267,13 @@ def setup_page():
     return html
 
 if __name__ == '__main__':
-    print("[eTickette] Printer server running on http://localhost:8000")
-    print("[eTickette] Kiosk available at http://localhost:8000/kiosk/")
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    import os
+    cert = os.path.join(os.path.dirname(__file__), 'cert.pem')
+    key  = os.path.join(os.path.dirname(__file__), 'key.pem')
+    if os.path.exists(cert) and os.path.exists(key):
+        print("[eTickette] Server running on https://0.0.0.0:8000")
+        app.run(host='0.0.0.0', port=8000, debug=False, ssl_context=(cert, key))
+    else:
+        print("[eTickette] No cert found — running HTTP (camera may not work on tablets)")
+        print("[eTickette] Run generate_cert.py to enable HTTPS")
+        app.run(host='0.0.0.0', port=8000, debug=False)
