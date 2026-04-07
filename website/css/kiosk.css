@@ -31,8 +31,12 @@ html, body {
   overflow: hidden; 
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
+  touch-action: manipulation;
   display: flex; flex-direction: column;
+}
+
+#screen-scan {
+  touch-action: auto;
 }
 
 input, textarea {

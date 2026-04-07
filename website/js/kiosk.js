@@ -546,63 +546,102 @@ let rawStream = null;
 
 function startScanner() {
     if (scannerActive) return;
-    scannerActive = true; 
-    setScanStatus('Starting camera...');
+    scannerActive = true;
+    scanProcessing = false;
+    setScanStatus('Starting camera…');
 
-    navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } }
-    })
-    .then(stream => {
-        if (!scannerActive) {
-            stream.getTracks().forEach(t => t.stop());
-            return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        scannerActive = false;
+        setScanStatus('Camera not supported on this browser. Try Chrome or Safari.');
+        return;
+    }
+
+    const constraints = [
+        { video: { facingMode: { exact: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: 'user' } },
+        { video: true }
+    ];
+
+    async function tryGetUserMedia(list) {
+        for (const c of list) {
+            try { return await navigator.mediaDevices.getUserMedia(c); } catch (_) {}
         }
-        
-        rawStream = stream;
+        throw new Error('No camera accessible');
+    }
 
-        const container = document.getElementById('qr-reader');
-        container.innerHTML = '';
+    tryGetUserMedia(constraints)
+        .then(stream => {
+            if (!scannerActive) { stream.getTracks().forEach(t => t.stop()); return; }
 
-        const video = document.createElement('video');
-        video.id = 'qr-video';
-        video.setAttribute('playsinline', 'true');
-        video.muted = true;
-        video.autoplay = true;
-        
-        container.appendChild(video);
+            rawStream = stream;
 
-        video.srcObject = stream;
-        video.onloadedmetadata = () => {
-            video.play();
-            setScanStatus('Ready — point at QR code');
-            
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const container = document.getElementById('qr-reader');
+            container.innerHTML = '';
 
-            function scan() {
-                if (!scannerActive) return;
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.width = video.videoWidth;
+            const video = document.createElement('video');
+            video.id = 'qr-video';
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            video.playsInline = true;
+            video.muted = true;
+            video.autoplay = true;
+            container.appendChild(video);
+
+            video.srcObject = stream;
+
+            const onReady = () => {
+                video.play().catch(() => {});
+                setScanStatus('Ready — point camera at QR code');
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                let lastScan = 0;
+
+                function scan(ts) {
+                    if (!scannerActive) return;
+                    window._scanAnim = requestAnimationFrame(scan);
+                    if (ts - lastScan < 200) return;
+                    lastScan = ts;
+                    if (video.readyState < video.HAVE_ENOUGH_DATA) return;
+                    if (!video.videoWidth || !video.videoHeight) return;
+
+                    canvas.width  = video.videoWidth;
                     canvas.height = video.videoHeight;
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert'
+                    });
+
                     if (code && code.data && !scanProcessing) {
                         scanProcessing = true;
                         onScanSuccess(code.data);
-                        return; 
                     }
                 }
-                requestAnimationFrame(scan);
+                window._scanAnim = requestAnimationFrame(scan);
+            };
+
+            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                onReady();
+            } else {
+                video.onloadedmetadata = onReady;
+                video.oncanplay = onReady;
             }
-            requestAnimationFrame(scan);
-        };
-    })
-    .catch(e => {
-        scannerActive = false;
-        setScanStatus('Camera error: ' + e.message);
-    });
+        })
+        .catch(e => {
+            scannerActive = false;
+            if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                setScanStatus('Camera permission denied. Please allow camera access in your browser settings and try again.');
+            } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                setScanStatus('No camera found on this device.');
+            } else if (e.name === 'NotReadableError') {
+                setScanStatus('Camera is in use by another app. Please close it and try again.');
+            } else {
+                setScanStatus('Camera error: ' + e.message);
+            }
+        });
 }
 
 function stopScanner() {
