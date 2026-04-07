@@ -199,9 +199,14 @@ function logout() {
     ov.style.display = 'flex';
     ov.classList.remove('dismissed');
     document.getElementById('loginId').value = '02000';
+    const childIdEl = document.getElementById('loginChildId');
+    if (childIdEl) childIdEl.value = '';
+    const loginNameEl = document.getElementById('loginName');
+    if (loginNameEl) loginNameEl.value = '';
     document.getElementById('loginError').textContent = '';
     document.getElementById('appShell').classList.add('locked');
     document.getElementById('appShell').classList.remove('unlocked');
+    selectUserType('student');
 }
 
 function navigate(view) {

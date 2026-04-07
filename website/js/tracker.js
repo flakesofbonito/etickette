@@ -101,9 +101,12 @@ function checkAndShowState(ticket) {
     label.textContent = "It's Your Turn!";
     sub.textContent   = 'Please proceed to the ' + myDept.toUpperCase() + ' counter now';
     calledBanner.classList.remove('hidden');
-    calledBanner.style.background  = ''; 
-    calledBanner.style.borderColor = ''; 
-    document.getElementById('calledDept').textContent = myDept.toUpperCase();
+    calledBanner.style.background  = '';
+    calledBanner.style.borderColor = '';
+    const callStrong = calledBanner.querySelector('.called-text strong');
+    const callSpan   = calledBanner.querySelector('.called-text > span');
+    if (callStrong) { callStrong.textContent = "It's Your Turn!"; callStrong.style.color = ''; }
+    if (callSpan)   callSpan.innerHTML = `Please proceed to the <span id="calledDept">${myDept.toUpperCase()}</span> counter now`;
     document.getElementById('positionCard').style.opacity = '0.5';
 
     if (lastStatus !== 'serving') {

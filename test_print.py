@@ -1,5 +1,7 @@
 import urllib.request
+import urllib.error
 import json
+import ssl
 
 payload = json.dumps({
     "number": "C-01",
@@ -10,12 +12,20 @@ payload = json.dumps({
     "type":   "Walk-in"
 }).encode("utf-8")
 
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
 req = urllib.request.Request(
-    "http://localhost:8000/print",
+    "https://localhost:8000/print",  
     data    = payload,
     headers = {"Content-Type": "application/json"},
     method  = "POST"
 )
 
-with urllib.request.urlopen(req) as res:
-    print(res.read().decode())
+try:
+    with urllib.request.urlopen(req, context=ctx) as res:
+        print(res.read().decode())
+except urllib.error.URLError as e:
+    print(f"[ERROR] Could not connect: {e}")
+    print("Make sure the eTickette server is running (start_etickette.bat)")
