@@ -129,7 +129,7 @@ function listenToSettings() {
         window._lastTickerMsg = msg;
 
         clearTimeout(window._tickerTimer);
-        clearInterval(window._tickerScroll);
+        cancelAnimationFrame(window._tickerAnim);
 
         if (msg.trim() === '') {
             ticker.style.display = 'none';
@@ -153,17 +153,20 @@ function listenToSettings() {
 
         let pos = ticker.offsetWidth;
         tickerText.style.transform = `translateX(${pos}px)`;
-        window._tickerScroll = setInterval(() => {
+
+        function tickStep() {
             pos -= 2;
             if (pos < -(tickerText.offsetWidth)) pos = ticker.offsetWidth;
             tickerText.style.transform = `translateX(${pos}px)`;
-        }, 16);
+            window._tickerAnim = requestAnimationFrame(tickStep);
+        }
+        window._tickerAnim = requestAnimationFrame(tickStep);
 
         window._tickerTimer = setTimeout(() => {
             ticker.classList.add('fading');
             setTimeout(() => {
                 ticker.style.display = 'none';
-                clearInterval(window._tickerScroll);
+                cancelAnimationFrame(window._tickerAnim);
             }, 800);
         }, remaining);
     });

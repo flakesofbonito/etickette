@@ -794,13 +794,14 @@ async function loadHistory() {
 
     let hasHistory = false;
 
+    let html = '';
     ticketDocs.forEach(d => {
         const t = d.data();
         if (t.isReservation) return;
         if (t.status === 'waiting' || t.status === 'serving') return;
         const cls  = t.status === 'completed' ? 'open' : t.status === 'cancelled' ? 'closed' : 'break';
         const date = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleDateString() : '—';
-        el.innerHTML += `<div class="history-item">
+        html += `<div class="history-item">
             <div><strong>${t.ticketNumber}</strong> — ${t.department.toUpperCase()}<br/>
             <span class="subtle">Walk-in · ${date}</span></div>
             <span class="${cls}">${t.status.toUpperCase()}</span>
@@ -814,13 +815,14 @@ async function loadHistory() {
         const cls = r.status === 'cancelled'                        ? 'closed'
         : (r.status === 'expired' || r.status === 'noshow') ? 'break'
         : 'open';
-        el.innerHTML += `<div class="history-item">
+        html += `<div class="history-item">
             <div><strong>${r.department.toUpperCase()}</strong> — ${r.reason}<br/>
             <span class="subtle">Reservation · ${r.reservationDate}</span></div>
             <span class="${cls}">${r.status.toUpperCase()}</span>
         </div>`;
         hasHistory = true;
     });
+    el.innerHTML = html;
 
     if (!hasHistory) {
         el.innerHTML = hasActiveBanner

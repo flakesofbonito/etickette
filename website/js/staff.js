@@ -5,7 +5,7 @@ import {
   serverTimestamp, increment, getDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { showToast, showConfirmDialog } from '../js/utils.js';
+import { showToast, showConfirmDialog, formatTime } from '../js/utils.js';
 
 let STAFF_PIN = '';
 let staffDept      = 'cashier';
@@ -359,7 +359,7 @@ function startTimer() {
     if (!serveStartTime) return;
     const e = Math.floor((Date.now() - serveStartTime) / 1000);
     const el = document.getElementById('servingTimer');
-    el.textContent = String(Math.floor(e / 60)).padStart(2,'0') + ':' + String(e % 60).padStart(2,'0');
+    el.textContent = formatTime(e);
     el.className = e > 600 ? 'serving-timer over' : e > 300 ? 'serving-timer warn' : 'serving-timer';
   }, 1000);
 }
@@ -619,7 +619,7 @@ async function markManualComplete() {
       where('ticketNumber', '==', tNum),
       where('department', '==', staffDept)
     ));
-    if (tSnap.empty) { alert('Ticket not found: ' + tNum); return; }
+    if (tSnap.empty) { showToast('Ticket not found: ' + tNum, 'error'); return; }
     const snap = tSnap.docs[0];
     const ticketData = snap.data();
     await updateDoc(doc(db,'tickets', snap.id), { status:'completed', completedAt:serverTimestamp() });
