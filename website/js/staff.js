@@ -1,9 +1,11 @@
 import { db } from '../js/firebase.js';
 import {
-  getFirestore, doc, collection, onSnapshot,
+  doc, collection, onSnapshot,
   updateDoc, getDocs, query, where,
   serverTimestamp, increment, getDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import { showToast, showConfirmDialog } from '../js/utils.js';
 
 let STAFF_PIN = '';
 let staffDept      = 'cashier';
@@ -85,6 +87,7 @@ function staffLogout() {
   if (unsubDept)  unsubDept();
   clearInterval(timerInterval);
   clearTimeout(noShowTimer);
+  staffDept = 'cashier';
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('pinInput').value = '';
@@ -409,28 +412,6 @@ async function callNextTicket() {
     addActivity('called', next.ticketNumber, next.displayName || next.userId || '—');
     startTimer();
   } catch (e) { console.error('[callNext]', e); }
-}
-
-function showConfirmDialog(message, confirmText, cancelText) {
-  return new Promise(resolve => {
-    const ex = document.getElementById('confirmDialog');
-    if (ex) ex.remove();
-    const o = document.createElement('div');
-    o.id = 'confirmDialog';
-    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
-    o.innerHTML = `
-      <div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,.25);text-align:center;">
-        <div style="margin-bottom:12px;display:flex;justify-content:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--blue-800)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
-        <p style="font-size:15px;font-weight:600;color:#1a1a2e;line-height:1.5;margin-bottom:20px;">${message}</p>
-        <div style="display:flex;gap:10px;">
-          <button id="dlgCancel"  style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:#6b7280;font-family:inherit;">${cancelText}</button>
-          <button id="dlgConfirm" style="flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:linear-gradient(90deg,#2563eb,#1f3c88);color:#fff;font-family:inherit;">${confirmText}</button>
-        </div>
-      </div>`;
-    document.body.appendChild(o);
-    document.getElementById('dlgConfirm').onclick = () => { o.remove(); resolve(true); };
-    document.getElementById('dlgCancel').onclick  = () => { o.remove(); resolve(false); };
-  });
 }
 
 async function completeTicket() {
@@ -766,22 +747,6 @@ function addActivity(type, tNum, name) {
   item.innerHTML = `<span class="a-icon">${icons[type]}</span><span class="a-num">${tNum}</span><span class="a-label">${labels[type]} · ${name}</span><span class="a-time">${now}</span>`;
   log.insertBefore(item, log.firstChild);
   while (log.children.length > 20) log.removeChild(log.lastChild);
-}
-
-function showToast(msg, type = 'info') {
-  let t = document.getElementById('staffToast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'staffToast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;color:#fff;z-index:9999;opacity:0;transition:opacity .3s;font-family:\'Plus Jakarta Sans\',sans-serif;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2);';
-    document.body.appendChild(t);
-  }
-  const colors = { success:'#16a34a', error:'#dc2626', info:'#2563eb', warning:'#d97706' };
-  t.style.background = colors[type] || colors.info;
-  t.textContent = msg;
-  t.style.opacity = '1';
-  clearTimeout(t._t);
-  t._t = setTimeout(() => { t.style.opacity = '0'; }, 3500);
 }
 
 async function exportCSV(mode = 'single') {

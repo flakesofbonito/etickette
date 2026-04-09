@@ -4,10 +4,11 @@ import {
     getDoc, getDocs, setDoc, runTransaction,
     serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { REASONS } from './reasons.js';
-const PUBLIC_URL = 'https://etickette.web.app';
 
 import { REASONS } from './reasons.js';
+import { showToast } from '../js/utils.js';
+
+const PUBLIC_URL = 'https://etickette.web.app';
 
 let currentStudentId   = null;
 let reserveDept        = null;
@@ -156,6 +157,9 @@ function afterLogin() {
         <div class="info"><span>ID / Name</span><b>${currentDisplayName}</b></div>
         <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Log out</button>
     `;
+
+    _unsubs.forEach(u => u());
+    _unsubs = [];
 
     setReserveButtonsLocked(true);
     navigate('home');
@@ -836,12 +840,4 @@ function handleOverlay(e, id) {
         if (!confirm('Close reservation? Your progress will be lost.')) return;
     }
     closeModal(id);
-}
-let toastTimer;
-function showToast(msg, type = 'info') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className   = 'toast ' + type + ' show';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
