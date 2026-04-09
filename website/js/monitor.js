@@ -1,6 +1,7 @@
 import { db } from '../js/firebase.js';
-
-let app, db;
+import {
+    collection, doc, query, where, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 let lastServing  = { cashier: null, registrar: null };
 let initialLoad  = { cashier: true, registrar: true };
@@ -26,8 +27,6 @@ function playCallAlert() {
 }
 
 export function initMonitor() {
-    app = initializeApp(firebaseConfig, 'monitor');
-    db  = getFirestore(app);
     updateClock();
     setInterval(updateClock, 1000);
     listenToDept('cashier');

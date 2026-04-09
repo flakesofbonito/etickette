@@ -1,11 +1,14 @@
 import { db } from '../js/firebase.js';
+import {
+    collection, doc, query, where, onSnapshot,
+    getDoc, getDocs, runTransaction,
+    serverTimestamp, increment
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { REASONS } from './reasons.js';
 
 const PUBLIC_URL  = 'https://etickette.web.app';
 const PRINTER_URL = window.location.origin + '/print';
 
-import { REASONS } from './reasons.js';
-
-let app, db;
 let selectedDept        = 'cashier';
 let selectedUserType    = 'student';
 let selectedDisplayName = null;
@@ -18,9 +21,6 @@ let allQuotaFull = false;
 let scanProcessing = false;
 
 export function initKiosk() {
-    app = initializeApp(firebaseConfig);
-    db  = getFirestore(app);
-
     window.goScreen            = goScreen;
     window.pickDept            = pickDept;      
     window.pickUserType        = pickUserType;   

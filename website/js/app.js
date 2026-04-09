@@ -1,10 +1,14 @@
 import { db } from '../js/firebase.js';
-
+import {
+    collection, doc, query, where, onSnapshot,
+    getDoc, getDocs, setDoc, runTransaction,
+    serverTimestamp, increment
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { REASONS } from './reasons.js';
 const PUBLIC_URL = 'https://etickette.web.app';
 
 import { REASONS } from './reasons.js';
 
-let app, db;
 let currentStudentId   = null;
 let reserveDept        = null;
 let reserveReason      = null;
@@ -29,9 +33,6 @@ function setIfChanged(id, value) {
 }
 
 export function initWebsite() {
-    app = initializeApp(firebaseConfig);
-    db  = getFirestore(app);
-
     window.loginStudent      = loginStudent;
     window.logout            = logout;
     window.navigate          = navigate;

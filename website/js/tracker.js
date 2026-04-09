@@ -1,6 +1,9 @@
 import { db } from '../js/firebase.js';
+import {
+  collection, doc, query, where, onSnapshot, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-let app, db;
+
 let myTicket = null;
 let myDept = null;
 let lastStatus = null;
@@ -9,9 +12,6 @@ let earlyWarnFired = false;
 let deptAvgWait = 0;
 
 window.requestNotification = requestNotification;
-
-app = initializeApp(firebaseConfig);
-db = getFirestore(app);
 
 const params = new URLSearchParams(window.location.search);
 const ticketNum = params.get('t');

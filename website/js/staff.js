@@ -1,22 +1,11 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { db } from '../js/firebase.js';
 import {
   getFirestore, doc, collection, onSnapshot,
   updateDoc, getDocs, query, where,
   serverTimestamp, increment, getDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-  authDomain: "etickette-78f74.firebaseapp.com",
-  projectId: "etickette-78f74",
-  storageBucket: "etickette-78f74.firebasestorage.app",
-  messagingSenderId: "147547566302",
-  appId: "1:147547566302:web:2c7a52792b539331d8524f",
-  measurementId: "G-QHMMWXW7F3"
-};
-
 let STAFF_PIN = '';
-let app, db;
 let staffDept      = 'cashier';
 let currentTicket  = null;
 let serveStartTime = null;
@@ -50,9 +39,6 @@ window.toggleActivity = function() {
     log.style.display = hidden ? 'flex' : 'none';
     btn.textContent = hidden ? '▲ hide' : '▼ show';
 };
-
-app = initializeApp(firebaseConfig);
-db  = getFirestore(app);
 
 (async () => {
   try {
