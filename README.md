@@ -232,4 +232,8 @@ No manual `firebase deploy` needed.
 
 ---
 
+For the full user guide, see the [User Manual](MANUAL.md).
+
+---
+
 STI College Fairview — SHS IT in Mobile and Web App Development — 2026
