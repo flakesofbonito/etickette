@@ -1,5 +1,7 @@
 # eTickette
 
+<img src="website/assets/poster.png" alt="eTickette — Queue Smarter. Anywhere." width="100%" />
+
 **Hybrid Smart Queue Management System — STI College Fairview**
 
 <img src="website/assets/poster.png" alt="eTickette — Queue Smarter. Anywhere." width="100%" />
