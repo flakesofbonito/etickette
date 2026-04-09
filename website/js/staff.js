@@ -81,8 +81,9 @@ function staffLogin() {
     startDashboard();
 }
 
-function staffLogout() {
-  if (!confirm('Log out of Staff Dashboard?')) return;
+async function staffLogout() {
+  const ok = await showConfirmDialog('Log out of Staff Dashboard?', 'Log Out', 'Cancel');
+  if (!ok) return;
   if (unsubQueue) unsubQueue();
   if (unsubDept)  unsubDept();
   clearInterval(timerInterval);

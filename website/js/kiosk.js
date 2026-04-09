@@ -149,11 +149,18 @@ function goScreen(name) {
     if (current && current.id === 'screen-scan' && name !== 'scan') {
         stopScanner();
     }
-
+    if (name === 'home' || name === 'usertype') {
+        selectedReason = null;
+        selectedDisplayName = null;
+        pendingUserId = null;
+        const trigger = document.getElementById('reasonTriggerText');
+        if (trigger) trigger.textContent = '— Please Select a Reason —';
+        const errEl = document.getElementById('reasonError');
+        if (errEl) errEl.textContent = '';
+    }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
     if (el) el.classList.add('active');
-
     if (name === 'home') startScreensaver(); else clearTimeout(ssTimer);
 }
 
@@ -161,7 +168,7 @@ function pickDept(dept) {
     if (!deptStatus[dept]) {
         const st  = deptStatusLabel[dept];
         const msg = st === 'break' ? 'currently on break' : 'currently closed';
-        alert('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window is ' + msg + '. Please try again later.');
+        showToast('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window is ' + msg + '. Please try again later.', 'warning');
         return;
     }
     selectedDept = dept;
@@ -205,7 +212,7 @@ function pickUserType(type) {
         if (inp) { 
             inp.placeholder = "Child's Student ID (11 digits)"; 
             inp.inputMode = 'numeric';
-            inp.readOnly = false;
+            inp.readOnly = true;
         }
         if (title) title.textContent = "Enter Your Child's Student ID";
     }
@@ -218,7 +225,7 @@ function pickUserType(type) {
     if (errEl)   errEl.textContent = '';
 
     const numpad = document.getElementById('kioskNumpad');
-    if (numpad) numpad.style.display = type === 'parent' ? 'none' : 'grid';
+    if (numpad) numpad.style.display = type === 'grid';
 
     goScreen('id');
 }
@@ -227,15 +234,26 @@ function pickUserType(type) {
 function toggleReasonDropdown() {
     const trigger = document.getElementById('reasonTrigger');
     const dropdown = document.getElementById('reasonDropdownList');
-    
     const isHidden = dropdown.classList.toggle('hidden');
-    
     if (!isHidden) {
         trigger.classList.add('open-active');
+        setTimeout(() => {
+            document.addEventListener('click', closeReasonDropdownOutside, { once: true });
+        }, 10);
     } else {
         trigger.classList.remove('open-active');
     }
 }
+
+function closeReasonDropdownOutside(e) {
+    const trigger = document.getElementById('reasonTrigger');
+    const dropdown = document.getElementById('reasonDropdownList');
+    if (!trigger?.contains(e.target) && !dropdown?.contains(e.target)) {
+        dropdown?.classList.add('hidden');
+        trigger?.classList.remove('open-active');
+    }
+}
+
 
 function buildReasonList() {
     selectedReason = null; 
@@ -406,7 +424,7 @@ async function proceedIssue() {
 
 async function issueTicket(userId) {
     if (!deptStatus[selectedDept]) {
-        alert('Sorry, the ' + selectedDept + ' department just closed. Please try again later.');
+        showToast('Sorry, the ' + selectedDept.charAt(0).toUpperCase() + selectedDept.slice(1) + ' department just closed. Please try again later.', 'warning');
         goScreen('home');
         return;
     }
@@ -481,11 +499,11 @@ async function issueTicket(userId) {
         console.error(e);
         if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
         if (e.message === 'QUOTA_FULL') {
-            alert('Sorry, the daily quota has been reached. No more tickets can be issued today.');
+            showToast('Daily quota has been reached. No more tickets can be issued today.', 'error');
             goScreen('home');
             return;
         }
-        alert('Error issuing ticket. Please try again.');
+        showToast('Error issuing ticket. Please try again.', 'error');
     }
 }
 

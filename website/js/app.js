@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { REASONS } from './reasons.js';
-import { showToast } from '../js/utils.js';
+import { showToast, showConfirmDialog } from '../js/utils.js';
 
 const PUBLIC_URL = 'https://etickette.web.app';
 
@@ -559,9 +559,14 @@ function renderActiveWalkinBanner(ticket, docId) {
 }
 
 async function cancelReservation(rid, status) {
-    if (!confirm(status === 'active'
-        ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
-        : 'Are you sure you want to cancel this reservation?')) return;
+    const ok = await showConfirmDialog(
+        status === 'active'
+            ? 'Your ticket has already been activated. Cancelling will remove you from the queue. Are you sure?'
+            : 'Are you sure you want to cancel this reservation?',
+        'Yes, Cancel',
+        'Keep Reservation'
+    );
+    if (!ok) return;
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -622,7 +627,13 @@ async function cancelReservation(rid, status) {
 
 function openReserveModal(dept) {
     const btn = document.getElementById(dept + 'Btn');
-    if (btn && btn.disabled) { showToast('No slots available today.', 'error'); return; }
+    if (btn && btn.disabled) {
+        const msg = btn.textContent.includes('BREAK') ? `${dept.toUpperCase()} is currently on break.`
+            : btn.textContent.includes('CLOSED') ? `${dept.toUpperCase()} is currently closed.`
+            : 'No slots available today.';
+        showToast(msg, 'warning');
+        return;
+    }
     if (!currentStudentId)    { showToast('Please log in first.', 'error'); return; }
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
 
@@ -836,10 +847,15 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('active'); 
 }
 
-function handleOverlay(e, id) {
+async function handleOverlay(e, id) {
     if (e.target !== document.getElementById(id)) return;
     if (id === 'reserveModal' && currentStep > 1 && currentStep < 4) {
-        if (!confirm('Close reservation? Your progress will be lost.')) return;
+        const ok = await showConfirmDialog(
+            'Close reservation? Your progress will be lost.',
+            'Yes, Close',
+            'Keep Going'
+        );
+        if (!ok) return;
     }
     closeModal(id);
 }
