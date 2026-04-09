@@ -6,10 +6,11 @@
 
 > Reserve your slot before you arrive, scan at the Kiosk, and track your queue live.
 
-![Firebase](https://img.shields.io/badge/Firebase-Firestore-E3CF57?style=flat&logo=firebase&logoColor=1F3C88&labelColor=1f3c88)
-![Hosting](https://img.shields.io/badge/Live-etickette.web.app-E3CF57?style=flat&labelColor=1f3c88)
-![Status](https://img.shields.io/badge/Build-Passing-E3CF57?style=flat&labelColor=1f3c88)
-![School](https://img.shields.io/badge/STI-College%20Fairview-E3CF57?style=flat&labelColor=1f3c88)
+[![Live](https://img.shields.io/badge/Live-etickette.web.app-e3cf57?style=flat-square&labelColor=1f3c88)](https://etickette.web.app)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore-e3cf57?style=flat-square&labelColor=1f3c88&logo=firebase&logoColor=e3cf57)](https://firebase.google.com/)
+[![Hosting](https://img.shields.io/badge/Hosted-Firebase%20Hosting-e3cf57?style=flat-square&labelColor=1f3c88)](https://firebase.google.com/products/hosting)
+[![Status](https://img.shields.io/badge/Build-Passing-e3cf57?style=flat-square&labelColor=1f3c88)](https://github.com/flakesofbonito/etickette/actions)
+[![School](https://img.shields.io/badge/STI-College%20Fairview-e3cf57?style=flat-square&labelColor=1f3c88)]([https://www.sti.edu.ph](https://www.facebook.com/fairview.sti.edu))
 
 ---
 
