@@ -2,6 +2,8 @@
 
 **Hybrid Smart Queue Management System — STI College Fairview**
 
+<img src="website/assets/poster.png" alt="eTickette — Queue Smarter. Anywhere." width="100%" />
+
 > Reserve your slot before you arrive, scan at the Kiosk, and track your queue live.
 
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-E3CF57?style=flat&logo=firebase&logoColor=1F3C88&labelColor=1f3c88)
