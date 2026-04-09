@@ -158,7 +158,7 @@ async function setDailyQuota() {
     const val   = parseInt(input.value);
 
     if (!val || val < 1 || val > 999) {
-        alert('Enter a valid number between 1 and 999.');
+        showToast('Enter a valid number between 1 and 999.', 'error');
         return;
     }
 
@@ -541,12 +541,12 @@ async function recallTicket() {
             where('ticketNumber', '==', tNum),
             where('department', '==', staffDept)
         ));
-        if (tSnap.empty) { alert('Ticket not found: ' + tNum); return; }
+        if (tSnap.empty) { showToast('Ticket not found: ' + tNum, 'error'); return; }
         const snap  = tSnap.docs[0];
         const tData = snap.data();
 
         if (tData.status === 'cancelled') {
-            alert(`Ticket ${tNum} was cancelled and cannot be recalled.`);
+            showToast(`Ticket ${tNum} was cancelled and cannot be recalled.`, 'error');
             return;
         }
 
@@ -560,7 +560,7 @@ async function recallTicket() {
 
         if (currentTicket && currentTicket.status === 'serving') {
             if (currentTicket.ticketNumber === tNum) {          
-                alert(`Ticket ${tNum} is already being served.`); 
+                showToast(`Ticket ${tNum} is already being served.`, 'info'); 
                 input.value = '';                                
                 return;                                          
             }                                                    
@@ -605,7 +605,7 @@ async function recallTicket() {
 
     } catch (e) {
         console.error('[recall]', e);
-        alert('Could not recall ticket. Try again.');
+        showToast('Could not recall ticket. Try again.', 'error');
     }
 }
 
@@ -640,7 +640,7 @@ async function markManualComplete() {
     document.getElementById('statServed').textContent = servedToday;
     addActivity('completed', tNum, '—');
     input.value = '';
-  } catch (e) { alert('Could not update ticket.'); }
+  } catch (e) { showToast('Could not update ticket.', 'error'); }
 }
 
 async function dailyReset(auto = false) {

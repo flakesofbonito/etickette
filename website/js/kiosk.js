@@ -5,6 +5,7 @@ import {
     serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { REASONS } from './reasons.js';
+import { showToast } from '../js/utils.js';
 
 const PUBLIC_URL  = 'https://etickette.web.app';
 const PRINTER_URL = window.location.origin + '/print';
@@ -420,7 +421,7 @@ async function issueTicket(userId) {
         ));
         if (!resCheck.empty) {
             if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-            alert(`You have a pending reservation. Please scan your QR code instead.`);
+            showToast(`You have a pending reservation. Please scan your QR code instead.`, 'warning');
             goScreen('home'); return;
         }
 
@@ -432,7 +433,7 @@ async function issueTicket(userId) {
         if (!activeCheck.empty) {
             const t = activeCheck.docs[0].data();
             if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
-            alert(`You already have ticket ${t.ticketNumber} in the queue.`);
+            showToast(`You already have ticket ${t.ticketNumber} in the queue.`, 'warning');
             goScreen('home'); return;
         }
 
@@ -857,7 +858,7 @@ async function reprintTicket() {
     clearInterval(window._ticketCountTimer);
     clearInterval(window._scanSuccessTimer);
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
-    if (!window._lastTicket) { alert('Nothing to reprint.'); return; }
+    if (!window._lastTicket) { showToast('Nothing to reprint.', 'error'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
     const success = await printTicket(window._lastTicket.tNum, window._lastTicket.dept, window._lastTicket.firestoreId);
     if (btn) { btn.disabled = false; btn.textContent = 'Reprint Ticket'; }
