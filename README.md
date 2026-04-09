@@ -10,7 +10,7 @@
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-e3cf57?style=flat-square&labelColor=1f3c88&logo=firebase&logoColor=e3cf57)](https://firebase.google.com/)
 [![Hosting](https://img.shields.io/badge/Hosted-Firebase%20Hosting-e3cf57?style=flat-square&labelColor=1f3c88)](https://firebase.google.com/products/hosting)
 [![Status](https://img.shields.io/badge/Build-Passing-e3cf57?style=flat-square&labelColor=1f3c88)](https://github.com/flakesofbonito/etickette/actions)
-[![School](https://img.shields.io/badge/STI-College%20Fairview-e3cf57?style=flat-square&labelColor=1f3c88)]([https://www.sti.edu.ph](https://www.facebook.com/fairview.sti.edu))
+[![School](https://img.shields.io/badge/STI-College%20Fairview-e3cf57?style=flat-square&labelColor=1f3c88)](https://www.facebook.com/fairview.sti.edu)
 
 ---
 
