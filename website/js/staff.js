@@ -98,7 +98,7 @@ function staffLogout() {
   if (unsubQueue) unsubQueue();
   if (unsubDept)  unsubDept();
   clearInterval(timerInterval);
-  clearTimeout(noShowTimer); g
+  clearTimeout(noShowTimer);
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('pinInput').value = '';

@@ -4,42 +4,6 @@
   padding: 0;
 }
 
-:root {
-  --blue-900: #0d1f4e;
-  --blue-800: #1f3c88;
-  --blue-700: #2552b0;
-  --blue-600: #2563eb;
-  --blue-100: #dbeafe;
-  --blue-50: #eff6ff;
-  --gold-700: #a88000;
-  --gold-600: #c9a800;
-  --gold-400: #e3cf57;
-  --gold-100: #fef9c3;
-  --gold-50: #fffde7;
-  --slate-900: #0f172a;
-  --slate-700: #334155;
-  --slate-600: #475569;
-  --slate-500: #64748b;
-  --slate-400: #94a3b8;
-  --slate-300: #cbd5e1;
-  --slate-200: #e2e8f0;
-  --slate-100: #f1f5f9;
-  --slate-50: #f8fafc;
-  --white: #ffffff;
-  --green-600: #16a34a;
-  --orange-600: #ea580c;
-  --red-600: #dc2626;
-  --header-h: 80px;
-  --footer-h: 52px;
-  --font: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
-  --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 6px 24px rgba(15, 23, 42, 0.12);
-}
-
 html,
 body {
   height: 100%;

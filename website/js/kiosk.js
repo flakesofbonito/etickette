@@ -1,19 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-    getFirestore, doc, collection, getDoc, getDocs,
-    onSnapshot, increment, serverTimestamp, query, where,
-    runTransaction
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-    authDomain: "etickette-78f74.firebaseapp.com",
-    projectId: "etickette-78f74",
-    storageBucket: "etickette-78f74.firebasestorage.app",
-    messagingSenderId: "147547566302",
-    appId: "1:147547566302:web:2c7a52792b539331d8524f",
-    measurementId: "G-QHMMWXW7F3"
-};
+import { db } from '../js/firebase.js';
 
 const PUBLIC_URL  = 'https://etickette.web.app';
 const PRINTER_URL = window.location.origin + '/print';
