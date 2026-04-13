@@ -180,11 +180,17 @@ function updatePositionInfo(all) {
       }
   }
 
+  let earlyWarnTime = 0;
+  const EARLY_WARN_COOLDOWN_MS = 60000;
+
   if (myPos === 1 && !earlyWarnFired && lastStatus !== 'serving') {
-    earlyWarnFired = true;
-    triggerEarlyWarning();
+      const now = Date.now();
+      if (now - earlyWarnTime > EARLY_WARN_COOLDOWN_MS) {
+          earlyWarnFired = true;
+          earlyWarnTime = now;
+          triggerEarlyWarning();
+      }
   }
-  if (myPos !== 1) earlyWarnFired = false;
 
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   document.getElementById('progBar').style.width        = pct + '%';

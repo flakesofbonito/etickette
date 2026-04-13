@@ -238,6 +238,7 @@ function toggleReasonDropdown() {
     if (!isHidden) {
         trigger.classList.add('open-active');
         setTimeout(() => {
+            document.removeEventListener('click', closeReasonDropdownOutside);
             document.addEventListener('click', closeReasonDropdownOutside, { once: true });
         }, 10);
     } else {
@@ -716,7 +717,7 @@ async function onScanSuccess(decoded) {
             return;
         }
 
-        const dept   = res.department;
+        dept   = res.department;
 
         if (!deptStatus[dept]) {
             const st  = deptStatusLabel[dept];

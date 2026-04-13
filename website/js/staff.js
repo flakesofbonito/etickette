@@ -6,6 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { showToast, showConfirmDialog, formatTime } from '../js/utils.js';
+import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 let STAFF_PIN = '';
 let staffDept      = 'cashier';
@@ -97,8 +98,12 @@ async function staffLogout() {
 
 async function checkAutoReset() {
   const now = new Date();
-  const today8am = new Date();
-  today8am.setHours(8, 0, 0, 0);
+  function getTodayPH8AM() {
+    const now = new Date();
+    const phDateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    return new Date(`${phDateStr}T08:00:00+08:00`);
+  }
+  const today8am = getTodayPH8AM();
 
   if (now < today8am) return;
 
@@ -254,11 +259,12 @@ async function loadTodayStats() {
     const deptSnap = await getDoc(doc(db, 'departments', staffDept));
     const lastReset = deptSnap.data()?.lastResetAt?.toDate?.() || startOfDay;
     const countFrom = lastReset > startOfDay ? lastReset : startOfDay;
-
+    
     const [completedSnap, noshowSnap] = await Promise.all([
       getDocs(query(collection(db, 'tickets'),
         where('department', '==', staffDept),
-        where('status', '==', 'completed')
+        where('status', '==', 'completed'),
+        where('issuedAt', '>=', Timestamp.fromDate(countFrom))
       )),
       getDocs(query(collection(db, 'tickets'),
         where('department', '==', staffDept),
