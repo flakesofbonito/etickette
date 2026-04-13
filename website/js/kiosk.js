@@ -695,6 +695,8 @@ async function onScanSuccess(decoded) {
 
     if (!reservationId) { setScanStatus('Invalid QR code.'); return; }
 
+    let dept = '';
+
     try {
         const resSnap = await getDoc(doc(db, 'reservations', reservationId));
         if (!resSnap.exists()) { setScanStatus('Reservation not found.', true); return; }

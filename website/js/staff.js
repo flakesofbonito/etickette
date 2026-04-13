@@ -536,6 +536,9 @@ async function recallTicket() {
     const tNum  = input.value.trim().toUpperCase();
     if (!tNum) return;
 
+    const startOfDay = new Date(); 
+    startOfDay.setHours(0, 0, 0, 0);
+
     try {
         const tSnap = await getDocs(query(
             collection(db, 'tickets'),
