@@ -6,6 +6,9 @@ import usb.util
 import usb.backend.libusb1
 import os
 import ssl
+import qrcode
+import io
+import base64
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -175,7 +178,14 @@ def setup_page():
         local_ip = "127.0.0.1"
 
     tablet_url = f"https://{local_ip}:8000/kiosk/"
-
+    
+    qr = qrcode.QRCode(box_size=5, border=2)
+    qr.add_data(tablet_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="#1f3c88", back_color="white")
+    buf = io.BytesIO()
+    qr_img.save(buf, format='PNG')
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -231,7 +241,7 @@ def setup_page():
     <p>Scan the QR code below on your tablet,<br/>or type the URL into any browser.</p>
 
     <div class="qr-wrap">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={tablet_url}&color=1f3c88"
+            <img src="data:image/png;base64,{qr_b64}"
            alt="Tablet QR Code" width="180" height="180" />
     </div>
 

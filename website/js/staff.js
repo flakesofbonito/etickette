@@ -268,7 +268,8 @@ async function loadTodayStats() {
       )),
       getDocs(query(collection(db, 'tickets'),
         where('department', '==', staffDept),
-        where('status', '==', 'noshow')
+        where('status', '==', 'noshow'),
+        where('issuedAt', '>=', Timestamp.fromDate(countFrom))
       ))
     ]);
 
@@ -503,7 +504,10 @@ async function noShowTicket() {
             toast.remove();
             if (!cancelled) {
               if (callNextBtn) callNextBtn.disabled = false;
-              await callNextTicket();
+              const dSnap = await getDoc(doc(db, 'departments', staffDept));
+              if ((dSnap.data()?.status || 'open') === 'open') {
+                  await callNextTicket();
+              }
           }
         }
     }, 1000);
@@ -778,7 +782,8 @@ async function exportCSV(mode = 'single') {
 
             const snap = await getDocs(query(
                 collection(db, 'tickets'),
-                where('department', '==', dept)
+                where('department', '==', dept),
+                where('issuedAt', '>=', Timestamp.fromDate(countFrom))
             ));
             const rows = snap.docs
                 .map(d => ({ id: d.id, ...d.data() }))

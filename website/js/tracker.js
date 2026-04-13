@@ -8,8 +8,10 @@ let myTicket = null;
 let myDept = null;
 let lastStatus = null;
 let notifGranted = false;
-let earlyWarnFired = false;
 let deptAvgWait = 0;
+let earlyWarnFired = false;
+let earlyWarnTime = 0;
+const EARLY_WARN_COOLDOWN_MS = 60000;
 
 window.requestNotification = requestNotification;
 
@@ -179,9 +181,6 @@ function updatePositionInfo(all) {
           etaEl.style.display = 'none';
       }
   }
-
-  let earlyWarnTime = 0;
-  const EARLY_WARN_COOLDOWN_MS = 60000;
 
   if (myPos === 1 && !earlyWarnFired && lastStatus !== 'serving') {
       const now = Date.now();

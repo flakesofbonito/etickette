@@ -889,8 +889,12 @@ function showPrinterWarning() {
 }
 
 async function reprintTicket() {
-    clearInterval(window._ticketCountTimer);
-    clearInterval(window._scanSuccessTimer);
+    const activeScreen = document.querySelector('.screen.active')?.id;
+    if (activeScreen === 'screen-ticket') {
+        clearInterval(window._ticketCountTimer);
+    } else if (activeScreen === 'screen-scan-success') {
+        clearInterval(window._scanSuccessTimer);
+    }
     const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
     if (!window._lastTicket) { showToast('Nothing to reprint.', 'error'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
