@@ -10,8 +10,9 @@ service cloud.firestore {
     }
 
     match /system/{doc} {
-      allow read: if true;
-  		allow write: if false;
+      allow read:   if true;
+      allow create: if false;
+      allow delete: if false;
       allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['staffPin', 'monitorPin']);
     }
 

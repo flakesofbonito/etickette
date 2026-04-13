@@ -233,10 +233,10 @@ async function requestNotification() {
 
     try {
         const result = await new Promise((resolve) => {
-            const perm = Notification.requestPermission(resolve); 
-            if (perm && typeof perm.then === 'function') {
-                perm.then(resolve); 
-            }
+            let settled = false;
+            const done = (r) => { if (!settled) { settled = true; resolve(r); } };
+            const perm = Notification.requestPermission(done);
+            if (perm && typeof perm.then === 'function') perm.then(done);
         });
 
         if (result === 'granted') {

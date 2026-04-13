@@ -225,7 +225,7 @@ function pickUserType(type) {
     if (errEl)   errEl.textContent = '';
 
     const numpad = document.getElementById('kioskNumpad');
-    if (numpad) numpad.style.display = type === 'grid';
+    if (numpad) numpad.style.display = 'grid';
 
     goScreen('id');
 }
@@ -469,6 +469,8 @@ async function issueTicket(userId) {
             if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
+            if ((dSnap.data().status || 'open').toLowerCase() !== 'open')
+                throw new Error('DEPT_UNAVAILABLE');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
@@ -500,6 +502,11 @@ async function issueTicket(userId) {
         if (btn) { btn.disabled = false; btn.textContent = 'I Have All Documents — Get Ticket'; }
         if (e.message === 'QUOTA_FULL') {
             showToast('Daily quota has been reached. No more tickets can be issued today.', 'error');
+            goScreen('home');
+            return;
+        }
+        if (e.message === 'DEPT_UNAVAILABLE') {
+            showToast('The ' + selectedDept.charAt(0).toUpperCase() + selectedDept.slice(1) + ' window just closed. Please try again later.', 'warning');
             goScreen('home');
             return;
         }
@@ -565,9 +572,9 @@ function startScanner() {
 }
 
     const constraints = [
-        { video: { facingMode: { exact: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: 'user' } },
+        { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: 'environment' } },
         { video: true }
     ];
 
@@ -730,6 +737,8 @@ async function onScanSuccess(decoded) {
             if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
+            if ((dSnap.data().status || 'open').toLowerCase() !== 'open')
+                throw new Error('DEPT_UNAVAILABLE');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum  = prefix + '-' + String(newCounter).padStart(2, '0');
@@ -791,6 +800,10 @@ async function onScanSuccess(decoded) {
     } catch (e) {
         if (e.message === 'QUOTA_FULL') {
             setScanStatus('Daily quota is full. Please come back tomorrow or ask staff.');
+            return;
+        }
+        if (e.message === 'DEPT_UNAVAILABLE') {
+            setScanStatus('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window just closed. Please try again later.');
             return;
         }
         console.error(e);

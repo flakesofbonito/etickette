@@ -395,7 +395,10 @@ function listenToActiveReservation() {
             if (activeTicket) {
                 _hasActiveTicket = true;
                 const existingBanner = document.getElementById('activeResBanner');
-                if (!existingBanner || existingBanner.dataset.bannerType === 'walkin') {
+                const alreadyShowing = existingBanner?.dataset.bannerType === 'walkin'
+                    && existingBanner?.dataset.ticketId === activeTicket.id;
+
+                if (!alreadyShowing) {
                     renderActiveWalkinBanner(activeTicket.data(), activeTicket.id);
                 }
             } else {
@@ -543,6 +546,7 @@ function renderActiveWalkinBanner(ticket, docId) {
     banner.id                 = 'activeResBanner';
     banner.className          = 'active-res-banner';
     banner.dataset.bannerType = 'walkin';
+    banner.dataset.ticketId   = docId;  
     banner.innerHTML = `
     <div class="active-res-header"><span>Active Ticket</span></div>
     <div class="active-res-body">

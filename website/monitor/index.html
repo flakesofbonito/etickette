@@ -180,24 +180,12 @@
 
     <script type="module">
         import { initMonitor } from '../js/monitor.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA3g7-_ldguMjweIHrIduBNJOcJ3201bQc",
-            authDomain: "etickette-78f74.firebaseapp.com",
-            projectId: "etickette-78f74",
-            storageBucket: "etickette-78f74.firebasestorage.app",
-            messagingSenderId: "147547566302",
-            appId: "1:147547566302:web:2c7a52792b539331d8524f"
-        };
-
+        import { db } from '../js/firebase.js';
+        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         let monitorPin = '';
 
         try {
-            const app = initializeApp(firebaseConfig, 'gate');
-            const db = getFirestore(app);
             const snap = await getDoc(doc(db, 'system', 'settings'));
             if (snap.exists() && snap.data().monitorPin) monitorPin = snap.data().monitorPin;
         } catch (e) {

@@ -540,7 +540,8 @@ async function recallTicket() {
         const tSnap = await getDocs(query(
             collection(db, 'tickets'),
             where('ticketNumber', '==', tNum),
-            where('department', '==', staffDept)
+            where('department', '==', staffDept),
+            where('issuedAt', '>=', startOfDay)  
         ));
         if (tSnap.empty) { showToast('Ticket not found: ' + tNum, 'error'); return; }
         const snap  = tSnap.docs[0];
