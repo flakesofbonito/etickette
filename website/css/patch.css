@@ -1,0 +1,115 @@
+:root {
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-lg:   18px;
+  --text-xl:   24px;
+}
+
+body { line-height: 1.6; }
+
+.dept-card,
+.home-notice-card,
+.queue-item,
+.history-item,
+.tracking-card,
+.action-card,
+.active-res-banner,
+.position-card,
+.progress-card,
+.how-it-works,
+.notif-card {
+  box-shadow: none;
+}
+
+.modal       { box-shadow: 0 24px 60px rgba(15,23,42,.18); }
+.serving-panel,
+.dept-panel  { box-shadow: 0 2px 12px rgba(15,23,42,.06); }
+
+.dept-card,
+.home-notice-card,
+.queue-item,
+.history-item,
+.active-res-banner,
+.docs-box,
+.ticket-wrap { border-radius: var(--radius-md); }
+
+.login-input,
+.modal-input,
+.kiosk-input,
+.tool-input,
+.pin-input,
+.gate-input  { border-radius: var(--radius-sm); }
+
+.dept-card:hover {
+  box-shadow: none;
+  border-color: var(--slate-300);
+  transform: none;
+}
+
+.queue-item::before,
+.home-notice-card::before,
+.stat-card::before,
+.history-item::before,
+.action-card::before,
+.position-card::before,
+.progress-card::before,
+.how-it-works::before,
+.notif-card::before { display: none; }
+
+.stats-grid .stat-card {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--slate-200);
+  border-radius: 0;
+  padding: 8px 16px;
+  box-shadow: none;
+}
+.stats-grid .stat-card:last-child { border-right: none; }
+
+.home-notice-row { display: none; }
+
+.status-strip { display: none; }
+
+.screen {
+  height: calc(100vh - var(--header-h));
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .screen { height: calc(100vh - var(--header-h)); }
+}
+
+.pos-divider { display: none; }
+
+.position-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  overflow: hidden; 
+}
+
+.pos-half:first-child {
+  background: var(--slate-50);
+  border-right: 1px solid var(--slate-200);
+}
+
+.dept-status.open   { background: transparent; border-color: transparent; color: var(--green-700); }
+.dept-status.break  { background: transparent; border-color: transparent; color: var(--orange-600); }
+.dept-status.closed { background: transparent; border-color: transparent; color: var(--red-600); }
+
+#cashierMonStatus,
+#registrarMonStatus { background: rgba(22,163,74,.08); }
+#cashierMonStatus.break,
+#registrarMonStatus.break  { background: rgba(234,88,12,.08); }
+#cashierMonStatus.closed,
+#registrarMonStatus.closed { background: rgba(220,38,38,.08); }
+
+.page-card         { padding: var(--space-lg); }
+.home-notice-card  { padding: var(--space-md); }
+.dept-card-inner   { padding: var(--space-md) var(--space-md) 0; }
+
+.tool-row button { min-width: 0; }
