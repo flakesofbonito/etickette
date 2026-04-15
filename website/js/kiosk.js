@@ -20,6 +20,7 @@ let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
 let allQuotaFull = false;
 let scanProcessing = false;
+let currentFacingMode = 'environment';
 
 export function initKiosk() {
     window.goScreen            = goScreen;
@@ -148,6 +149,7 @@ function goScreen(name) {
     const current = document.querySelector('.screen.active');
     if (current && current.id === 'screen-scan' && name !== 'scan') {
         stopScanner();
+        currentFacingMode = 'environment';
     }
     if (name === 'home' || name === 'usertype') {
         selectedReason = null;
@@ -563,21 +565,27 @@ function startScanner() {
     setScanStatus('Starting camera…');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    scannerActive = false;
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        setScanStatus('Camera requires a secure connection. Open this page via the laptop (localhost) or ask staff to enable HTTPS.');
-    } else {
-        setScanStatus('Camera not supported on this browser. Try Chrome or Safari.');
+        scannerActive = false;
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            setScanStatus('Camera requires a secure connection. Open this page via the laptop (localhost) or ask staff to enable HTTPS.');
+        } else {
+            setScanStatus('Camera not supported on this browser. Try Chrome or Safari.');
+        }
+        return;
     }
-    return;
-}
 
-    const constraints = [
-        { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: 'environment' } },
-        { video: true }
-    ];
+    const constraints = currentFacingMode === 'environment'
+        ? [
+            { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+            { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+            { video: { facingMode: 'environment' } },
+            { video: true }
+        ]
+        : [
+            { video: { facingMode: { exact: 'user' } } },
+            { video: { facingMode: 'user' } },
+            { video: true }
+        ];
 
     async function tryGetUserMedia(list) {
         for (const c of list) {
@@ -606,9 +614,29 @@ function startScanner() {
 
             video.srcObject = stream;
 
+            let lastTapTime = 0;
+            const DOUBLE_TAP_MS = 350;
+
+            function handleFlipGesture() {
+                const now = Date.now();
+                if (now - lastTapTime < DOUBLE_TAP_MS) {
+                    lastTapTime = 0;
+                    flipCamera();
+                } else {
+                    lastTapTime = now;
+                }
+            }
+
+            const scanBox = document.querySelector('#screen-scan .scan-box');
+            if (scanBox) {
+                scanBox.addEventListener('dblclick',  flipCamera,          { once: true });
+                scanBox.addEventListener('touchend',  handleFlipGesture,   { passive: true });
+            }
+
             const onReady = () => {
                 video.play().catch(() => {});
-                setScanStatus('Ready — point camera at QR code');
+                const camLabel = currentFacingMode === 'user' ? 'Front cam' : 'Back cam';
+                setScanStatus(`Ready — ${camLabel} · Double-tap to flip`);
 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -682,6 +710,12 @@ function stopScanner() {
 
     const container = document.getElementById('qr-reader');
     if (container) container.innerHTML = '';
+}
+
+function flipCamera() {
+    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+    stopScanner();
+    setTimeout(() => startScanner(), 200); 
 }
 
 async function onScanSuccess(decoded) {
