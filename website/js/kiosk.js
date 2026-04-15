@@ -20,7 +20,8 @@ let deptStatusLabel = { cashier: 'open', registrar: 'open' };
 let deptAvgWait     = { cashier: 0, registrar: 0 };
 let allQuotaFull = false;
 let scanProcessing = false;
-let currentFacingMode = 'environment';
+let availableCameras = [];
+let currentCameraIndex = 0;
 
 export function initKiosk() {
     window.goScreen            = goScreen;
@@ -558,7 +559,7 @@ function showTicketScreen(tNum, firestoreId, userId, ahead) {
 let scannerActive = false;
 let rawStream = null;
 
-function startScanner() {
+async function startScanner() {
     if (scannerActive) return;
     scannerActive = true;
     scanProcessing = false;
@@ -566,126 +567,104 @@ function startScanner() {
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         scannerActive = false;
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-            setScanStatus('Camera requires a secure connection. Open this page via the laptop (localhost) or ask staff to enable HTTPS.');
-        } else {
-            setScanStatus('Camera not supported on this browser. Try Chrome or Safari.');
-        }
+        setScanStatus(location.protocol !== 'https:' && location.hostname !== 'localhost'
+            ? 'Camera requires HTTPS. Open via the laptop or enable HTTPS.'
+            : 'Camera not supported. Try Chrome or Safari.');
         return;
     }
 
-    const constraints = currentFacingMode === 'environment'
-        ? [
-            { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-            { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-            { video: { facingMode: 'environment' } },
-            { video: true }
-        ]
-        : [
-            { video: { facingMode: { exact: 'user' } } },
-            { video: { facingMode: 'user' } },
-            { video: true }
-        ];
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cams = devices.filter(d => d.kind === 'videoinput');
 
-    async function tryGetUserMedia(list) {
-        for (const c of list) {
-            try { return await navigator.mediaDevices.getUserMedia(c); } catch (_) {}
+        if (cams.length === 0) throw Object.assign(new Error(), { name: 'NotFoundError' });
+
+        if (currentCameraIndex >= cams.length) currentCameraIndex = 0;
+        availableCameras = cams;
+
+        const preferred = cams[currentCameraIndex];
+        const constraints = preferred.deviceId
+            ? { video: { deviceId: { exact: preferred.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } } }
+            : { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (!scannerActive) { stream.getTracks().forEach(t => t.stop()); return; }
+
+        rawStream = stream;
+
+        const container = document.getElementById('qr-reader');
+        container.innerHTML = '';
+
+        const video = document.createElement('video');
+        video.id = 'qr-video';
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.playsInline = true;
+        video.muted = true;
+        video.autoplay = true;
+        container.appendChild(video);
+        video.srcObject = stream;
+
+        let lastTapTime = 0;
+        const DOUBLE_TAP_MS = 350;
+        function handleFlipGesture() {
+            const now = Date.now();
+            if (now - lastTapTime < DOUBLE_TAP_MS) { lastTapTime = 0; cycleCamera(); }
+            else lastTapTime = now;
         }
-        throw new Error('No camera accessible');
-    }
+        const scanBox = document.querySelector('#screen-scan .scan-box');
+        if (scanBox) {
+            scanBox.addEventListener('dblclick', cycleCamera, { once: true });
+            scanBox.addEventListener('touchend', handleFlipGesture, { passive: true });
+        }
 
-    tryGetUserMedia(constraints)
-        .then(stream => {
-            if (!scannerActive) { stream.getTracks().forEach(t => t.stop()); return; }
+        attachHiddenLongPress();
 
-            rawStream = stream;
+        const onReady = () => {
+            video.play().catch(() => {});
+            setScanStatus(`Ready to scan QR`);
 
-            const container = document.getElementById('qr-reader');
-            container.innerHTML = '';
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            let lastScan = 0;
 
-            const video = document.createElement('video');
-            video.id = 'qr-video';
-            video.setAttribute('playsinline', 'true');
-            video.setAttribute('webkit-playsinline', 'true');
-            video.playsInline = true;
-            video.muted = true;
-            video.autoplay = true;
-            container.appendChild(video);
-
-            video.srcObject = stream;
-
-            let lastTapTime = 0;
-            const DOUBLE_TAP_MS = 350;
-
-            function handleFlipGesture() {
-                const now = Date.now();
-                if (now - lastTapTime < DOUBLE_TAP_MS) {
-                    lastTapTime = 0;
-                    flipCamera();
-                } else {
-                    lastTapTime = now;
-                }
-            }
-
-            const scanBox = document.querySelector('#screen-scan .scan-box');
-            if (scanBox) {
-                scanBox.addEventListener('dblclick',  flipCamera,          { once: true });
-                scanBox.addEventListener('touchend',  handleFlipGesture,   { passive: true });
-            }
-
-            const onReady = () => {
-                video.play().catch(() => {});
-                const camLabel = currentFacingMode === 'user' ? 'Front cam' : 'Back cam';
-                setScanStatus(`Ready — ${camLabel} · Double-tap to flip`);
-
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                let lastScan = 0;
-
-                function scan(ts) {
-                    if (!scannerActive) return;
-                    window._scanAnim = requestAnimationFrame(scan);
-                    if (ts - lastScan < 200) return;
-                    lastScan = ts;
-                    if (video.readyState < video.HAVE_ENOUGH_DATA) return;
-                    if (!video.videoWidth || !video.videoHeight) return;
-
-                    canvas.width  = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: 'dontInvert'
-                    });
-
-                    if (code && code.data && !scanProcessing) {
-                        scanProcessing = true;
-                        onScanSuccess(code.data);
-                    }
-                }
+            function scan(ts) {
+                if (!scannerActive) return;
                 window._scanAnim = requestAnimationFrame(scan);
-            };
+                if (ts - lastScan < 200) return;
+                lastScan = ts;
+                if (video.readyState < video.HAVE_ENOUGH_DATA) return;
+                if (!video.videoWidth || !video.videoHeight) return;
 
-            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-                onReady();
-            } else {
-                video.onloadedmetadata = onReady;
-                video.oncanplay = onReady;
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+                if (code && code.data && !scanProcessing) {
+                    scanProcessing = true;
+                    onScanSuccess(code.data);
+                }
             }
-        })
-        .catch(e => {
-            scannerActive = false;
-            if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                setScanStatus('Camera permission denied. Please allow camera access in your browser settings and try again.');
-            } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-                setScanStatus('No camera found on this device.');
-            } else if (e.name === 'NotReadableError') {
-                setScanStatus('Camera is in use by another app. Please close it and try again.');
-            } else {
-                setScanStatus('Camera error: ' + e.message);
-            }
-        });
+            window._scanAnim = requestAnimationFrame(scan);
+        };
+
+        if (video.readyState >= video.HAVE_ENOUGH_DATA) onReady();
+        else { video.onloadedmetadata = onReady; video.oncanplay = onReady; }
+
+    } catch (e) {
+        scannerActive = false;
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
+            setScanStatus('Camera permission denied. Allow access in browser settings.');
+        else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError')
+            setScanStatus('No camera found. Connect a camera and try again.');
+        else if (e.name === 'NotReadableError')
+            setScanStatus('Camera is in use by another app. Close it and try again.');
+        else
+            setScanStatus('Camera error: ' + e.message);
+    }
 }
 
 function stopScanner() {
@@ -712,10 +691,62 @@ function stopScanner() {
     if (container) container.innerHTML = '';
 }
 
-function flipCamera() {
-    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+function cycleCamera() {
+    if (availableCameras.length <= 1) {
+        setScanStatus('Only one camera detected.');
+        return;
+    }
+    currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
     stopScanner();
-    setTimeout(() => startScanner(), 200); 
+    setTimeout(() => startScanner(), 200);
+}
+
+function attachHiddenLongPress() {
+    const el = document.getElementById('scanStatus');
+    if (!el || el._longPressAttached) return;
+    el._longPressAttached = true;
+
+    let pressTimer = null;
+    let pressIndicator = null;
+
+    function startPress(e) {
+        if (availableCameras.length <= 1) return;
+        pressTimer = setTimeout(() => {
+            pressTimer = null;
+            if (pressIndicator) { pressIndicator.remove(); pressIndicator = null; }
+            cycleCamera();
+        }, 2000);
+
+        pressIndicator = document.createElement('div');
+        pressIndicator.style.cssText = `
+            position:fixed; pointer-events:none; z-index:9999;
+            width:48px; height:48px; border-radius:50%;
+            border:2px solid rgba(255,255,255,0.5);
+            animation:pressRing 2s linear forwards;
+        `;
+        if (!document.getElementById('_pressKeyframes')) {
+            const s = document.createElement('style');
+            s.id = '_pressKeyframes';
+            s.textContent = `@keyframes pressRing { from{transform:scale(1);opacity:0.6} to{transform:scale(0.2);opacity:0} }`;
+            document.head.appendChild(s);
+        }
+        const rect = el.getBoundingClientRect();
+        pressIndicator.style.left = (rect.left + rect.width / 2 - 24) + 'px';
+        pressIndicator.style.top  = (rect.top  + rect.height / 2 - 24) + 'px';
+        document.body.appendChild(pressIndicator);
+    }
+
+    function cancelPress() {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+        if (pressIndicator) { pressIndicator.remove(); pressIndicator = null; }
+    }
+
+    el.addEventListener('mousedown',  startPress);
+    el.addEventListener('touchstart', startPress, { passive: true });
+    el.addEventListener('mouseup',    cancelPress);
+    el.addEventListener('mouseleave', cancelPress);
+    el.addEventListener('touchend',   cancelPress);
+    el.addEventListener('touchcancel',cancelPress);
 }
 
 async function onScanSuccess(decoded) {
