@@ -22,6 +22,7 @@ let allQuotaFull = false;
 let scanProcessing = false;
 let availableCameras = [];
 let currentCameraIndex = 0;
+let currentFacingMode = 'environment';
 
 export function initKiosk() {
     window.goScreen            = goScreen;
