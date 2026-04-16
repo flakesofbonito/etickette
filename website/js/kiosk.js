@@ -605,20 +605,25 @@ async function startScanner() {
         container.appendChild(video);
         video.srcObject = stream;
 
-        let lastTapTime = 0;
-        const DOUBLE_TAP_MS = 350;
-        function handleFlipGesture() {
-            const now = Date.now();
-            if (now - lastTapTime < DOUBLE_TAP_MS) { lastTapTime = 0; cycleCamera(); }
-            else lastTapTime = now;
-        }
         const scanBox = document.querySelector('#screen-scan .scan-box');
         if (scanBox) {
-            scanBox.addEventListener('dblclick', cycleCamera, { once: true });
-            scanBox.addEventListener('touchend', handleFlipGesture, { passive: true });
-        }
 
-        attachHiddenLongPress();
+            scanBox.addEventListener('dblclick', () => {
+                if (availableCameras.length > 1) cycleCamera();
+            });
+
+            let _lastTap = 0;
+            scanBox.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - _lastTap < 350 && availableCameras.length > 1) {
+                    _lastTap = 0;
+                    e.preventDefault(); 
+                    cycleCamera();
+                } else {
+                    _lastTap = now;
+                }
+            }, { passive: false });
+        }
 
         const onReady = () => {
             video.play().catch(() => {});
