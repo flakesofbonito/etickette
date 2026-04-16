@@ -707,54 +707,6 @@ function cycleCamera() {
     setTimeout(() => startScanner(), 200);
 }
 
-function attachHiddenLongPress() {
-    const el = document.getElementById('scanStatus');
-    if (!el || el._longPressAttached) return;
-    el._longPressAttached = true;
-
-    let pressTimer = null;
-    let pressIndicator = null;
-
-    function startPress(e) {
-        if (availableCameras.length <= 1) return;
-        pressTimer = setTimeout(() => {
-            pressTimer = null;
-            if (pressIndicator) { pressIndicator.remove(); pressIndicator = null; }
-            cycleCamera();
-        }, 2000);
-
-        pressIndicator = document.createElement('div');
-        pressIndicator.style.cssText = `
-            position:fixed; pointer-events:none; z-index:9999;
-            width:48px; height:48px; border-radius:50%;
-            border:2px solid rgba(255,255,255,0.5);
-            animation:pressRing 2s linear forwards;
-        `;
-        if (!document.getElementById('_pressKeyframes')) {
-            const s = document.createElement('style');
-            s.id = '_pressKeyframes';
-            s.textContent = `@keyframes pressRing { from{transform:scale(1);opacity:0.6} to{transform:scale(0.2);opacity:0} }`;
-            document.head.appendChild(s);
-        }
-        const rect = el.getBoundingClientRect();
-        pressIndicator.style.left = (rect.left + rect.width / 2 - 24) + 'px';
-        pressIndicator.style.top  = (rect.top  + rect.height / 2 - 24) + 'px';
-        document.body.appendChild(pressIndicator);
-    }
-
-    function cancelPress() {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-        if (pressIndicator) { pressIndicator.remove(); pressIndicator = null; }
-    }
-
-    el.addEventListener('mousedown',  startPress);
-    el.addEventListener('touchstart', startPress, { passive: true });
-    el.addEventListener('mouseup',    cancelPress);
-    el.addEventListener('mouseleave', cancelPress);
-    el.addEventListener('touchend',   cancelPress);
-    el.addEventListener('touchcancel',cancelPress);
-}
-
 async function onScanSuccess(decoded) {
     stopScanner();
     setScanStatus('QR scanned! Verifying…');
