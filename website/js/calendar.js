@@ -63,7 +63,7 @@ export function initCalendar() {
 
             var thisDate = new Date(calState.year, calState.month, d);
             var dateStr = toDateStr(calState.year, calState.month, d);
-            var isWeekend = thisDate.getDay() === 0 || thisDate.getDay() === 6;
+            var isWeekend = thisDate.getDay() === 0;
             var phHour = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })).getHours();
             var isTodayPastCutoff = thisDate.toDateString() === today.toDateString() && phHour >= 20;
 

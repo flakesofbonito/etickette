@@ -729,8 +729,8 @@ async function submitReserveDate() {
 
     const [_y, _m, _d] = dateVal.split('-').map(Number);
     const pickedDay = new Date(_y, _m - 1, _d).getDay();
-    if (pickedDay === 0 || pickedDay === 6) {
-        errEl.textContent = 'Reservations are not available on weekends.';
+    if (pickedDay === 0) {
+        errEl.textContent = 'Reservations are not available on Sundays.';
         resetBtn(); return;
     }
     const todayStrPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
