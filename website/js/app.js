@@ -325,9 +325,37 @@ function updateReserveButton(dept) {
     const btn = document.getElementById(dept + 'Btn');
     if (!btn) return;
 
+    const card = btn.closest('.dept-card');
+    const existingNotice = card?.querySelector('.active-ticket-notice');
+    if (existingNotice) existingNotice.remove();
+
     if (hasActiveReservation) {
-        btn.disabled            = true;
-        btn.title               = 'Cancel your current reservation first.';
+        btn.disabled = true;
+        btn.textContent = 'You already have an active ticket';
+        btn.style.background    = 'rgba(37,99,235,.08)';
+        btn.style.color         = 'var(--blue-800)';
+        btn.style.border        = '2px solid var(--blue-100)';
+        btn.style.pointerEvents = 'none';
+        btn.style.fontWeight    = '700';
+
+        if (card && !card.querySelector('.active-ticket-notice')) {
+            const notice = document.createElement('div');
+            notice.className = 'active-ticket-notice';
+            notice.style.cssText = `
+                display:flex; align-items:center; gap:8px;
+                margin: 0 14px 10px;
+                padding: 9px 14px;
+                background: var(--blue-50);
+                border: 1.5px solid var(--blue-100);
+                border-radius: var(--radius-sm);
+                font-size: 12px; font-weight: 600;
+                color: var(--blue-800); line-height: 1.5;
+            `;
+            notice.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span>You have an active ticket. Go to <strong style="cursor:pointer;text-decoration:underline;" onclick="navigate('history')">My Ticket</strong> to view or cancel it.</span>`;
+            btn.before(notice);
+        }
         return;
     }
 
@@ -371,7 +399,37 @@ function listenToActiveReservation() {
             });
             if (activeDoc) {
                 _hasActiveRes = true;
-                renderActiveResBanner(activeDoc.data(), activeDoc.id);
+                const resData = activeDoc.data();
+
+                if (_modalOpen && resData.status === 'active' && resData.ticketNumber) {
+                    const qrEl = document.getElementById('reserveQR');
+                    const hintEl = document.querySelector('#rstep4 .qr-hint');
+                    const warnEl = document.querySelector('#rstep4 [style*="blue-50"]');
+                    if (qrEl) {
+                        qrEl.innerHTML = `
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0;">
+                                <div style="width:64px;height:64px;border-radius:50%;background:var(--green-100);display:flex;align-items:center;justify-content:center;">
+                                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                                <div style="font-size:22px;font-weight:900;color:var(--blue-800);letter-spacing:-1px;">${resData.ticketNumber}</div>
+                                <div style="font-size:13px;font-weight:700;color:var(--green-600);">QR Scanned — You're in the Queue!</div>
+                                <div style="font-size:12px;color:var(--slate-500);text-align:center;line-height:1.6;">Your ticket has been issued at the <strong>${resData.department.toUpperCase()}</strong> kiosk.<br/>Watch the lobby monitor for your number.</div>
+                            </div>`;
+                    }
+                    if (hintEl) hintEl.style.display = 'none';
+                    if (warnEl) warnEl.style.display = 'none';
+
+                    const trackUrl = `${PUBLIC_URL}/tracker/?t=${encodeURIComponent(resData.ticketId || resData.ticketNumber)}&d=${encodeURIComponent(resData.department)}`;
+                    const doneBtn = document.querySelector('#rstep4 .btn-primary');
+                    if (doneBtn) {
+                        doneBtn.insertAdjacentHTML('beforebegin', `
+                            <a href="${trackUrl}" target="_blank" class="btn-primary" style="text-decoration:none;margin-bottom:8px;background:var(--green-600);">
+                                Track My Queue →
+                            </a>`);
+                    }
+                }
+
+                renderActiveResBanner(resData, activeDoc.id);
             } else {
                 _hasActiveRes = false;
                 const banner = document.getElementById('activeResBanner');

@@ -307,7 +307,13 @@
         <div class="ticket-wrap">
             <div class="ticket-left">
                 <div class="ticket-school">STI COLLEGE FAIRVIEW</div>
-                <div style="font-size:12px; font-weight:700; color:var(--green-600); background:var(--green-100); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:10px;">✓ Reservation Activated!</div>
+                <div style="margin-bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+                    <div style="font-size:14px;font-weight:800;color:var(--green-600);background:var(--green-100);padding:8px 18px;border-radius:30px;display:inline-flex;align-items:center;gap:8px;border:1.5px solid rgba(22,163,74,.3);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Reservation Activated — You're in the Queue!
+                    </div>
+                    <p style="font-size:12px;color:var(--slate-500);font-weight:500;padding:0 4px;line-height:1.5;">Your QR code was verified. The ticket number below is your queue number — watch the lobby monitor for your turn.</p>
+                </div>
                 <div class="ticket-dept" id="scanDept">REGISTRAR</div>
                 <div class="ticket-number" id="scanNumber">R-01</div>
                 <div class="ticket-details">
