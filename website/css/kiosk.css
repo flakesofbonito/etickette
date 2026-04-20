@@ -413,7 +413,7 @@ input, textarea {
 .t-row span { color: var(--slate-500); }
 .t-row strong { color: var(--blue-800); font-weight: 700; text-align: right; }
 .qr-placeholder {
-    background: var(--white); 
+    background: #ffffff !important;
     border: 1px solid var(--slate-200);
     border-radius: var(--radius-sm);
     padding: 16px;
@@ -422,12 +422,17 @@ input, textarea {
     align-items: center;
     justify-content: center;
     min-height: 200px;
+    color-scheme: light;
 }
 .qr-grid {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
+    background: #ffffff !important;
+    padding: 8px;
+    border-radius: 6px;
+    color-scheme: light;
 }
 .qr-grid canvas {
     display: block !important;

@@ -491,7 +491,7 @@ function renderQR(el, text, size) {
     el.innerHTML = '';
     new QRCode(el, {
         text: text, width: size, height: size,
-        colorDark: '#1f3c88', colorLight: '#ffffff',
+        colorDark: '#000000', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
     });
 

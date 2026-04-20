@@ -723,7 +723,7 @@ function showTicketScreen(tNum, firestoreId, userId, ahead) {
         qrEl.replaceChildren();
         new QRCode(qrEl, {
             text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + selectedDept,
-            width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
+            width: 110, height: 110, colorDark: '#000000', colorLight: '#ffffff'
         });
     }
     goScreen('ticket');
@@ -991,7 +991,7 @@ async function onScanSuccess(decoded) {
             scanQREl.replaceChildren();
             new QRCode(scanQREl, {
                 text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + dept,
-                width: 110, height: 110, colorDark: '#1f3c88', colorLight: '#ffffff'
+                width: 110, height: 110, colorDark: '#000000', colorLight: '#ffffff'
             });
         }
         goScreen('scan-success');
