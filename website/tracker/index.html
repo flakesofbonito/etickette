@@ -17,15 +17,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="eTickette" />
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-        appId: "b174f4d4-bf89-4f13-a5fd-55ef3b720515",
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window._oneSignalReady = false;
+
+        window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "b174f4d4-bf89-4f13-a5fd-55ef3b720515",
+                serviceWorkerPath: "/OneSignalSDKWorker.js",
+                notifyButton: { enable: false },
+            });
+            window._oneSignalReady = true;
+            window.dispatchEvent(new Event('onesignal-ready'));
+            console.log('[OneSignal] Ready');
         });
-    });
     </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" async></script>
   </head>
   <body>
     <div class="tracker-wrap">
