@@ -20,13 +20,16 @@
     <script>
     (async () => {
         if (!('serviceWorker' in navigator)) return;
+        const CLEANUP_KEY = 'sw-cleanup-v2';
+        if (localStorage.getItem(CLEANUP_KEY)) return; 
         try {
             const regs = await navigator.serviceWorker.getRegistrations();
             for (const reg of regs) {
                 const url = reg.active?.scriptURL || reg.installing?.scriptURL || '';
-                if (url.includes('OneSignal')) await reg.update();
+                if (url.includes('OneSignalSDKWorker')) await reg.unregister();
             }
-        } catch(e) {}
+            localStorage.setItem(CLEANUP_KEY, '1');
+        } catch(e) { console.warn('[SW cleanup]', e); }
     })();
     </script>
     <script>

@@ -1,3 +1,4 @@
+// v2 - 2026-04-20
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => {
     event.waitUntil(
