@@ -32,12 +32,18 @@
     <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-            appId: "b174f4d4-bf89-4f13-a5fd-55ef3b720515",
-            serviceWorkerPath: "/OneSignalSDKWorker.js",
-            serviceWorkerParam: { scope: "/" },  
-            notifyButton: { enable: false },
-        });
+        try {
+            await OneSignal.init({
+                appId: "b174f4d4-bf89-4f13-a5fd-55ef3b720515",
+                serviceWorkerPath: "/OneSignalSDKWorker.js",
+                serviceWorkerParam: { scope: "/" },
+                notifyButton: { enable: false },
+            });
+            window._oneSignalReady = true;
+            window.dispatchEvent(new Event('onesignal-ready'));
+        } catch (e) {
+            console.warn('[OneSignal] Push service unavailable:', e.message);
+        }
     });
     </script>
 </head>
