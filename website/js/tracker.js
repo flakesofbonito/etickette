@@ -269,50 +269,46 @@ async function requestNotification() {
     await waitForOneSignal();
 
     try {
-        if (window._oneSignalReady && window.OneSignal?.Notifications) {
-            const permission = await OneSignal.Notifications.requestPermission();
+      if (window._oneSignalReady && window.OneSignal?.Notifications) {
+          let permission;
+          try {
+              permission = await OneSignal.Notifications.requestPermission();
+          } catch (swErr) {
+              console.warn('[OneSignal] SW push failed, using native:', swErr.message);
+              permission = false;
+          }
 
-            if (!permission) {
-                btn.textContent = 'Denied';
-                btn.classList.add('denied');
-                if (notifText) notifText.textContent = 'Blocked — enable in browser settings.';
-                btn.disabled = false;
-                return;
-            }
+          if (permission) {
+              await OneSignal.User.addTag('ticketId', ticketNum);
+              await OneSignal.User.addTag('dept', myDept);
+              notifGranted = true;
+              btn.textContent = 'Enabled';
+              btn.classList.add('done');
+              btn.disabled = false;
+              card?.classList.add('granted');
+              if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
+              return;  
+          }
+      }
 
-            await OneSignal.User.addTag('ticketId', ticketNum);
-            await OneSignal.User.addTag('dept', myDept);
-
-            notifGranted = true;
-            btn.textContent = 'Enabled';
-            btn.classList.add('done');
-            btn.disabled = false;
-            card?.classList.add('granted');
-            if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
-
-        } else {
-            console.warn('[Notifications] OneSignal unavailable, using native API');
-            const permission = await Notification.requestPermission();
-
-            if (permission === 'granted') {
-                notifGranted = true;
-                btn.textContent = 'Enabled';
-                btn.classList.add('done');
-                btn.disabled = false;
-                card?.classList.add('granted');
-                if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open.';
-
-                new Notification('Notifications enabled!', {
-                    body: 'You will be alerted when ticket ' + ticketNum + ' is called.',
-                    icon: 'https://etickette.web.app/assets/logo.png'
-                });
-            } else {
-                btn.textContent = 'Denied';
-                btn.classList.add('denied');
-                btn.disabled = false;
-                if (notifText) notifText.textContent = 'Permission denied — enable in site settings.';
-            }
-        }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+          notifGranted = true;
+          btn.textContent = 'Enabled';
+          btn.classList.add('done');
+          btn.disabled = false;
+          card?.classList.add('granted');
+          if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open.';
+          new Notification('Notifications enabled!', {
+              body: 'You will be alerted when ticket ' + ticketNum + ' is called.',
+              icon: 'https://etickette.web.app/assets/logo.png'
+          });
+      } else {
+          btn.textContent = 'Denied';
+          btn.classList.add('denied');
+          btn.disabled = false;
+          if (notifText) notifText.textContent = 'Permission denied — enable in site settings.';
+      }
     } catch (e) {
         console.error('[requestNotification]', e);
         btn.textContent = 'Try Again';
