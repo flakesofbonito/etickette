@@ -352,12 +352,13 @@ function pulseIcon() {
   setTimeout(() => el.classList.remove('ping'), 600);
 }
 
-if ('Notification' in window && Notification.permission === 'granted') {
-  notifGranted = true;
-  const btn = document.getElementById('btnNotif');
-  if (btn) {
-    btn.textContent = 'Enabled';
-    btn.classList.add('done');
-  }
-  document.getElementById('notifCard')?.classList.add('granted');
-}
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+    const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
+    if (isSubscribed) {
+        notifGranted = true;
+        const btn = document.getElementById('btnNotif');
+        if (btn) { btn.textContent = 'Enabled'; btn.classList.add('done'); }
+        document.getElementById('notifCard')?.classList.add('granted');
+    }
+});
