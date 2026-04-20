@@ -443,6 +443,8 @@ window.addEventListener('onesignal-ready', async () => {
     try {
         const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
         if (isSubscribed) {
+            await OneSignal.User.addTag('ticketId', ticketNum);
+            await OneSignal.User.addTag('dept', myDept);
             notifGranted = true;
             const btn      = document.getElementById('btnNotif');
             const card     = document.getElementById('notifCard');
