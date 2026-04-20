@@ -246,15 +246,36 @@ async function requestNotification() {
     const card      = document.getElementById('notifCard');
     const notifText = card?.querySelector('.notif-text span');
 
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-        try {
+    if (!btn) return;
+
+    btn.textContent = 'Loading...';
+    btn.disabled = true;
+
+    if (!('Notification' in window)) {
+        btn.textContent = 'Not Supported';
+        btn.classList.add('denied');
+        if (notifText) notifText.textContent = 'Your browser does not support notifications.';
+        btn.disabled = false;
+        return;
+    }
+
+    if (Notification.permission === 'denied') {
+        btn.textContent = 'Blocked';
+        btn.classList.add('denied');
+        if (notifText) notifText.textContent = 'Notifications are blocked — go to browser Settings and allow this site.';
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        if (window.OneSignal && typeof OneSignal.Notifications?.requestPermission === 'function') {
             const permission = await OneSignal.Notifications.requestPermission();
 
             if (!permission) {
                 btn.textContent = 'Denied';
                 btn.classList.add('denied');
                 if (notifText) notifText.textContent = 'Blocked — enable in browser settings.';
+                btn.disabled = false;
                 return;
             }
 
@@ -264,16 +285,41 @@ async function requestNotification() {
             notifGranted = true;
             btn.textContent = 'Enabled';
             btn.classList.add('done');
+            btn.disabled = false;
             card?.classList.add('granted');
-            if (notifText) notifText.textContent = "You'll be notified even with this tab closed.";
+            if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
 
-        } catch(e) {
-            console.error('[OneSignal]', e);
-            btn.textContent = 'Failed';
-            btn.classList.add('denied');
-            if (notifText) notifText.textContent = 'Could not enable — try refreshing.';
+        } else {
+            console.warn('[Notifications] OneSignal not ready, using native API');
+
+            const permission = await Notification.requestPermission();
+
+            if (permission === 'granted') {
+                notifGranted = true;
+                btn.textContent = 'Enabled';
+                btn.classList.add('done');
+                btn.disabled = false;
+                card?.classList.add('granted');
+                if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open to receive alerts.';
+
+                new Notification('Notifications enabled!', {
+                    body: 'You will be alerted when ticket ' + ticketNum + ' is called.',
+                    icon: 'https://etickette.web.app/assets/logo.png'
+                });
+
+            } else {
+                btn.textContent = 'Denied';
+                btn.classList.add('denied');
+                btn.disabled = false;
+                if (notifText) notifText.textContent = 'Permission denied. Enable in browser site settings.';
+            }
         }
-    });
+    } catch (e) {
+        console.error('[requestNotification error]', e);
+        btn.textContent = 'Try Again';
+        btn.disabled = false;
+        if (notifText) notifText.textContent = 'Something went wrong. Tap to retry.';
+    }
 }
 
 
@@ -352,13 +398,30 @@ function pulseIcon() {
   setTimeout(() => el.classList.remove('ping'), 600);
 }
 
+const btn = document.getElementById('btnNotif');
+if (btn) {
+    btn.addEventListener('click', requestNotification);
+}
+
+window.requestNotification = requestNotification;
+
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
-    const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
-    if (isSubscribed) {
-        notifGranted = true;
-        const btn = document.getElementById('btnNotif');
-        if (btn) { btn.textContent = 'Enabled'; btn.classList.add('done'); }
-        document.getElementById('notifCard')?.classList.add('granted');
+    try {
+        const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
+        if (isSubscribed) {
+            notifGranted = true;
+            const btn = document.getElementById('btnNotif');
+            const card = document.getElementById('notifCard');
+            const notifText = card?.querySelector('.notif-text span');
+            if (btn) {
+                btn.textContent = 'Enabled';
+                btn.classList.add('done');
+            }
+            card?.classList.add('granted');
+            if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
+        }
+    } catch (e) {
+        console.warn('[OneSignal load check]', e.message);
     }
 });

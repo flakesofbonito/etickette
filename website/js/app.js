@@ -49,7 +49,7 @@ export function initWebsite() {
     const loginIdEl = document.getElementById('loginId');
     if (loginIdEl && !loginIdEl.value) loginIdEl.value = '02000';
 
-    const saved = sessionStorage.getItem('studentId');
+    const saved = localStorage.getItem('studentId');
     if (saved) {
         currentStudentId = saved;
         afterLogin();
@@ -135,9 +135,9 @@ function loginStudent() {
     }
     currentStudentId   = userId;
     currentDisplayName = displayName;
-    sessionStorage.setItem('studentId',   userId);
-    sessionStorage.setItem('displayName', displayName);
-    sessionStorage.setItem('userType',    currentUserType);
+    localStorage.setItem('studentId',   userId);
+    localStorage.setItem('displayName', displayName);
+    localStorage.setItem('userType',    currentUserType);
 
     document.getElementById('loginOverlay').classList.add('dismissed');
     document.getElementById('appShell').classList.remove('locked');
@@ -147,8 +147,8 @@ function loginStudent() {
 }
 
 function afterLogin() {
-    currentDisplayName = sessionStorage.getItem('displayName') || currentStudentId;
-    currentUserType    = sessionStorage.getItem('userType')    || 'student';
+    currentDisplayName = localStorage.getItem('displayName') || currentStudentId;
+    currentUserType    = localStorage.getItem('userType')    || 'student';
 
     document.getElementById('userDisplay').style.display = 'flex';
     document.getElementById('userLabel').textContent = currentDisplayName;
@@ -174,9 +174,9 @@ function logout() {
     _unsubs.forEach(u => u());
     _unsubs = [];
     _lastHistoryFetch = 0;
-    sessionStorage.removeItem('studentId');
-    sessionStorage.removeItem('displayName');
-    sessionStorage.removeItem('userType');
+    localStorage.removeItem('studentId');
+    localStorage.removeItem('displayName');
+    localStorage.removeItem('userType');
     currentDisplayName   = null;
     currentUserType      = 'student';
     currentStudentId     = null;
