@@ -275,7 +275,6 @@ async function requestNotification() {
               permission = await OneSignal.Notifications.requestPermission();
           } catch (swErr) {
               console.warn('[OneSignal] SW push failed, using native:', swErr.message);
-              permission = false;
           }
 
           if (permission) {
