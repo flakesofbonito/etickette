@@ -520,3 +520,31 @@ input, textarea {
   .qr-placeholder { min-height: unset; border: none; background: transparent; padding: 0; width: 100%; }
   .countdown-bar { max-width: 760px; }
 }
+
+.reason-search-wrap {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--slate-100);
+  z-index: 2;
+}
+
+.reason-search-input {
+  width: 100%;
+  padding: clamp(10px, 1.5vh, 14px) 14px;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  font-size: clamp(13px, 2vw, 15px);
+  font-family: var(--font);
+  color: var(--slate-700);
+  background: var(--slate-50);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.reason-search-input:focus {
+  border-color: var(--blue-600);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}

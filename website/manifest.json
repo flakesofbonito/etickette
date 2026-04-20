@@ -1,0 +1,13 @@
+{
+    "name": "eTickette — STI Fairview",
+    "short_name": "eTickette",
+    "description": "Virtual queue tracker for STI College Fairview",
+    "start_url": "/tracker/",
+    "display": "standalone",
+    "background_color": "#1f3c88",
+    "theme_color": "#1f3c88",
+    "icons": [
+    { "src": "/assets/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/logo.png", "sizes": "512x512", "type": "image/png" }
+    ]
+}

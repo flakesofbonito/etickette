@@ -43,6 +43,13 @@ export function initKiosk() {
     window.numpadPress     = numpadPress;
     window.numpadBackspace = numpadBackspace;
     window.numpadClear     = numpadClear;
+    window.cancelNumpad      = cancelNumpad;
+    window.cancelNumpadBack  = cancelNumpadBack;
+    window.cancelNumpadClear = cancelNumpadClear;
+    window.lookupCancelTicket  = lookupCancelTicket;
+    window.confirmCancelTicket = confirmCancelTicket;
+    window.resetCancelScreen   = resetCancelScreen;
+    window.filterReasons       = filterReasons;
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -261,12 +268,12 @@ function closeReasonDropdownOutside(e) {
 
 
 function buildReasonList() {
-    selectedReason = null; 
-
+    selectedReason = null;
     const trigger = document.getElementById('reasonTriggerText');
     if (trigger) trigger.textContent = '— Please Select a Reason —';
     const arrow = document.getElementById('reasonArrow');
     if (arrow) arrow.textContent = '▼';
+    window._reasonItems = [];
 
     const list = document.getElementById('reasonDropdownList');
     if (!list) return;
@@ -276,27 +283,54 @@ function buildReasonList() {
     const deptLbl = document.getElementById('reasonDeptLabel');
     if (deptLbl) deptLbl.textContent = selectedDept.toUpperCase();
 
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'reason-search-wrap';
+    searchWrap.innerHTML = `<input type="text" class="reason-search-input" placeholder="🔍  Search reasons…" oninput="filterReasons(this.value)" autocomplete="off" />`;
+    list.appendChild(searchWrap);
+
     (REASONS[selectedDept] || []).forEach((r, i) => {
         if (r.category) {
             const header = document.createElement('div');
             header.className = 'reason-category-header';
             header.textContent = r.category;
             list.appendChild(header);
+            window._reasonItems.push({ el: header, isCategory: true, text: r.category.toLowerCase() });
             return;
         }
         const btn = document.createElement('button');
         btn.className   = 'reason-item';
         btn.textContent = r.label;
-        btn.onclick     = () => {
+        btn.onclick = () => {
             selectReason(i);
             list.classList.add('hidden');
             if (arrow) arrow.textContent = '▼';
         };
         list.appendChild(btn);
+        window._reasonItems.push({ el: btn, isCategory: false, text: r.label.toLowerCase() });
     });
 
     const errEl = document.getElementById('reasonError');
     if (errEl) errEl.textContent = '';
+}
+
+function filterReasons(q) {
+    if (!window._reasonItems) return;
+    const term = q.toLowerCase().trim();
+    window._reasonItems.forEach(item => {
+        if (item.isCategory) { item.el.style.display = ''; return; }
+        item.el.style.display = (!term || item.text.includes(term)) ? '' : 'none';
+    });
+    if (term) {
+        window._reasonItems.filter(i => i.isCategory).forEach(cat => {
+            let sib = cat.el.nextElementSibling;
+            let anyVisible = false;
+            while (sib && !sib.classList.contains('reason-category-header') && !sib.classList.contains('reason-search-wrap')) {
+                if (sib.style.display !== 'none') anyVisible = true;
+                sib = sib.nextElementSibling;
+            }
+            cat.el.style.display = anyVisible ? '' : 'none';
+        });
+    }
 }
 
 function numpadPress(digit) {
@@ -516,6 +550,157 @@ async function issueTicket(userId) {
             return;
         }
         showToast('Error issuing ticket. Please try again.', 'error');
+    }
+}
+
+let _cancelTarget = null;
+
+function cancelNumpad(d) {
+    const inp = document.getElementById('cancelIdInput');
+    if (!inp || inp.value.length >= 11) return;
+    inp.value += d;
+    document.getElementById('cancelError').textContent = '';
+}
+function cancelNumpadBack() {
+    const inp = document.getElementById('cancelIdInput');
+    if (inp) inp.value = inp.value.slice(0, -1);
+}
+function cancelNumpadClear() {
+    const inp = document.getElementById('cancelIdInput');
+    if (inp) inp.value = '';
+    document.getElementById('cancelError').textContent = '';
+}
+
+function resetCancelScreen() {
+    const inp = document.getElementById('cancelIdInput');
+    if (inp) inp.value = '';
+    const errEl = document.getElementById('cancelError');
+    if (errEl) errEl.textContent = '';
+    const result = document.getElementById('cancelResult');
+    if (result) result.style.display = 'none';
+    const form = document.getElementById('cancelIdForm');
+    if (form) form.style.display = 'flex';
+    _cancelTarget = null;
+}
+
+async function lookupCancelTicket() {
+    const val   = (document.getElementById('cancelIdInput')?.value || '').trim();
+    const errEl = document.getElementById('cancelError');
+    if (!/^\d{11}$/.test(val)) { errEl.textContent = 'Please enter a valid 11-digit ID.'; return; }
+
+    errEl.textContent = 'Looking up…';
+    _cancelTarget = null;
+
+    try {
+        const [ticketSnap, resSnap] = await Promise.all([
+            getDocs(query(collection(db, 'tickets'),
+                where('userId', '==', val),
+                where('status', 'in', ['waiting', 'serving', 'hold']))),
+            getDocs(query(collection(db, 'reservations'),
+                where('studentId', '==', val),
+                where('status', 'in', ['pending', 'active'])))
+        ]);
+
+        if (ticketSnap.empty && resSnap.empty) {
+            errEl.textContent = 'No active ticket found for this ID.';
+            return;
+        }
+        errEl.textContent = '';
+
+        const infoEl = document.getElementById('cancelTicketInfo');
+        if (!ticketSnap.empty) {
+            const t = ticketSnap.docs[0].data();
+            _cancelTarget = { type: 'ticket', id: ticketSnap.docs[0].id, data: t };
+            infoEl.innerHTML = `
+                <p style="font-size:22px;font-weight:900;color:var(--blue-800);margin-bottom:10px;">${t.ticketNumber} — ${t.department.toUpperCase()}</p>
+                <p style="font-size:14px;color:var(--slate-600);margin-bottom:6px;"><strong>Reason:</strong> ${t.reason}</p>
+                <p style="font-size:14px;color:var(--slate-600);">
+                  <strong>Status:</strong>
+                  ${t.status === 'serving'
+                    ? '<span style="color:var(--green-600);font-weight:700;">Currently Being Served</span>'
+                    : t.status === 'hold'
+                    ? '<span style="color:var(--orange-600);font-weight:700;">On Hold</span>'
+                    : 'Waiting in Queue'}
+                </p>
+                ${t.status === 'serving'
+                    ? '<p style="font-size:12px;color:var(--red-600);margin-top:10px;font-weight:700;">⚠ You are currently being called. Cancel anyway?</p>'
+                    : ''}`;
+        } else {
+            const r = resSnap.docs[0].data();
+            _cancelTarget = { type: 'reservation', id: resSnap.docs[0].id, data: r };
+            infoEl.innerHTML = `
+                <p style="font-size:22px;font-weight:900;color:var(--blue-800);margin-bottom:10px;">${r.department.toUpperCase()} Reservation</p>
+                <p style="font-size:14px;color:var(--slate-600);margin-bottom:6px;"><strong>Reason:</strong> ${r.reason}</p>
+                <p style="font-size:14px;color:var(--slate-600);"><strong>Date:</strong> ${r.reservationDate}</p>`;
+        }
+
+        document.getElementById('cancelIdForm').style.display = 'none';
+        document.getElementById('cancelResult').style.display = 'block';
+
+    } catch (e) {
+        errEl.textContent = 'Error looking up ticket. Try again.';
+    }
+}
+
+async function confirmCancelTicket() {
+    if (!_cancelTarget) return;
+    try {
+        if (_cancelTarget.type === 'ticket') {
+            const t  = _cancelTarget.data;
+            const st = t.status;
+            await updateDoc(doc(db, 'tickets', _cancelTarget.id), {
+                status: 'cancelled', cancelledAt: serverTimestamp()
+            });
+            if (st === 'waiting' || st === 'serving' || st === 'hold') {
+                await updateDoc(doc(db, 'departments', t.department), {
+                    queue: increment(-1),
+                    ...(st === 'serving' ? { nowServing: '' } : {})
+                });
+                await updateDoc(doc(db, 'system', 'settings'), {
+                    ticketsIssued: increment(-1),
+                    [t.department + 'Issued']: increment(-1)
+                });
+            }
+            if (t.isReservation && t.reservationId) {
+                try {
+                    await updateDoc(doc(db, 'reservations', t.reservationId), {
+                        status: 'cancelled', cancelledAt: serverTimestamp()
+                    });
+                } catch (_) {}
+            }
+        } else {
+            const r = _cancelTarget.data;
+            await updateDoc(doc(db, 'reservations', _cancelTarget.id), {
+                status: 'cancelled', cancelledAt: serverTimestamp()
+            });
+            if (r.ticketId) {
+                try {
+                    const tSnap = await getDoc(doc(db, 'tickets', r.ticketId));
+                    if (tSnap.exists()) {
+                        const tData = tSnap.data();
+                        const st    = tData.status;
+                        await updateDoc(doc(db, 'tickets', r.ticketId), {
+                            status: 'cancelled', cancelledAt: serverTimestamp()
+                        });
+                        if (st === 'waiting' || st === 'serving' || st === 'hold') {
+                            await updateDoc(doc(db, 'departments', r.department), {
+                                queue: increment(-1),
+                                ...(st === 'serving' ? { nowServing: '' } : {})
+                            });
+                            await updateDoc(doc(db, 'system', 'settings'), {
+                                ticketsIssued: increment(-1),
+                                [r.department + 'Issued']: increment(-1)
+                            });
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
+        _cancelTarget = null;
+        showToast('Ticket cancelled successfully.', 'success');
+        setTimeout(() => goScreen('home'), 1800);
+    } catch (e) {
+        showToast('Could not cancel. Please ask staff for help.', 'error');
     }
 }
 

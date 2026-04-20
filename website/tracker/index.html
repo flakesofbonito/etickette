@@ -12,6 +12,11 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1f3c88" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="eTickette" />
   </head>
   <body>
     <div class="tracker-wrap">
@@ -118,6 +123,11 @@
                 </div>
               </div>
 
+              <div class="ahead-card hidden" id="aheadCard">
+                <div class="ahead-label">Tickets Ahead of You</div>
+                <div class="ahead-list" id="aheadList"></div>
+              </div>
+
               <div class="progress-card">
                 <div class="prog-label">Queue Progress</div>
                 <div class="prog-bar-wrap">
@@ -206,6 +216,12 @@
                 }
             }, 3000);
         });
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
     </script>
 
     <script type="module" src="../js/tracker.js"></script>

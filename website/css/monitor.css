@@ -693,3 +693,43 @@ body {
 .now-serving-number.flashing {
   animation: numFlash .8s ease forwards;
 }
+
+.dept-avg-wait {
+  font-size: 14px;
+  color: var(--slate-400);
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.quota-bar-wrap {
+  padding: 10px 20px 16px;
+  border-top: 1px solid var(--slate-100);
+  margin-top: 0;
+}
+
+.quota-bar-track {
+  height: 8px;
+  background: var(--slate-100);
+  border-radius: 30px;
+  overflow: hidden;
+  border: 1px solid var(--slate-200);
+  margin-bottom: 6px;
+}
+
+.quota-bar-fill {
+  height: 100%;
+  border-radius: 30px;
+  background: linear-gradient(90deg, var(--blue-800), var(--gold-400));
+  transition: width 1s ease, background 1s ease;
+}
+
+.quota-bar-stats {
+  font-size: 13px;
+  color: var(--slate-400);
+  font-weight: 600;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .quota-bar-wrap { padding: 8px 16px 14px; }
+}

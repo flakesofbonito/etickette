@@ -56,6 +56,10 @@ function listenToDept(dept) {
         const m = map[st] || map.open;
         el.textContent = m.t;
         el.className   = 'dept-status ' + m.c;
+
+        const avg    = d.avgWaitSeconds || 0;
+        const avgEl  = document.getElementById(dept + 'AvgWait');
+        if (avgEl) avgEl.textContent = avg ? '~' + Math.ceil(avg / 60) + ' min avg' : '';
     });
 }
 
@@ -120,6 +124,23 @@ function listenToSettings() {
         const rRem = Math.max(0, rQ - rI);
         document.getElementById('footerQuota').textContent =
             'C: ' + cRem + '/' + cQ + '  ·  R: ' + rRem + '/' + rQ;
+
+        [['cashier', cI, cQ], ['registrar', rI, rQ]].forEach(([dept, issued, quota]) => {
+            const pct = quota > 0 ? Math.min(100, Math.round(issued / quota * 100)) : 0;
+            const bar      = document.getElementById(dept + 'QuotaBar');
+            const issuedEl = document.getElementById(dept + 'QuotaIssued');
+            const maxEl    = document.getElementById(dept + 'QuotaMax');
+            if (bar)      bar.style.width         = pct + '%';
+            if (issuedEl) issuedEl.textContent    = issued;
+            if (maxEl)    maxEl.textContent        = quota;
+            if (bar) {
+                bar.style.background = pct >= 90
+                    ? 'var(--red-600)'
+                    : pct >= 70
+                    ? 'var(--orange-600)'
+                    : 'linear-gradient(90deg, var(--blue-800), var(--gold-400))';
+            }
+        });
 
         const msg        = d.statusMessage || '';
         const ticker     = document.getElementById('monitorTicker');

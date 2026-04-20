@@ -218,6 +218,34 @@ html, body {
 }
 .btn-noshow svg { width: 14px; height: 14px; stroke: var(--red-600); }
 .btn-noshow:hover:not(:disabled) { background: var(--red-100); }
+.btn-hold {
+  width: 100%; padding: 9px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--gold-50); color: var(--gold-700);
+  border: 1.5px solid var(--gold-400); border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font);
+  transition: all .18s;
+}
+.btn-hold svg { width: 13px; height: 13px; stroke: var(--gold-700); fill: none; stroke-width: 2.2; }
+.btn-hold:hover:not(:disabled) { background: var(--gold-100); }
+.btn-hold.held {
+  background: var(--orange-100); color: var(--orange-600);
+  border-color: var(--orange-600);
+}
+.btn-hold.held svg { stroke: var(--orange-600); }
+.btn-hold:disabled { opacity: .4; cursor: not-allowed; }
+
+@media (pointer: coarse) {
+  .queue-item { position: relative; overflow: hidden; will-change: transform; }
+  .queue-item::after {
+    content: '← No-Show · Complete →';
+    position: absolute;
+    bottom: 5px; right: 10px;
+    font-size: 9px; color: var(--slate-300);
+    letter-spacing: .3px; pointer-events: none;
+    font-weight: 600;
+  }
+}
 .btn-complete:disabled, .btn-noshow:disabled { opacity: .4; cursor: not-allowed; }
 .btn-call-next {
   width: 100%; padding: 14px;

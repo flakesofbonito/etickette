@@ -34,6 +34,7 @@ window.dailyReset         = dailyReset;
 window.setDailyQuota = setDailyQuota;
 window.setStatusMessage   = setStatusMessage;
 window.clearStatusMessage = clearStatusMessage;
+window.holdTicket = holdTicket;
 window.exportCSV          = exportCSV;
 window.toggleActivity = function() {
     const log = document.getElementById('activityLog');
@@ -225,7 +226,7 @@ function listenToQueue() {
   const q = query(
       collection(db, 'tickets'),
       where('department', '==', staffDept),
-      where('status', 'in', ['waiting', 'serving'])
+      where('status', 'in', ['waiting', 'serving', 'hold'])
   );
   unsubQueue = onSnapshot(q, snap => {
     const all     = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -298,8 +299,9 @@ function renderQueue(waiting) {
     el.innerHTML = '';
     waiting.forEach((t, i) => {
         const item = document.createElement('div');
-        item.className = 'queue-item';
+        item.className = 'queue-item' + (t.status === 'hold' ? ' hold-item' : '');
         const tag  = t.isReservation ? '<span class="queue-tag reservation">Reservation</span>' : '<span class="queue-tag walkin">Walk-in</span>';
+        const holdBadge = t.status === 'hold' ? '<span class="queue-tag" style="background:var(--orange-100);color:var(--orange-600);border-color:var(--orange-600);">ON HOLD</span>' : '';
         const time = t.issuedAt?.toDate ? t.issuedAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—';
 
         let docsHtml = '';
@@ -318,8 +320,68 @@ function renderQueue(waiting) {
                 ${docsHtml}
                 <div class="q-time">Issued: ${time}</div>
             </div>
-            ${tag}
+            ${tag}${holdBadge}
             <div class="queue-pos">#${i + 1}</div>`;
+
+        let swipeStartX = 0, swipeStartY = 0, swiping = false;
+
+        item.addEventListener('touchstart', e => {
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+            swiping = false;
+            item.style.transition = 'none';
+        }, { passive: true });
+
+        item.addEventListener('touchmove', e => {
+            const dx = e.touches[0].clientX - swipeStartX;
+            const dy = Math.abs(e.touches[0].clientY - swipeStartY);
+            if (!swiping && dy > Math.abs(dx)) return;
+            swiping = true;
+            const clamped = Math.max(-82, Math.min(82, dx));
+            item.style.transform = `translateX(${clamped}px)`;
+            if (dx > 0) {
+                item.style.borderColor = `rgba(22,163,74,${Math.min(dx/82,.7)})`;
+                item.style.background  = `rgba(22,163,74,${Math.min(dx/82,.1)})`;
+            } else {
+                item.style.borderColor = `rgba(220,38,38,${Math.min(Math.abs(dx)/82,.7)})`;
+                item.style.background  = `rgba(220,38,38,${Math.min(Math.abs(dx)/82,.1)})`;
+            }
+        }, { passive: true });
+
+        item.addEventListener('touchend', async e => {
+            if (!swiping) return;
+            const dx = e.changedTouches[0].clientX - swipeStartX;
+            item.style.transition = 'transform .25s ease, border-color .25s, background .25s';
+            item.style.transform  = '';
+            item.style.borderColor = '';
+            item.style.background  = '';
+
+            if (dx > 72) {
+                const ok = await showConfirmDialog(`Mark ${t.ticketNumber} as completed?`, 'Complete', 'Cancel');
+                if (!ok) return;
+                try {
+                    await updateDoc(doc(db,'tickets',t.id), { status:'completed', completedAt:serverTimestamp() });
+                    await updateDoc(doc(db,'departments',staffDept), { queue:increment(-1) });
+                    servedToday++;
+                    document.getElementById('statServed').textContent = servedToday;
+                    const sc = document.getElementById('servedCount');
+                    if (sc) sc.textContent = servedToday;
+                    addActivity('completed', t.ticketNumber, t.displayName||t.userId||'—');
+                } catch(_) { showToast('Could not update ticket.','error'); }
+
+            } else if (dx < -72) {
+                const ok = await showConfirmDialog(`Mark ${t.ticketNumber} as no-show?`, 'No-Show', 'Cancel');
+                if (!ok) return;
+                try {
+                    await updateDoc(doc(db,'tickets',t.id), { status:'noshow', completedAt:serverTimestamp() });
+                    await updateDoc(doc(db,'departments',staffDept), { queue:increment(-1) });
+                    noShowToday++;
+                    document.getElementById('statNoShow').textContent = noShowToday;
+                    addActivity('noshow', t.ticketNumber, t.displayName||t.userId||'—');
+                } catch(_) { showToast('Could not update ticket.','error'); }
+            }
+        }, { passive: true });
+
         el.appendChild(item);
     });
 }
@@ -331,6 +393,19 @@ function renderServing(ticket, isNew = true) {
   document.getElementById('servingType').textContent   = ticket.isReservation ? 'Reservation' : 'Walk-in';
   document.getElementById('btnComplete').disabled      = false;
   document.getElementById('btnNoshow').disabled        = false;
+
+  const holdBtn   = document.getElementById('btnHold');
+  const holdLabel = document.getElementById('btnHoldLabel');
+  if (holdBtn) {
+    holdBtn.disabled = false;
+    const isHeld = ticket.status === 'hold';
+    holdBtn.classList.toggle('held', isHeld);
+    if (holdLabel) holdLabel.textContent = isHeld ? 'Resume (Remove Hold)' : 'Put on Hold';
+    holdBtn.querySelector('svg').innerHTML = isHeld
+      ? '<polygon points="5 3 19 12 5 21 5 3"/>'
+      : '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  }
+
   if (isNew && !serveStartTime) { serveStartTime = Date.now(); startTimer(); }
 }
 
@@ -339,11 +414,18 @@ function clearServing() {
     document.getElementById(id).textContent = '—');
   document.getElementById('btnComplete').disabled     = true;
   document.getElementById('btnNoshow').disabled       = true;
+  const holdBtn = document.getElementById('btnHold');
+  if (holdBtn) {
+    holdBtn.disabled = true;
+    holdBtn.classList.remove('held');
+    const holdLabel = document.getElementById('btnHoldLabel');
+    if (holdLabel) holdLabel.textContent = 'Put on Hold';
+  }
   document.getElementById('servingTimer').textContent = '00:00';
   document.getElementById('servingTimer').className   = 'serving-timer';
   serveStartTime = null;
   clearInterval(timerInterval);
-  clearTimeout(noShowTimer); 
+  clearTimeout(noShowTimer);
 }
 
 function startTimer() {
@@ -512,6 +594,26 @@ async function noShowTicket() {
         }
     }, 1000);
 }
+
+async function holdTicket() {
+  if (!currentTicket) return;
+  const isHeld = currentTicket.status === 'hold';
+  try {
+    await updateDoc(doc(db, 'tickets', currentTicket.id), {
+      status: isHeld ? 'serving' : 'hold'
+    });
+    showToast(isHeld ? 'Ticket resumed.' : 'Ticket put on hold.', 'info');
+    if (!isHeld) {
+      clearInterval(timerInterval);
+      clearTimeout(noShowTimer);
+    } else {
+      startTimer();
+    }
+  } catch (e) {
+    showToast('Could not update hold status.', 'error');
+  }
+}
+
 
 async function finishServing(ticket, status) {
   try {

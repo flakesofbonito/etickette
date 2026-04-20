@@ -101,6 +101,13 @@ function checkAndShowState(ticket) {
       triggerNotification(ticket.ticketNumber);
       playAlertSound();
       pulseIcon();
+      const numEl = document.getElementById('tcNumber');
+      if (numEl) {
+        numEl.classList.remove('flash');
+        void numEl.offsetWidth;
+        numEl.classList.add('flash');
+        setTimeout(() => numEl.classList.remove('flash'), 950);
+      }
     }
   } else {
     statusCard.classList.remove('serving');
@@ -137,12 +144,12 @@ function updatePositionInfo(all) {
     .filter(t => t.status === 'waiting')
     .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 
-  const serving  = all.find(t => t.status === 'serving');
+  const serving   = all.find(t => t.status === 'serving');
   const completed = all.filter(t => t.status === 'completed' || t.status === 'noshow').length;
   const total     = all.filter(t => t.status !== 'cancelled').length;
 
-  const iAmServing = serving && (serving.ticketId === ticketNum || serving.ticketNumber === ticketNum);
-  const myPos      = waitingOnly.findIndex(t => t.ticketId === ticketNum || t.ticketNumber === ticketNum);
+  const iAmServing = serving && (serving.ticketId === ticketNum || serving.ticketNumber === ticketNum || serving.id === ticketNum);
+  const myPos      = waitingOnly.findIndex(t => t.ticketId === ticketNum || t.ticketNumber === ticketNum || t.id === ticketNum);
 
   let posDisplay, aheadText, estWait;
 
@@ -168,33 +175,70 @@ function updatePositionInfo(all) {
 
   const etaEl = document.getElementById('estClockTime');
   if (etaEl) {
-      if (typeof estWait === 'number' && estWait > 0) {
-          const eta = new Date(Date.now() + estWait * 60 * 1000);
-          etaEl.textContent = 'Around ' + eta.toLocaleTimeString('en-PH', {
-              hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Manila'
-          });
-          etaEl.style.display = '';
-      } else if (estWait === '<1') {
-          etaEl.textContent = 'Any moment now';
-          etaEl.style.display = '';
-      } else {
-          etaEl.style.display = 'none';
-      }
+    if (typeof estWait === 'number' && estWait > 0) {
+      const eta = new Date(Date.now() + estWait * 60 * 1000);
+      etaEl.textContent = 'Around ' + eta.toLocaleTimeString('en-PH', {
+        hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Manila'
+      });
+      etaEl.style.display = '';
+    } else if (estWait === '<1') {
+      etaEl.textContent = 'Any moment now';
+      etaEl.style.display = '';
+    } else {
+      etaEl.style.display = 'none';
+    }
   }
 
   if (myPos === 1 && !earlyWarnFired && lastStatus !== 'serving') {
-      const now = Date.now();
-      if (now - earlyWarnTime > EARLY_WARN_COOLDOWN_MS) {
-          earlyWarnFired = true;
-          earlyWarnTime = now;
-          triggerEarlyWarning();
-      }
+    const now = Date.now();
+    if (now - earlyWarnTime > EARLY_WARN_COOLDOWN_MS) {
+      earlyWarnFired = true;
+      earlyWarnTime = now;
+      triggerEarlyWarning();
+    }
   }
 
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  document.getElementById('progBar').style.width        = pct + '%';
-  document.getElementById('progServed').textContent     = completed + ' served';
-  document.getElementById('progTotal').textContent      = total + ' total';
+  document.getElementById('progBar').style.width    = pct + '%';
+  document.getElementById('progServed').textContent = completed + ' served';
+  document.getElementById('progTotal').textContent  = total + ' total';
+
+  const aheadCard = document.getElementById('aheadCard');
+  const aheadList = document.getElementById('aheadList');
+  if (aheadCard && aheadList) {
+    if (iAmServing || myPos <= 0) {
+      aheadCard.classList.add('hidden');
+    } else {
+      aheadCard.classList.remove('hidden');
+      const beforeMe = waitingOnly.slice(0, myPos);
+      const toShow   = beforeMe.slice(-3);
+      let html = '';
+
+      if (serving) {
+        html += `<div class="ahead-item">
+          <span class="ahead-badge now">NOW</span>
+          <span class="ahead-num">${serving.ticketNumber}</span>
+          <span class="ahead-meta">Being served</span>
+        </div>`;
+      }
+      if (beforeMe.length > 3) {
+        html += `<div class="ahead-ellipsis">· · · ${beforeMe.length - 3} more ahead · · ·</div>`;
+      }
+      toShow.forEach((t, i) => {
+        const pos = myPos - toShow.length + i + 1;
+        html += `<div class="ahead-item">
+          <span class="ahead-badge pos">#${pos}</span>
+          <span class="ahead-num">${t.ticketNumber}</span>
+        </div>`;
+      });
+      html += `<div class="ahead-item ahead-mine-row">
+        <span class="ahead-badge mine">YOU</span>
+        <span class="ahead-num">${myTicket?.ticketNumber || '—'}</span>
+        <span class="ahead-meta">Your ticket</span>
+      </div>`;
+      aheadList.innerHTML = html;
+    }
+  }
 }
 
 async function requestNotification() {

@@ -142,13 +142,13 @@
                     <span>Scan your QR code</span>
                 </div>
             </div>
-            <div class="action-card">
+            <div class="action-card" onclick="goScreen('cancel'); resetCancelScreen()">
                 <div class="ac-icon">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="9" x2="15" y2="15" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
                 <div class="ac-text">
-                    <strong>Need Help?</strong>
-                    <span>Call a staff member</span>
+                    <strong>Cancel My Ticket</strong>
+                    <span>Remove yourself from queue</span>
                 </div>
             </div>
         </div>
@@ -361,5 +361,49 @@
     });
     </script>
 
+    <div class="screen" id="screen-cancel">
+        <button class="back-btn" onclick="goScreen('home')">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back
+        </button>
+        <div class="screen-title">Cancel My Ticket</div>
+        <div class="screen-sub">Enter your Student or Employee ID</div>
+
+        <div class="id-form" id="cancelIdForm">
+            <input type="text" id="cancelIdInput" class="kiosk-input" placeholder="e.g. 02000385394"
+                inputmode="none" maxlength="11" readonly />
+            <div class="numpad">
+                <div class="np-key" onclick="cancelNumpad('1')">1</div>
+                <div class="np-key" onclick="cancelNumpad('2')">2</div>
+                <div class="np-key" onclick="cancelNumpad('3')">3</div>
+                <div class="np-key" onclick="cancelNumpad('4')">4</div>
+                <div class="np-key" onclick="cancelNumpad('5')">5</div>
+                <div class="np-key" onclick="cancelNumpad('6')">6</div>
+                <div class="np-key" onclick="cancelNumpad('7')">7</div>
+                <div class="np-key" onclick="cancelNumpad('8')">8</div>
+                <div class="np-key" onclick="cancelNumpad('9')">9</div>
+                <div class="np-key key-clr" onclick="cancelNumpadClear()">CLR</div>
+                <div class="np-key key-zero" onclick="cancelNumpad('0')">0</div>
+                <div class="np-key key-del" onclick="cancelNumpadBack()">⌫</div>
+            </div>
+            <p id="cancelError" class="kiosk-error"></p>
+            <button class="btn-primary kiosk-submit-btn" onclick="lookupCancelTicket()">Find My Ticket →</button>
+        </div>
+
+        <div id="cancelResult" style="display:none; width:100%; max-width:480px; margin-top:8px;">
+            <div class="docs-box" id="cancelTicketInfo" style="margin-bottom:14px;"></div>
+            <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+                <button class="btn-danger kiosk-cancel-btn"
+                    style="background:var(--red-600);color:white;border-color:var(--red-600);font-size:15px;padding:16px;"
+                    onclick="confirmCancelTicket()">
+                    Yes, Cancel My Ticket
+                </button>
+                <button class="btn-primary"
+                    style="background:var(--slate-100);color:var(--slate-700);border:1px solid var(--slate-200);"
+                    onclick="goScreen('home')">
+                    Keep My Ticket — Go Back
+                </button>
+            </div>
+        </div>
+    </div>
     </body>
 </html>
