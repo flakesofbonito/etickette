@@ -285,7 +285,7 @@ function buildReasonList() {
 
     const searchWrap = document.createElement('div');
     searchWrap.className = 'reason-search-wrap';
-    searchWrap.innerHTML = `<input type="text" class="reason-search-input" placeholder="🔍  Search reasons…" oninput="filterReasons(this.value)" autocomplete="off" />`;
+    searchWrap.innerHTML = `<input type="text" class="reason-search-input" placeholder="Search reasons…" oninput="filterReasons(this.value)" autocomplete="off" />`;
     list.appendChild(searchWrap);
 
     (REASONS[selectedDept] || []).forEach((r, i) => {
