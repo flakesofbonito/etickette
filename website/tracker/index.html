@@ -18,6 +18,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="eTickette" />
     <script>
+    (async () => {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) {
+                const url = reg.active?.scriptURL || reg.installing?.scriptURL || '';
+                if (url.includes('OneSignal')) await reg.update();
+            }
+        } catch(e) {}
+    })();
+    </script>
+    <script>
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window._oneSignalReady = false;
 

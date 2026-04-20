@@ -259,12 +259,25 @@ async function requestNotification() {
     }
 
     if (Notification.permission === 'denied') {
-        btn.textContent = 'Blocked';
-        btn.classList.add('denied');
-        if (notifText) notifText.textContent = 'Notifications blocked — allow in browser settings then refresh.';
-        btn.disabled = false;
-        return;
-    }
+      btn.textContent = 'Unblock Notifications';
+      btn.classList.add('denied');
+      btn.disabled = false;
+
+      const isChrome  = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+      const isFirefox = /Firefox/.test(navigator.userAgent);
+      const isSafari  = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+
+      let instructions = '';
+      if (isChrome)  instructions = 'Click the 🔒 lock icon in the address bar → Notifications → Allow → Reload';
+      if (isFirefox) instructions = 'Click the shield icon in the address bar → Permissions → Allow Notifications → Reload';
+      if (isSafari)  instructions = 'Safari → Settings for This Website → Notifications → Allow → Reload';
+      if (!instructions) instructions = 'Go to browser site settings → Notifications → Allow → Reload';
+
+      if (notifText) notifText.textContent = instructions;
+
+      btn.onclick = () => location.reload();
+      return;
+  }
 
     await waitForOneSignal();
 
