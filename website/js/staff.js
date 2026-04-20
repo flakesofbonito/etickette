@@ -232,7 +232,7 @@ function listenToQueue() {
     const all     = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const waiting = all.filter(t => t.status === 'waiting')
       .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
-    const serving = all.find(t => t.status === 'serving');
+    const serving = all.find(t => t.status === 'serving' || t.status === 'hold');
 
     renderQueue(waiting);
     updateStats(waiting);

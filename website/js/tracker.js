@@ -76,6 +76,17 @@ function checkAndShowState(ticket) {
 
   showState('active');
 
+  if (status === 'hold') {
+    statusCard.classList.remove('serving');
+    statusIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    label.textContent = 'Temporarily On Hold';
+    sub.textContent   = 'Please wait — the staff will resume shortly';
+    calledBanner.classList.add('hidden');
+    document.getElementById('positionCard').style.opacity = '1';
+    lastStatus = status;
+    return;
+  }
+
   const statusCard = document.getElementById('statusCard');
   const iconWrap   = document.getElementById('statusIconWrap');
   const statusIcon = document.getElementById('statusIcon');
@@ -141,7 +152,7 @@ function renderTicketCard(ticket) {
 
 function updatePositionInfo(all) {
   const waitingOnly = all
-    .filter(t => t.status === 'waiting')
+    .filter(t => t.status === 'waiting' || t.status === 'hold')
     .sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 
   const serving   = all.find(t => t.status === 'serving');
