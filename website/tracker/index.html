@@ -32,7 +32,11 @@
             console.log('[OneSignal] Ready');
         });
     </script>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" async></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" 
+        async 
+        crossorigin="anonymous"
+        onerror="console.error('[OneSignal] SDK failed to load — likely blocked by adblocker or network')">
+    </script>
   </head>
   <body>
     <div class="tracker-wrap">
