@@ -147,6 +147,11 @@ function loginStudent() {
 }
 
 function afterLogin() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) { overlay.classList.add('dismissed'); overlay.style.display = 'none'; }
+    document.getElementById('appShell').classList.remove('locked');
+    document.getElementById('appShell').classList.add('unlocked');
+
     currentDisplayName = localStorage.getItem('displayName') || currentStudentId;
     currentUserType    = localStorage.getItem('userType')    || 'student';
 
