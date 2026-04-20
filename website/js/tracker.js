@@ -75,6 +75,13 @@ function checkAndShowState(ticket) {
   if (status === 'cancelled') { showState('cancelled'); return; }
 
   showState('active');
+  
+  const statusCard = document.getElementById('statusCard');
+  const iconWrap   = document.getElementById('statusIconWrap');
+  const statusIcon = document.getElementById('statusIcon');
+  const label      = document.getElementById('statusLabel');
+  const sub        = document.getElementById('statusSub');
+  const calledBanner = document.getElementById('calledBanner');
 
   if (status === 'hold') {
     statusCard.classList.remove('serving');
@@ -86,13 +93,6 @@ function checkAndShowState(ticket) {
     lastStatus = status;
     return;
   }
-
-  const statusCard = document.getElementById('statusCard');
-  const iconWrap   = document.getElementById('statusIconWrap');
-  const statusIcon = document.getElementById('statusIcon');
-  const label      = document.getElementById('statusLabel');
-  const sub        = document.getElementById('statusSub');
-  const calledBanner = document.getElementById('calledBanner');
 
   if (status === 'serving') {
     statusCard.classList.add('serving');
