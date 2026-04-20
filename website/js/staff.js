@@ -20,6 +20,7 @@ let servedToday    = 0;
 let noShowToday    = 0;
 let unsubQueue     = null;
 let unsubDept      = null;
+let holdElapsed = 0;
 
 window.selectDept         = selectDept;
 window.staffLogin         = staffLogin;
@@ -605,9 +606,12 @@ async function holdTicket() {
     });
     showToast(isHeld ? 'Ticket resumed.' : 'Ticket put on hold.', 'info');
     if (!isHeld) {
+      holdElapsed = serveStartTime ? Math.floor((Date.now() - serveStartTime) / 1000) : 0;
       clearInterval(timerInterval);
       clearTimeout(noShowTimer);
     } else {
+      serveStartTime = Date.now() - (holdElapsed * 1000);
+      holdElapsed = 0;
       startTimer();
     }
   } catch (e) {
