@@ -656,11 +656,13 @@ async function recallTicket() {
         const tSnap = await getDocs(query(
             collection(db, 'tickets'),
             where('ticketNumber', '==', tNum),
-            where('department', '==', staffDept),
-            where('issuedAt', '>=', startOfDay)  
+            where('department', '==', staffDept)
         ));
+        
         if (tSnap.empty) { showToast('Ticket not found: ' + tNum, 'error'); return; }
-        const snap  = tSnap.docs[0];
+
+        const snap  = tSnap.docs
+        .sort((a, b) => (b.data().issuedAt?.toMillis?.() || 0) - (a.data().issuedAt?.toMillis?.() || 0))[0];
         const tData = snap.data();
 
         if (tData.status === 'cancelled') {
