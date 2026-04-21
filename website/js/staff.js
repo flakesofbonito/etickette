@@ -893,7 +893,6 @@ async function exportCSV(mode = 'single') {
             const snap = await getDocs(query(
                 collection(db, 'tickets'),
                 where('department', '==', dept),
-                where('issuedAt', '>=', Timestamp.fromDate(countFrom))
             ));
             const rows = snap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
