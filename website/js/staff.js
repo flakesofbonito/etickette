@@ -500,7 +500,6 @@ async function callNextTicket() {
         called:true
     });
     await updateDoc(doc(db,'departments',staffDept), { nowServing: next.ticketNumber });
-    pushNotifyTicket(next.ticketNumber, staffDept, next.id);
     addActivity('called', next.ticketNumber, next.displayName || next.userId || '—');
     startTimer();
   } catch (e) { console.error('[callNext]', e); }
@@ -725,7 +724,6 @@ async function recallTicket() {
         clearInterval(timerInterval);
         startTimer();
         addActivity('called', tNum, tData.displayName || tData.userId || '—');
-        pushNotifyTicket(tNum, staffDept, snap.id);
         input.value = '';
 
     } catch (e) {
@@ -1044,29 +1042,3 @@ async function exportCSV(mode = 'single') {
     }
 }
 
-const ONESIGNAL_APP_ID   = 'b174f4d4-bf89-4f13-a5fd-55ef3b720515';
-const ONESIGNAL_REST_KEY = 'os_v2_app_wf2pjvf7rfhrhjp5kxxtw4qfcxy7zsoxqyouhbn5oy2wle7wfazogutxh2lzw6h52rm3cory2gqe3x7nenovago6hmr67q4633to5dq';
-
-async function pushNotifyTicket(ticketNumber, dept, ticketId) {
-    try {
-        await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${ONESIGNAL_REST_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                app_id:   ONESIGNAL_APP_ID,
-                filters:  [
-                    { field: 'tag', key: 'ticketId', relation: '=', value: ticketId }
-                ],
-                headings: { en: `It's Your Turn! — ${ticketNumber}` },
-                contents: { en: `Please proceed to the ${dept.toUpperCase()} counter now.` },
-                url: `https://etickette.web.app/tracker/?t=${encodeURIComponent(ticketId)}&d=${dept}`
-            })
-        });
-        console.log('[OneSignal] Push sent for', ticketNumber);
-    } catch(e) {
-        console.warn('[OneSignal push]', e.message);
-    }
-}

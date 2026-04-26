@@ -32,28 +32,6 @@
         } catch(e) { console.warn('[SW cleanup]', e); }
     })();
     </script>
-    <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-            try {
-                await OneSignal.init({
-                    appId: "b174f4d4-bf89-4f13-a5fd-55ef3b720515",
-                    serviceWorkerPath: "/OneSignalSDKWorker.js",
-                    serviceWorkerParam: { scope: "/" },
-                    notifyButton: { enable: false },
-                });
-                window._oneSignalReady = true;
-                window.dispatchEvent(new Event('onesignal-ready'));
-            } catch (e) {
-                console.warn('[OneSignal] Push service unavailable:', e.message);
-            }
-        });
-    </script>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" 
-        async 
-        crossorigin="anonymous"
-        onerror="console.error('[OneSignal] SDK failed to load — likely blocked by adblocker or network')">
-    </script>
   </head>
   <body>
     <div class="tracker-wrap">
@@ -182,9 +160,62 @@
                 </div>
                 <div class="notif-text">
                   <strong>Get notified when called</strong>
-                  <span>We'll alert you when it's your turn</span>
+                  <span>Keep this tab open — we'll alert you when it's your turn</span>
                 </div>
                   <button class="btn-notif" id="btnNotif">Enable Notifications</button>
+              </div>
+
+              <div class="how-it-works" id="iosInstallCard">
+                <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="toggleIosCard()">
+                  <div class="hiw-label" style="margin-bottom:0;display:flex;align-items:center;gap:8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    iPhone / iPad — Add to Home Screen
+                  </div>
+                  <span id="iosCardToggle" style="font-size:12px;color:var(--slate-400);">▼ show</span>
+                </div>
+                <div id="iosCardBody" style="display:none;margin-top:14px;">
+                  <p style="font-size:12px;color:var(--slate-500);margin-bottom:14px;line-height:1.6;">
+                    On iPhone and iPad, notifications only work when this page is installed as a home screen app.
+                    Follow these steps once and you'll receive alerts even when your screen is locked.
+                  </p>
+                  <div class="hiw-steps">
+                    <div class="hiw-step">
+                      <div class="hiw-num">1</div>
+                      <div class="hiw-text">
+                        Open this page in <strong>Safari</strong> (not Chrome or another browser — iOS only supports notifications from Safari PWAs).
+                      </div>
+                    </div>
+                    <div class="hiw-step">
+                      <div class="hiw-num">2</div>
+                      <div class="hiw-text">
+                        Tap the <strong>Share</strong> button at the bottom of the screen
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:2px;"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                        (the box with an arrow pointing up).
+                      </div>
+                    </div>
+                    <div class="hiw-step">
+                      <div class="hiw-num">3</div>
+                      <div class="hiw-text">
+                        Scroll down in the share sheet and tap <strong>"Add to Home Screen"</strong>.
+                      </div>
+                    </div>
+                    <div class="hiw-step">
+                      <div class="hiw-num">4</div>
+                      <div class="hiw-text">
+                        Tap <strong>Add</strong> in the top-right corner. The eTickette icon will appear on your home screen.
+                      </div>
+                    </div>
+                    <div class="hiw-step">
+                      <div class="hiw-num">5</div>
+                      <div class="hiw-text">
+                        <strong>Open the app from your home screen</strong>, then tap <strong>Enable Notifications</strong> above and allow when prompted.
+                      </div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;padding:10px 14px;background:var(--gold-50);border:1px solid var(--gold-400);border-radius:var(--radius-sm);font-size:12px;color:var(--slate-600);line-height:1.6;">
+                    <strong>Note:</strong> If you open this page from the browser tab instead of the home screen icon, notifications won't work on iPhone even after granting permission.
+                  </div>
+                </div>
               </div>
 
               <div class="how-it-works">
@@ -255,6 +286,18 @@
         });
     </script>
 
+    <script>
+    function toggleIosCard() {
+        const body   = document.getElementById('iosCardBody');
+        const toggle = document.getElementById('iosCardToggle');
+        const shown  = body.style.display !== 'none';
+        body.style.display = shown ? 'none' : 'block';
+        toggle.textContent = shown ? '▼ show' : '▲ hide';
+    }
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+        document.addEventListener('DOMContentLoaded', () => toggleIosCard());
+    }
+    </script>
     <script type="module" src="../js/tracker.js"></script>
   </body>
 </html>

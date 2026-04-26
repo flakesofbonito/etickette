@@ -195,18 +195,18 @@
             </div>
             
             <div class="numpad" id="kioskNumpad">
-                <div class="np-key" onclick="numpadPress('1')">1</div>
-                <div class="np-key" onclick="numpadPress('2')">2</div>
-                <div class="np-key" onclick="numpadPress('3')">3</div>
-                <div class="np-key" onclick="numpadPress('4')">4</div>
-                <div class="np-key" onclick="numpadPress('5')">5</div>
-                <div class="np-key" onclick="numpadPress('6')">6</div>
-                <div class="np-key" onclick="numpadPress('7')">7</div>
-                <div class="np-key" onclick="numpadPress('8')">8</div>
-                <div class="np-key" onclick="numpadPress('9')">9</div>
-                <div class="np-key key-clr" onclick="numpadClear()">CLR</div>
-                <div class="np-key key-zero" onclick="numpadPress('0')">0</div>
-                <div class="np-key key-del" onclick="numpadBackspace()">⌫</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('1')" onclick="numpadPress('1')">1</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('2')" onclick="numpadPress('2')">2</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('3')" onclick="numpadPress('3')">3</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('4')" onclick="numpadPress('4')">4</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('5')" onclick="numpadPress('5')">5</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('6')" onclick="numpadPress('6')">6</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('7')" onclick="numpadPress('7')">7</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('8')" onclick="numpadPress('8')">8</div>
+                <div class="np-key" ontouchstart="event.preventDefault();numpadPress('9')" onclick="numpadPress('9')">9</div>
+                <div class="np-key key-clr" ontouchstart="event.preventDefault();numpadClear()" onclick="numpadClear()">CLR</div>
+                <div class="np-key key-zero" ontouchstart="event.preventDefault();numpadPress('0')" onclick="numpadPress('0')">0</div>
+                <div class="np-key key-del" ontouchstart="event.preventDefault();numpadBackspace()" onclick="numpadBackspace()">⌫</div>
             </div>
             
             <p id="idError" class="kiosk-error"></p>
@@ -372,18 +372,18 @@
             <input type="text" id="cancelIdInput" class="kiosk-input" placeholder="e.g. 02000385394"
                 inputmode="none" maxlength="11" readonly />
             <div class="numpad">
-                <div class="np-key" onclick="cancelNumpad('1')">1</div>
-                <div class="np-key" onclick="cancelNumpad('2')">2</div>
-                <div class="np-key" onclick="cancelNumpad('3')">3</div>
-                <div class="np-key" onclick="cancelNumpad('4')">4</div>
-                <div class="np-key" onclick="cancelNumpad('5')">5</div>
-                <div class="np-key" onclick="cancelNumpad('6')">6</div>
-                <div class="np-key" onclick="cancelNumpad('7')">7</div>
-                <div class="np-key" onclick="cancelNumpad('8')">8</div>
-                <div class="np-key" onclick="cancelNumpad('9')">9</div>
-                <div class="np-key key-clr" onclick="cancelNumpadClear()">CLR</div>
-                <div class="np-key key-zero" onclick="cancelNumpad('0')">0</div>
-                <div class="np-key key-del" onclick="cancelNumpadBack()">⌫</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('1')" onclick="cancelNumpad('1')">1</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('2')" onclick="cancelNumpad('2')">2</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('3')" onclick="cancelNumpad('3')">3</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('4')" onclick="cancelNumpad('4')">4</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('5')" onclick="cancelNumpad('5')">5</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('6')" onclick="cancelNumpad('6')">6</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('7')" onclick="cancelNumpad('7')">7</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('8')" onclick="cancelNumpad('8')">8</div>
+                <div class="np-key" ontouchstart="event.preventDefault();cancelNumpad('9')" onclick="cancelNumpad('9')">9</div>
+                <div class="np-key key-clr" ontouchstart="event.preventDefault();cancelNumpadClear()" onclick="cancelNumpadClear()">CLR</div>
+                <div class="np-key key-zero" ontouchstart="event.preventDefault();cancelNumpad('0')" onclick="cancelNumpad('0')">0</div>
+                <div class="np-key key-del" ontouchstart="event.preventDefault();cancelNumpadBack()" onclick="cancelNumpadBack()">⌫</div>
             </div>
             <p id="cancelError" class="kiosk-error"></p>
             <button class="btn-primary kiosk-submit-btn" onclick="lookupCancelTicket()">Find My Ticket →</button>

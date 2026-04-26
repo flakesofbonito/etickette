@@ -270,68 +270,54 @@ async function requestNotification() {
     }
 
     if (Notification.permission === 'denied') {
-      btn.textContent = 'Unblock Notifications';
-      btn.classList.add('denied');
-      btn.disabled = false;
+        btn.textContent = 'Unblock Notifications';
+        btn.classList.add('denied');
+        btn.disabled = false;
 
-      const isChrome  = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
-      const isFirefox = /Firefox/.test(navigator.userAgent);
-      const isSafari  = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        const isChrome  = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+        const isFirefox = /Firefox/.test(navigator.userAgent);
+        const isSafari  = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
-      let instructions = '';
-      if (isChrome)  instructions = 'Click the 🔒 lock icon in the address bar → Notifications → Allow → Reload';
-      if (isFirefox) instructions = 'Click the shield icon in the address bar → Permissions → Allow Notifications → Reload';
-      if (isSafari)  instructions = 'Safari → Settings for This Website → Notifications → Allow → Reload';
-      if (!instructions) instructions = 'Go to browser site settings → Notifications → Allow → Reload';
+        let instructions = '';
+        if (isChrome)  instructions = 'Click the 🔒 lock icon in the address bar → Notifications → Allow → Reload';
+        if (isFirefox) instructions = 'Click the shield icon in the address bar → Permissions → Allow Notifications → Reload';
+        if (isSafari)  instructions = 'Safari → Settings for This Website → Notifications → Allow → Reload';
+        if (!instructions) instructions = 'Go to browser site settings → Notifications → Allow → Reload';
 
-      if (notifText) notifText.textContent = instructions;
+        if (notifText) notifText.textContent = instructions;
+        btn.onclick = () => location.reload();
+        return;
+    }
 
-      btn.onclick = () => location.reload();
-      return;
-  }
-
-    await waitForOneSignal();
+    if (Notification.permission === 'granted') {
+        notifGranted = true;
+        btn.textContent = 'Enabled';
+        btn.classList.add('done');
+        btn.disabled = false;
+        card?.classList.add('granted');
+        if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open to receive alerts.';
+        return;
+    }
 
     try {
-      if (window._oneSignalReady && window.OneSignal?.Notifications) {
-          let permission;
-          try {
-              permission = await OneSignal.Notifications.requestPermission();
-          } catch (swErr) {
-              console.warn('[OneSignal] SW push failed, using native:', swErr.message);
-          }
-
-          if (permission) {
-              await OneSignal.User.addTag('ticketId', ticketNum);
-              await OneSignal.User.addTag('dept', myDept);
-              notifGranted = true;
-              btn.textContent = 'Enabled';
-              btn.classList.add('done');
-              btn.disabled = false;
-              card?.classList.add('granted');
-              if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
-              return;  
-          }
-      }
-
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-          notifGranted = true;
-          btn.textContent = 'Enabled';
-          btn.classList.add('done');
-          btn.disabled = false;
-          card?.classList.add('granted');
-          if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open.';
-          new Notification('Notifications enabled!', {
-              body: 'You will be alerted when ticket ' + ticketNum + ' is called.',
-              icon: 'https://etickette.web.app/assets/logo.png'
-          });
-      } else {
-          btn.textContent = 'Denied';
-          btn.classList.add('denied');
-          btn.disabled = false;
-          if (notifText) notifText.textContent = 'Permission denied — enable in site settings.';
-      }
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            notifGranted = true;
+            btn.textContent = 'Enabled';
+            btn.classList.add('done');
+            btn.disabled = false;
+            card?.classList.add('granted');
+            if (notifText) notifText.textContent = 'Notifications enabled — keep this tab open to receive alerts.';
+            new Notification('Notifications enabled!', {
+                body: 'You will be alerted when ticket ' + (myTicket?.ticketNumber || ticketNum) + ' is called.',
+                icon: 'https://etickette.web.app/assets/logo.png'
+            });
+        } else {
+            btn.textContent = 'Denied';
+            btn.classList.add('denied');
+            btn.disabled = false;
+            if (notifText) notifText.textContent = 'Permission denied — enable in site settings.';
+        }
     } catch (e) {
         console.error('[requestNotification]', e);
         btn.textContent = 'Try Again';
@@ -339,23 +325,6 @@ async function requestNotification() {
         if (notifText) notifText.textContent = 'Something went wrong — tap to retry.';
     }
 }
-
-function waitForOneSignal() {
-    return new Promise(resolve => {
-        if (window._oneSignalReady) { resolve(); return; }
-        
-        const timeout = setTimeout(() => {
-            console.warn('[OneSignal] Timed out waiting for init');
-            resolve(); 
-        }, 10000);
-
-        window.addEventListener('onesignal-ready', () => {
-            clearTimeout(timeout);
-            resolve();
-        }, { once: true });
-    });
-}
-
 
 function triggerNotification(tNum) {
   if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
@@ -438,22 +407,3 @@ if (btn) {
 }
 
 window.requestNotification = requestNotification;
-
-window.addEventListener('onesignal-ready', async () => {
-    try {
-        const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
-        if (isSubscribed) {
-            await OneSignal.User.addTag('ticketId', ticketNum);
-            await OneSignal.User.addTag('dept', myDept);
-            notifGranted = true;
-            const btn      = document.getElementById('btnNotif');
-            const card     = document.getElementById('notifCard');
-            const notifText = card?.querySelector('.notif-text span');
-            if (btn)  { btn.textContent = 'Enabled'; btn.classList.add('done'); }
-            if (card) card.classList.add('granted');
-            if (notifText) notifText.textContent = "You'll be notified even with this tab in the background.";
-        }
-    } catch (e) {
-        console.warn('[OneSignal subscription check]', e.message);
-    }
-});

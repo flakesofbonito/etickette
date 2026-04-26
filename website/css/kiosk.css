@@ -256,6 +256,9 @@ input, textarea {
   font-size: clamp(18px, 3vw, 24px); font-weight: 700; color: var(--blue-800);
   background: var(--white); border: 2px solid var(--slate-200); border-radius: var(--radius-md);
   cursor: pointer; text-align: center; box-shadow: var(--shadow-xs); transition: transform .1s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .np-key:active { background: var(--blue-50); border-color: var(--blue-600); transform: scale(.95); }
 .np-key.key-del { background: var(--gold-50); border-color: var(--gold-400); color: var(--blue-900); font-size: 20px; }
