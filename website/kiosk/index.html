@@ -300,6 +300,9 @@
         </div>
 
         <div class="scan-status" id="scanStatus">Initializing camera…</div>
+        <button class="btn-primary" style="max-width:340px;background:var(--slate-100);color:var(--blue-900);border:1px solid var(--slate-200);margin-bottom:6px;" onclick="goScreen('resid'); stopScanner(); resIdNumpadClear()">
+            No QR Code? Enter Student ID Instead
+        </button>
         <button class="btn-danger kiosk-cancel-btn" onclick="goScreen('home'); stopScanner()">Cancel</button>
     </div>
 
@@ -335,6 +338,38 @@
         <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:8px;margin-top:8px">
             <button class="btn-primary" style="background:var(--slate-100); color:var(--blue-900); border:1px solid var(--slate-200);" onclick="reprintTicket()">Reprint Ticket</button>
             <button class="btn-primary kiosk-submit-btn" onclick="clearInterval(window._scanSuccessTimer); goScreen('home')">Done — Return to Home</button>
+        </div>
+
+        <div class="screen" id="screen-resid">
+            <button class="back-btn" onclick="goScreen('scan'); startScanner()">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Scanner
+            </button>
+            <div class="screen-title">Enter Your Student ID</div>
+            <div class="screen-sub">We'll look up your reservation for today</div>
+
+            <div class="id-form">
+                <input type="text" id="resIdInput" class="kiosk-input" placeholder="e.g. 02000385394"
+                    inputmode="none" maxlength="11" readonly />
+
+                <div class="numpad">
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('1')" onclick="resIdNumpadPress('1')">1</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('2')" onclick="resIdNumpadPress('2')">2</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('3')" onclick="resIdNumpadPress('3')">3</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('4')" onclick="resIdNumpadPress('4')">4</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('5')" onclick="resIdNumpadPress('5')">5</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('6')" onclick="resIdNumpadPress('6')">6</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('7')" onclick="resIdNumpadPress('7')">7</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('8')" onclick="resIdNumpadPress('8')">8</div>
+                    <div class="np-key" ontouchstart="event.preventDefault();resIdNumpadPress('9')" onclick="resIdNumpadPress('9')">9</div>
+                    <div class="np-key key-clr" ontouchstart="event.preventDefault();resIdNumpadClear()" onclick="resIdNumpadClear()">CLR</div>
+                    <div class="np-key key-zero" ontouchstart="event.preventDefault();resIdNumpadPress('0')" onclick="resIdNumpadPress('0')">0</div>
+                    <div class="np-key key-del" ontouchstart="event.preventDefault();resIdNumpadBack()" onclick="resIdNumpadBack()">⌫</div>
+                </div>
+
+                <p id="resIdError" class="kiosk-error"></p>
+                <button class="btn-primary kiosk-submit-btn" onclick="lookupReservationByStudentId()">Look Up My Reservation →</button>
+                <button class="btn-danger kiosk-cancel-btn" style="margin-top:8px;" onclick="goScreen('home')">Cancel — Return to Home</button>
+            </div>
         </div>
     </div>
 

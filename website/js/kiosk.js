@@ -50,6 +50,10 @@ export function initKiosk() {
     window.confirmCancelTicket = confirmCancelTicket;
     window.resetCancelScreen   = resetCancelScreen;
     window.filterReasons       = filterReasons;
+    window.resIdNumpadPress  = resIdNumpadPress;
+    window.resIdNumpadBack   = resIdNumpadBack;
+    window.resIdNumpadClear  = resIdNumpadClear;
+    window.lookupReservationByStudentId = lookupReservationByStudentId;
 
     updateClock();
     setInterval(updateClock, 1000);
@@ -570,6 +574,154 @@ function cancelNumpadClear() {
     if (inp) inp.value = '';
     document.getElementById('cancelError').textContent = '';
 }
+
+function resIdNumpadPress(digit) {
+    const inp = document.getElementById('resIdInput');
+    if (!inp || inp.value.length >= 11) return;
+    inp.value += digit;
+    document.getElementById('resIdError').textContent = '';
+}
+
+function resIdNumpadBack() {
+    const inp = document.getElementById('resIdInput');
+    if (inp) inp.value = inp.value.slice(0, -1);
+}
+
+function resIdNumpadClear() {
+    const inp = document.getElementById('resIdInput');
+    if (inp) inp.value = '';
+    const errEl = document.getElementById('resIdError');
+    if (errEl) errEl.textContent = '';
+}
+
+async function lookupReservationByStudentId() {
+    const val   = (document.getElementById('resIdInput')?.value || '').trim();
+    const errEl = document.getElementById('resIdError');
+    if (!/^\d{11}$/.test(val)) { errEl.textContent = 'Please enter a valid 11-digit Student ID.'; return; }
+
+    const btn = document.querySelector('#screen-resid .kiosk-submit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Searching…'; }
+    errEl.textContent = '';
+
+    const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = 'Look Up My Reservation →'; } };
+
+    const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+    try {
+        const snap = await getDocs(query(
+            collection(db, 'reservations'),
+            where('studentId', '==', val),
+            where('status', '==', 'pending')
+        ));
+
+        const todayRes = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(r => r.reservationDate === todayPH)
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+        if (todayRes.length === 0) {
+            errEl.textContent = 'No reservation found for today with that ID. Check your ID or visit the Cashier / Registrar directly.';
+            resetBtn(); return;
+        }
+
+        const res = todayRes[0];
+        const dept = res.department;
+
+        if (!deptStatus[dept]) {
+            const st  = deptStatusLabel[dept];
+            const msg = st === 'break' ? 'currently on break' : 'currently closed';
+            errEl.textContent = `The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is ${msg}. Please wait and try again.`;
+            resetBtn(); return;
+        }
+
+        const prefix = dept === 'cashier' ? 'C' : 'R';
+        const dRef   = doc(db, 'departments', dept);
+        const resRef = doc(db, 'reservations', res.id);
+
+        let tNum, firestoreId, ahead;
+        await runTransaction(db, async (transaction) => {
+            const sSnap = await transaction.get(doc(db, 'system', 'settings'));
+            const deptQuotaKey  = dept + 'Quota';
+            const deptIssuedKey = dept + 'Issued';
+            const deptQuota  = sSnap.data()[deptQuotaKey]  || sSnap.data().dailyQuota || 100;
+            const deptIssued = sSnap.data()[deptIssuedKey] || 0;
+            if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
+            const dSnap = await transaction.get(dRef);
+            if (!dSnap.exists()) throw new Error('Department doc missing');
+            if ((dSnap.data().status || 'open').toLowerCase() !== 'open') throw new Error('DEPT_UNAVAILABLE');
+            const newCounter = (dSnap.data().counter || 0) + 1;
+            const newQueue   = (dSnap.data().queue   || 0) + 1;
+            tNum = prefix + '-' + String(newCounter).padStart(2, '0');
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
+            firestoreId = tNum + '-' + todayStr;
+            ahead = Math.max(0, newQueue - 1);
+            const ticketRef = doc(collection(db, 'tickets'), firestoreId);
+            transaction.update(dRef, { counter: newCounter, queue: newQueue });
+            transaction.set(ticketRef, {
+                ticketNumber: tNum, ticketId: firestoreId, department: dept,
+                userId: res.studentId || val,
+                userType: res.userType || 'student',
+                displayName: res.displayName || val,
+                reason: res.reason || 'Reservation Check-In',
+                requiredDocs: res.requiredDocs || [],
+                status: 'waiting', issuedAt: serverTimestamp(),
+                printed: false, called: false,
+                isReservation: true, reservationId: res.id
+            });
+            transaction.update(doc(db, 'system', 'settings'), {
+                ticketsIssued: increment(1),
+                [deptIssuedKey]: increment(1)
+            });
+            transaction.update(resRef, { status: 'active', ticketNumber: tNum, ticketId: firestoreId, activatedAt: serverTimestamp() });
+        });
+
+        window._lastTicket = { tNum, firestoreId, dept };
+        printTicket(tNum, dept, firestoreId, res.studentId || val, res.reason || '—', 'Reservation');
+
+        selectedDept = dept;
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('scanDept',   dept.toUpperCase());
+        set('scanNumber', tNum);
+        set('scanId',     res.studentId || val);
+        set('scanReason', res.reason);
+        set('scanAhead',  ahead + ' people');
+
+        const scanQREl = document.getElementById('scanTicketQR');
+        if (scanQREl) {
+            scanQREl.replaceChildren();
+            new QRCode(scanQREl, {
+                text: PUBLIC_URL + '/tracker/?t=' + encodeURIComponent(firestoreId) + '&d=' + dept,
+                width: 110, height: 110, colorDark: '#000000', colorLight: '#ffffff'
+            });
+        }
+        goScreen('scan-success');
+        playBeep();
+        resetBtn();
+        resIdNumpadClear();
+
+        let count = 20;
+        const countEl = document.getElementById('scanSuccessCountdown');
+        if (countEl) countEl.textContent = count;
+        clearInterval(window._scanSuccessTimer);
+        window._scanSuccessTimer = setInterval(() => {
+            count--;
+            if (countEl) countEl.textContent = count;
+            if (count <= 0) { clearInterval(window._scanSuccessTimer); goScreen('home'); }
+        }, 1000);
+
+    } catch (e) {
+        if (e.message === 'QUOTA_FULL') {
+            errEl.textContent = 'Daily quota is full. Please ask staff for assistance.';
+        } else if (e.message === 'DEPT_UNAVAILABLE') {
+            errEl.textContent = 'The department window just closed. Please try again later.';
+        } else {
+            console.error('[lookupReservationByStudentId]', e);
+            errEl.textContent = 'Server error. Please try again.';
+        }
+        resetBtn();
+    }
+}
+
 
 function resetCancelScreen() {
     const inp = document.getElementById('cancelIdInput');
