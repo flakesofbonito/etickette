@@ -275,6 +275,16 @@ input, textarea {
 .btn-primary:active, .kiosk-submit-btn:active { transform: scale(.98); }
 .btn-primary:disabled, .kiosk-submit-btn:disabled { opacity: .4; pointer-events: none; }
 
+.btn-secondary {
+  width: 100%; max-width: 560px; padding: clamp(12px, 2vh, 16px);
+  background: var(--white); border: 1.5px solid var(--slate-200); border-radius: var(--radius-md);
+  color: var(--blue-900); font-size: clamp(13px, 2vw, 15px); font-weight: 700;
+  cursor: pointer; font-family: var(--font); margin: 0 auto; display: block;
+  box-shadow: var(--shadow-xs); transition: background .15s;
+}
+.btn-secondary:active { background: var(--slate-100); }
+.btn-secondary:disabled { opacity: .4; pointer-events: none; }
+
 .btn-danger, .kiosk-cancel-btn {
   width: 100%; max-width: 560px; padding: clamp(12px, 2vh, 16px);
   background: var(--red-50); border: 1.5px solid rgba(220,38,38,.25); border-radius: var(--radius-md);

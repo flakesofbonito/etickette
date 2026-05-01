@@ -1255,7 +1255,7 @@ async function reprintTicket() {
     } else if (activeScreen === 'screen-scan-success') {
         clearInterval(window._scanSuccessTimer);
     }
-    const btn = document.querySelector('#screen-ticket .kiosk-submit-btn');
+    const btn = document.querySelector('#screen-ticket .btn-secondary');
     if (!window._lastTicket) { showToast('Nothing to reprint.', 'error'); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Printing...'; }
     const success = await printTicket(window._lastTicket.tNum, window._lastTicket.dept, window._lastTicket.firestoreId);
