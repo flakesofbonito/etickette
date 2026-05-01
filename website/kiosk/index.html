@@ -339,8 +339,9 @@
             <button class="btn-primary" style="background:var(--slate-100); color:var(--blue-900); border:1px solid var(--slate-200);" onclick="reprintTicket()">Reprint Ticket</button>
             <button class="btn-primary kiosk-submit-btn" onclick="clearInterval(window._scanSuccessTimer); goScreen('home')">Done — Return to Home</button>
         </div>
+    </div>
 
-        <div class="screen" id="screen-resid">
+    <div class="screen" id="screen-resid">
             <button class="back-btn" onclick="goScreen('scan'); startScanner()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Scanner
             </button>
@@ -371,7 +372,6 @@
                 <button class="btn-danger kiosk-cancel-btn" style="margin-top:8px;" onclick="goScreen('home')">Cancel — Return to Home</button>
             </div>
         </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
