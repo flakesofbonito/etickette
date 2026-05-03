@@ -54,4 +54,15 @@
     --shadow-lg: 0 16px 48px rgba(15,23,42,.14);
 
     --border: var(--slate-200);
+
+    --space-sm: 12px;
+    --space-md: 20px;
+    --space-lg: 32px;
+    --space-xl: 48px;
+
+    --text-xs:   11px;
+    --text-sm:   13px;
+    --text-base: 15px;
+    --text-lg:   18px;
+    --text-xl:   24px;
 }

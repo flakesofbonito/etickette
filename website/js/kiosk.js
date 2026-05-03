@@ -1,7 +1,7 @@
 import { db } from '../js/firebase.js';
 import {
     collection, doc, query, where, onSnapshot,
-    getDoc, getDocs, runTransaction,
+    getDoc, getDocs, runTransaction, updateDoc,
     serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { REASONS } from './reasons.js';
