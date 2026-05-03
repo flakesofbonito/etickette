@@ -147,6 +147,40 @@ function loginStudent() {
 }
 
 function afterLogin() {
+    const homeView = document.getElementById('view-home');
+    const existingGreet = document.getElementById('homeGreeting');
+    if (existingGreet) existingGreet.remove();
+
+    if (homeView) {
+        const hour = parseInt(new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', hour12: false }));
+        const timeOfDay = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+        const firstName = currentDisplayName.split(/[\s,]+/)[0];
+
+        const greet = document.createElement('div');
+        greet.id = 'homeGreeting';
+        greet.style.cssText = `
+            padding:16px 20px; margin-bottom:14px;
+            background:linear-gradient(135deg, var(--blue-900), var(--blue-800));
+            border-radius:var(--radius-md); color:#fff;
+            display:flex; align-items:center; justify-content:space-between;
+            border:1px solid rgba(255,255,255,.08);
+        `;
+        greet.innerHTML = `
+            <div>
+                <div style="font-size:16px;font-weight:800;letter-spacing:-.2px;">
+                    ${timeOfDay}, ${firstName}
+                </div>
+                <div style="font-size:12px;opacity:.6;margin-top:3px;font-weight:500;">
+                    STI College Fairview — eTickette System
+                </div>
+            </div>
+            </div>`;
+
+        const statusBanner = homeView.querySelector('.status-banner');
+        if (statusBanner) statusBanner.after(greet);
+        else homeView.prepend(greet);
+    }
+
     const overlay = document.getElementById('loginOverlay');
     if (overlay) { overlay.classList.add('dismissed'); overlay.style.display = 'none'; }
     document.getElementById('appShell').classList.remove('locked');
@@ -173,6 +207,7 @@ function afterLogin() {
         _unsubs.push(listenToSettings());
         _unsubs.push(listenToActiveReservation());
     }, 520);
+    setTimeout(() => showOnboardingIfNew(), 600);
 }
 
 function logout() {
@@ -203,6 +238,125 @@ function logout() {
     document.getElementById('appShell').classList.add('locked');
     document.getElementById('appShell').classList.remove('unlocked');
     selectUserType('student');
+}
+
+function showOnboardingIfNew() {
+    const key = 'etickette_onboarded_' + currentStudentId;
+    if (localStorage.getItem(key)) return;
+
+    const steps = [
+        {
+            icon: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--blue-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>`,
+            title: 'Reserve a Slot',
+            desc: 'Pick your department and reason, then choose a date. A QR code will be generated for you.'
+        },
+        {
+            icon: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--blue-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h.01M17 14h.01M14 17h.01M17 17h.01"/></svg>`,
+            title: 'Save Your QR Code',
+            desc: 'Screenshot or save the QR code — you will need it when you arrive at school.'
+        },
+        {
+            icon: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--blue-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
+            title: 'Scan at the Kiosk',
+            desc: 'At school, tap "I Have a Reservation" on the kiosk and scan your QR. Your ticket number is assigned here — not when you book.'
+        },
+        {
+            icon: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--blue-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+            title: 'Track Your Queue',
+            desc: 'Use the tracker link on your printed ticket or in My Ticket to see your live queue position and get notified when called.'
+        },
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.id = 'onboardingOverlay';
+    overlay.style.cssText = `
+        position:fixed; inset:0; background:rgba(15,23,42,.65);
+        z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;
+    `;
+
+    let currentStep = 0;
+
+    function renderStep() {
+        const s = steps[currentStep];
+        const isLast = currentStep === steps.length - 1;
+        const isFirst = currentStep === 0;
+
+        overlay.innerHTML = `
+            <div style="
+                background:#fff; border-radius:20px; padding:36px 28px 28px;
+                max-width:420px; width:100%; text-align:center;
+                box-shadow:0 24px 60px rgba(15,23,42,.3);
+                animation:modalIn .22s ease;
+            ">
+                <div style="
+                    width:80px; height:80px; border-radius:50%;
+                    background:var(--blue-50); border:2px solid var(--blue-100);
+                    display:flex; align-items:center; justify-content:center;
+                    margin:0 auto 18px;
+                ">${s.icon}</div>
+
+                <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--slate-400);margin-bottom:8px;text-transform:uppercase;">
+                    Step ${currentStep + 1} of ${steps.length}
+                </div>
+
+                <h2 style="font-size:20px;font-weight:800;color:var(--blue-800);margin-bottom:10px;letter-spacing:-.3px;">
+                    ${s.title}
+                </h2>
+                <p style="font-size:14px;color:var(--slate-600);line-height:1.75;margin-bottom:24px;">
+                    ${s.desc}
+                </p>
+
+                <div style="display:flex;gap:6px;justify-content:center;margin-bottom:24px;">
+                    ${steps.map((_, i) => `
+                        <div style="
+                            width:${i === currentStep ? '24px' : '8px'};
+                            height:8px; border-radius:4px;
+                            background:${i === currentStep ? 'var(--blue-800)' : 'var(--slate-200)'};
+                            transition:all .25s;
+                        "></div>`).join('')}
+                </div>
+
+                <div style="display:flex;gap:8px;">
+                    ${!isFirst ? `
+                        <button id="obBack" style="
+                            flex:1; padding:13px;
+                            border:1.5px solid var(--slate-200); border-radius:10px;
+                            font-size:14px; font-weight:600; cursor:pointer;
+                            background:#fff; color:var(--slate-600);
+                            font-family:var(--font);
+                        ">Back</button>` : ''}
+                    <button id="obNext" style="
+                        flex:2; padding:13px; border:none; border-radius:10px;
+                        font-size:14px; font-weight:700; cursor:pointer;
+                        background:var(--blue-800); color:#fff;
+                        font-family:var(--font);
+                        box-shadow:0 4px 16px rgba(31,60,136,.25);
+                    ">${isLast ? 'Get Started' : 'Next →'}</button>
+                </div>
+
+                <button id="obSkip" style="
+                    margin-top:14px; background:none; border:none;
+                    font-size:12px; color:var(--slate-400); cursor:pointer;
+                    font-family:var(--font);
+                ">Skip tutorial</button>
+            </div>`;
+
+        document.getElementById('obNext').onclick = () => {
+            if (!isLast) { currentStep++; renderStep(); }
+            else dismiss();
+        };
+        const backBtn = document.getElementById('obBack');
+        if (backBtn) backBtn.onclick = () => { currentStep--; renderStep(); };
+        document.getElementById('obSkip').onclick = dismiss;
+    }
+
+    function dismiss() {
+        overlay.remove();
+        localStorage.setItem(key, '1');
+    }
+
+    document.body.appendChild(overlay);
+    renderStep();
 }
 
 function navigate(view) {
@@ -249,6 +403,7 @@ function listenToDepts() {
             setIfChanged(dept + 'Queue',      String(d.queue || 0));
             setIfChanged(dept + 'QueueNum',   String(d.queue || 0));
             setIfChanged(dept + 'NowServing', 'Serving: ' + (d.nowServing || '—'));
+            updateCongestion();
 
             const avg = d.avgWaitSeconds;
             setIfChanged(dept + 'AvgWait', avg
@@ -277,6 +432,43 @@ function listenToSettings() {
         setIfChanged('cashierQuotaText',   Math.max(0, cashierQuota - cashierIssued) + ' / ' + cashierQuota);
         setIfChanged('registrarQuotaText', Math.max(0, registrarQuota - registrarIssued) + ' / ' + registrarQuota);
 
+        const LOW_THRESHOLD = 10;
+        const existingWarn = document.getElementById('lowSlotWarning');
+        if (existingWarn) existingWarn.remove();
+
+        const warnings = [];
+        const cashierRem   = cashierQuota   - cashierIssued;
+        const registrarRem = registrarQuota - registrarIssued;
+
+        if (cashierRem > 0 && cashierRem <= LOW_THRESHOLD)
+            warnings.push(`Cashier: <strong>${cashierRem}</strong> slot${cashierRem === 1 ? '' : 's'} remaining`);
+        if (registrarRem > 0 && registrarRem <= LOW_THRESHOLD)
+            warnings.push(`Registrar: <strong>${registrarRem}</strong> slot${registrarRem === 1 ? '' : 's'} remaining`);
+
+        if (warnings.length > 0) {
+            const warn = document.createElement('div');
+            warn.id = 'lowSlotWarning';
+            warn.style.cssText = `
+                display:flex; align-items:flex-start; gap:12px;
+                padding:13px 16px; margin-bottom:14px;
+                background:var(--gold-50); border:1.5px solid var(--gold-400);
+                border-radius:var(--radius-sm);
+                font-size:13px; font-weight:600; color:var(--gold-700);
+                line-height:1.6;
+            `;
+            warn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Slots are filling up — ${warnings.join(' · ')}. Reserve soon to secure your spot.</span>`;
+
+            const homeView = document.getElementById('view-home');
+            const deptRow = homeView?.querySelector('.dept-row');
+            if (deptRow) deptRow.before(warn);
+        }
+
         const deptMap = {
             cashier:   { quota: cashierQuota,   issued: cashierIssued },
             registrar: { quota: registrarQuota, issued: registrarIssued }
@@ -287,15 +479,6 @@ function listenToSettings() {
             deptQuotas[dept] = { quota, issued };
             updateReserveButton(dept);
         });
-
-        const overallPct  = totalIssued / totalQuota;
-        const isTotalFull = totalIssued >= totalQuota;
-        const el = document.getElementById('congestionText');
-        if (el) {
-            const txt = isTotalFull ? 'QUOTA FULL' : overallPct < 0.5 ? 'LOW TRAFFIC' : overallPct < 0.75 ? 'MODERATE' : 'HIGH TRAFFIC';
-            const cls = isTotalFull ? 'closed' : overallPct < 0.5 ? 'open' : overallPct < 0.75 ? 'break' : 'closed';
-            if (el.textContent !== txt) { el.textContent = txt; el.className = cls; }
-        }
 
         const gs = document.getElementById('globalStatus');
         if (gs) {
@@ -324,6 +507,36 @@ function listenToSettings() {
         }
     });
     return unsub;
+}
+
+function updateCongestion() {
+    const cashierQueue   = parseInt(document.getElementById('cashierQueueNum')?.textContent)   || 0;
+    const registrarQueue = parseInt(document.getElementById('registrarQueueNum')?.textContent) || 0;
+    const totalQueue     = cashierQueue + registrarQueue;
+
+    const el = document.getElementById('congestionText');
+    if (!el) return;
+
+    let txt, cls;
+
+    if (totalQueue === 0) {
+        txt = 'NO QUEUE';
+        cls = 'open';
+    } else if (totalQueue <= 5) {
+        txt = 'LOW TRAFFIC';
+        cls = 'open';
+    } else if (totalQueue <= 15) {
+        txt = 'MODERATE';
+        cls = 'break';
+    } else {
+        txt = 'HIGH TRAFFIC';
+        cls = 'closed';
+    }
+
+    if (el.textContent !== txt) {
+        el.textContent = txt;
+        el.className   = cls;
+    }
 }
 
 function updateReserveButton(dept) {
@@ -376,13 +589,22 @@ function updateReserveButton(dept) {
         btn.style.border        = '';
         btn.style.pointerEvents = 'none';
     } else if (isFull) {
-        btn.disabled            = true;
-        btn.title               = `${dept.toUpperCase()} quota is full for today.`;
-        btn.textContent         = 'Quota Full — No Slots Available';
-        btn.style.background    = 'rgba(220,38,38,.1)';
-        btn.style.color         = '#dc2626';
-        btn.style.border        = '2px solid rgba(220,38,38,.3)';
-        btn.style.pointerEvents = 'none';
+        btn.disabled             = true;
+        btn.title                = '';
+        btn.innerHTML            = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+            Quota Full — No Slots Available Today`;
+        btn.style.display        = 'flex';
+        btn.style.alignItems     = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.gap            = '8px';
+        btn.style.background     = 'rgba(220,38,38,.08)';
+        btn.style.color          = 'var(--red-600)';
+        btn.style.border         = '1.5px solid rgba(220,38,38,.2)';
+        btn.style.pointerEvents  = 'none';
     } else {
         btn.disabled            = false;
         btn.title               = '';
@@ -905,7 +1127,30 @@ async function loadHistory() {
     if (!hasHistory) {
         el.innerHTML = hasActiveBanner
             ? '<p class="subtle">Your active reservation is shown above.</p>'
-            : '<p class="subtle">No tickets or reservations yet.</p>';
+            : `<div style="text-align:center;padding:48px 20px;">
+                <div style="
+                    width:64px; height:64px; border-radius:50%;
+                    background:var(--slate-100); border:1.5px solid var(--slate-200);
+                    display:flex; align-items:center; justify-content:center;
+                    margin:0 auto 16px;
+                ">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:var(--blue-800);margin-bottom:6px;">No tickets yet</div>
+                <div style="font-size:13px;color:var(--slate-500);line-height:1.75;max-width:260px;margin:0 auto 20px;">
+                    Reserve a ticket from the Home tab. Your active reservations and past history will appear here.
+                </div>
+                <button onclick="navigate('home')" style="
+                    padding:11px 24px;
+                    background:var(--blue-800); color:#fff; border:none;
+                    border-radius:var(--radius-sm); font-size:13px; font-weight:700;
+                    cursor:pointer; font-family:var(--font);
+                    box-shadow:0 3px 12px rgba(31,60,136,.2);
+                ">Go to Home →</button>
+            </div>`;
     }
 }
 
