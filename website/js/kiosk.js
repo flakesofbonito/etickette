@@ -114,7 +114,7 @@ function listenToQueueCounts() {
                 const st   = (data.status || 'open').toLowerCase();
                 deptAvgWait[dept] = data.avgWaitSeconds || 0;
                 const open = st === 'open';
-                deptStatus[dept]      = open;
+                deptStatus[dept] = st !== 'closed'; 
                 deptStatusLabel[dept] = st;
 
                 const qEl = document.getElementById(dept + 'QueueText');
@@ -512,7 +512,7 @@ async function issueTicket(userId) {
             if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
-            if ((dSnap.data().status || 'open').toLowerCase() !== 'open')
+            if ((dSnap.data().status || 'open').toLowerCase() === 'closed')
                 throw new Error('DEPT_UNAVAILABLE');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
@@ -648,7 +648,7 @@ async function lookupReservationByStudentId() {
             if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
-            if ((dSnap.data().status || 'open').toLowerCase() !== 'open') throw new Error('DEPT_UNAVAILABLE');
+            if ((dSnap.data().status || 'open').toLowerCase() === 'closed') throw new Error('DEPT_UNAVAILABLE');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
             tNum = prefix + '-' + String(newCounter).padStart(2, '0');
@@ -1100,7 +1100,7 @@ async function onScanSuccess(decoded) {
             if (deptIssued >= deptQuota) throw new Error('QUOTA_FULL');
             const dSnap      = await transaction.get(dRef);
             if (!dSnap.exists()) throw new Error('Department doc missing');
-            if ((dSnap.data().status || 'open').toLowerCase() !== 'open')
+            if ((dSnap.data().status || 'open').toLowerCase() === 'closed')
                 throw new Error('DEPT_UNAVAILABLE');
             const newCounter = (dSnap.data().counter || 0) + 1;
             const newQueue   = (dSnap.data().queue   || 0) + 1;
