@@ -13,7 +13,7 @@ const PUBLIC_URL = 'https://etickette.web.app';
 let currentStudentId   = null;
 let reserveDept        = null;
 let reserveReason      = null;
-let currentStep        = 1;
+let currentStep        = 1;openReserveModal
 let hasActiveReservation = false;
 let deptStatuses = { cashier: null, registrar: null };
 let deptQuotas   = { cashier: { quota: 100, issued: 0 }, registrar: { quota: 100, issued: 0 } };
@@ -24,6 +24,7 @@ let _lastHistoryFetch = 0;
 let _modalOpen = false;
 let _hasActiveRes    = false;
 let _hasActiveTicket = false;
+let _pendingReservationId = null;
 
 const _domCache = {};
 function setIfChanged(id, value) {
@@ -580,10 +581,10 @@ function updateReserveButton(dept) {
     const st     = deptStatuses[dept];
     const isFull = deptQuotas[dept].issued >= deptQuotas[dept].quota;
 
-    if (st && st !== 'open') {
+    if (st === 'closed') {
         btn.disabled            = true;
         btn.title               = '';
-        btn.textContent         = st === 'break' ? `${dept.toUpperCase()} — ON BREAK` : `${dept.toUpperCase()} — CLOSED`;
+        btn.textContent         = `${dept.toUpperCase()} — CLOSED`;
         btn.style.background    = '';
         btn.style.color         = '';
         btn.style.border        = '';
@@ -628,7 +629,7 @@ function listenToActiveReservation() {
                 _hasActiveRes = true;
                 const resData = activeDoc.data();
 
-                if (_modalOpen && resData.status === 'active' && resData.ticketNumber) {
+                if (_modalOpen && resData.status === 'active' && resData.ticketNumber && activeDoc.id === _pendingReservationId) {
                     const qrEl = document.getElementById('reserveQR');
                     const hintEl = document.querySelector('#rstep4 .qr-hint');
                     const warnEl = document.querySelector('#rstep4 [style*="blue-50"]');
@@ -927,6 +928,9 @@ function openReserveModal(dept) {
     if (hasActiveReservation) { showToast('You already have an active reservation. Cancel it first.', 'warning'); return; }
 
     _modalOpen = true;
+    _pendingReservationId = null;
+    const _existingQR = document.getElementById('reserveQR');
+    if (_existingQR) _existingQR.innerHTML = '';
     reserveDept = dept;
     reserveReason = null;
 
@@ -1054,6 +1058,7 @@ async function submitReserveDate() {
             ticketNumber:    null,
             createdAt:       serverTimestamp()
         });
+        _pendingReservationId = rid;
     } catch (e) {
         console.error('[setDoc]', e);
         errEl.textContent = 'Error saving reservation: ' + e.message;
