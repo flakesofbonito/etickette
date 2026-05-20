@@ -891,16 +891,12 @@ async function exportCSV(mode = 'single') {
             const snap = await getDocs(query(
                 collection(db, 'tickets'),
                 where('department', '==', dept),
+                where('issuedAt', '>=', Timestamp.fromDate(countFrom))
             ));
-            const rows = snap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(t => {
-                    const issuedAt = t.issuedAt?.toDate?.();
-                    return issuedAt && issuedAt >= countFrom;
-                });
+            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-            allRows = allRows.concat(rows);
-        }
+                        allRows = allRows.concat(rows);
+                    }
 
         allRows.sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 

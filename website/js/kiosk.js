@@ -180,10 +180,8 @@ function goScreen(name) {
 }
 
 function pickDept(dept) {
-    if (!deptStatus[dept]) {
-        const st  = deptStatusLabel[dept];
-        const msg = st === 'break' ? 'currently on break' : 'currently closed';
-        showToast('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window is ' + msg + '. Please try again later.', 'warning');
+    if (deptStatusLabel[dept] === 'closed') {
+        showToast('The ' + dept.charAt(0).toUpperCase() + dept.slice(1) + ' window is currently closed.', 'warning');
         return;
     }
     selectedDept = dept;
@@ -627,10 +625,8 @@ async function lookupReservationByStudentId() {
         const res = todayRes[0];
         const dept = res.department;
 
-        if (!deptStatus[dept]) {
-            const st  = deptStatusLabel[dept];
-            const msg = st === 'break' ? 'currently on break' : 'currently closed';
-            errEl.textContent = `The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is ${msg}. Please wait and try again.`;
+        if (deptStatusLabel[dept] === 'closed') {
+            errEl.textContent = `The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is currently closed.`;
             resetBtn(); return;
         }
 
@@ -1079,12 +1075,10 @@ async function onScanSuccess(decoded) {
 
         dept   = res.department;
 
-        if (!deptStatus[dept]) {
-            const st  = deptStatusLabel[dept];
-            const msg = st === 'break' ? 'currently on break' : 'currently closed';
-            setScanStatus(`The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is ${msg}. Please try again later.`);
+        if (deptStatusLabel[dept] === 'closed') {
+            setScanStatus(`The ${dept.charAt(0).toUpperCase() + dept.slice(1)} window is currently closed.`);
             return;
-        }
+        }   
 
         const prefix = dept === 'cashier' ? 'C' : 'R';
         const dRef   = doc(db, 'departments', dept);

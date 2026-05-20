@@ -12,6 +12,12 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#1f3c88" />
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/kiosk/sw.js', { scope: '/kiosk/' })
+            .catch(e => console.warn('[SW]', e));
+    }
+    </script>
 </head>
 <body>
     <script>
