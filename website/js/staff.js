@@ -879,7 +879,6 @@ async function exportCSV(mode = 'single') {
 
     try {
         const depts = mode === 'combined' ? ['cashier', 'registrar'] : [staffDept];
-
         let allRows = [];
 
         for (const dept of depts) {
@@ -888,15 +887,15 @@ async function exportCSV(mode = 'single') {
             const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
             const countFrom = deptReset && deptReset > startOfDay ? deptReset : startOfDay;
 
-            const snap = await getDocs(query(
-                collection(db, 'tickets'),
-                where('department', '==', dept),
-                where('issuedAt', '>=', Timestamp.fromDate(countFrom))
-            ));
-            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-                        allRows = allRows.concat(rows);
-                    }
+            const snap = await getDocs(query(collection(db, 'tickets'), where('department', '==', dept)));
+            const rows = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(t => {
+                    const issuedAt = t.issuedAt?.toDate?.();
+                    return issuedAt && issuedAt >= countFrom;
+                });
+            allRows = allRows.concat(rows);
+        }
 
         allRows.sort((a, b) => (a.issuedAt?.toMillis?.() || 0) - (b.issuedAt?.toMillis?.() || 0));
 
@@ -905,128 +904,141 @@ async function exportCSV(mode = 'single') {
             hint.style.color = 'var(--red-600)';
             return;
         }
+        
+        const fmtDate = (d) => {
+            if (!d) return '';
+            return d.toLocaleString('en-PH', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            }).replace(',', ''); 
+        };
 
-        const headers = [
-            'Ticket No.',
-            'Department',
-            'Student ID',
-            'Type',
-            'Reason',
-            'Status',
-            'Issued At',
-            'Called At',
-            'Completed At',
-            'Wait Time (min)',
-            'Is Reservation'
-        ];
-
-        const csvRows = allRows.map(t => {
+        const dataRows = allRows.map(t => {
             const issuedAt    = t.issuedAt?.toDate?.();
             const calledAt    = t.calledAt?.toDate?.();
             const completedAt = t.completedAt?.toDate?.();
             const waitMin     = (issuedAt && calledAt)
-                ? ((calledAt - issuedAt) / 60000).toFixed(2)
-                : '—';
-            const fmt = (d) => d
-                ? d.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
-                : '—';
-            return [
-                t.ticketNumber,
-                t.department.toUpperCase(),
-                t.userId || '—',
-                t.isReservation ? 'Reservation' : 'Walk-in',
-                `"${(t.reason || '—').replace(/"/g, '""')}"`,
-                t.status,
-                fmt(issuedAt),
-                fmt(calledAt),
-                fmt(completedAt),
-                waitMin,
-                t.isReservation ? 'Yes' : 'No'
-            ].join(',');
+                ? parseFloat(((calledAt - issuedAt) / 60000).toFixed(2))
+                : null;
+            return {
+                'Ticket No.':        t.ticketNumber || '',
+                'Department':        (t.department || '').toUpperCase(),
+                'Student ID':        t.userId || '',
+                'Type':              t.isReservation ? 'Reservation' : 'Walk-in',
+                'Reason':            t.reason || '',
+                'Status':            t.status || '',
+                'Issued At':         fmtDate(issuedAt),
+                'Called At':         fmtDate(calledAt),
+                'Completed At':      fmtDate(completedAt),
+                'Wait Time (min)':   waitMin !== null ? waitMin : '',
+                'Is Reservation':    t.isReservation ? 'Yes' : 'No',
+            };
         });
 
-        const summaryLines = ['', '--- SUMMARY ---'];
+        const summaryData = [];
+        const today = new Date().toLocaleDateString('en-PH', {
+            timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        summaryData.push({ 'Summary': 'Date', 'Value': today });
+        summaryData.push({ 'Summary': '', 'Value': '' });
 
         for (const dept of depts) {
-            const dRows    = allRows.filter(t => t.department === dept);
-            const total    = dRows.length;
-            const served   = dRows.filter(t => t.status === 'completed').length;
-            const noshow   = dRows.filter(t => t.status === 'noshow').length;
-            const waiting  = dRows.filter(t => t.status === 'waiting' || t.status === 'serving').length;
-            const cancelled = dRows.filter(t => t.status === 'cancelled').length;
-            const walkins  = dRows.filter(t => !t.isReservation).length;
-            const reservations = dRows.filter(t => t.isReservation).length;
+            const dRows     = allRows.filter(t => t.department === dept);
             const waitTimes = dRows
                 .filter(t => t.issuedAt?.toDate?.() && t.calledAt?.toDate?.())
                 .map(t => (t.calledAt.toDate() - t.issuedAt.toDate()) / 60000);
             const avgWait = waitTimes.length > 0
-                ? (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2)
-                : '—';
+                ? parseFloat((waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2))
+                : '';
             const maxWait = waitTimes.length > 0
-                ? Math.max(...waitTimes).toFixed(2)
-                : '—';
+                ? parseFloat(Math.max(...waitTimes).toFixed(2))
+                : '';
 
-            summaryLines.push(
-                ``,
-                `Department:,${dept.toUpperCase()}`,
-                `Total Tickets Issued:,${total}`,
-                `Served:,${served}`,
-                `No-Show:,${noshow}`,
-                `Still Waiting/Serving:,${waiting}`,
-                `Cancelled:,${cancelled}`,
-                `Walk-in:,${walkins}`,
-                `Reservation:,${reservations}`,
-                `Average Wait Time (min):,${avgWait}`,
-                `Longest Wait Time (min):,${maxWait}`
-            );
+            summaryData.push({ 'Summary': `--- ${dept.toUpperCase()} ---`, 'Value': '' });
+            summaryData.push({ 'Summary': 'Total Issued',         'Value': dRows.length });
+            summaryData.push({ 'Summary': 'Served',               'Value': dRows.filter(t => t.status === 'completed').length });
+            summaryData.push({ 'Summary': 'No-Show',              'Value': dRows.filter(t => t.status === 'noshow').length });
+            summaryData.push({ 'Summary': 'Waiting/Serving',      'Value': dRows.filter(t => t.status === 'waiting' || t.status === 'serving').length });
+            summaryData.push({ 'Summary': 'Cancelled',            'Value': dRows.filter(t => t.status === 'cancelled').length });
+            summaryData.push({ 'Summary': 'Walk-in',              'Value': dRows.filter(t => !t.isReservation).length });
+            summaryData.push({ 'Summary': 'Reservation',          'Value': dRows.filter(t => t.isReservation).length });
+            summaryData.push({ 'Summary': 'Avg Wait Time (min)',   'Value': avgWait });
+            summaryData.push({ 'Summary': 'Longest Wait (min)',    'Value': maxWait });
+            summaryData.push({ 'Summary': '', 'Value': '' });
         }
 
         if (mode === 'combined') {
-            const total    = allRows.length;
-            const served   = allRows.filter(t => t.status === 'completed').length;
-            const noshow   = allRows.filter(t => t.status === 'noshow').length;
-            const walkins  = allRows.filter(t => !t.isReservation).length;
-            const reservations = allRows.filter(t => t.isReservation).length;
             const waitTimes = allRows
                 .filter(t => t.issuedAt?.toDate?.() && t.calledAt?.toDate?.())
                 .map(t => (t.calledAt.toDate() - t.issuedAt.toDate()) / 60000);
             const avgWait = waitTimes.length > 0
-                ? (waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2)
-                : '—';
+                ? parseFloat((waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length).toFixed(2))
+                : '';
 
-            summaryLines.push(
-                ``,
-                `--- GRAND TOTAL ---`,
-                `Total All Departments:,${total}`,
-                `Total Served:,${served}`,
-                `Total No-Show:,${noshow}`,
-                `Total Walk-in:,${walkins}`,
-                `Total Reservation:,${reservations}`,
-                `Overall Average Wait Time (min):,${avgWait}`
-            );
+            summaryData.push({ 'Summary': '--- GRAND TOTAL ---',  'Value': '' });
+            summaryData.push({ 'Summary': 'All Departments Total', 'Value': allRows.length });
+            summaryData.push({ 'Summary': 'Total Served',          'Value': allRows.filter(t => t.status === 'completed').length });
+            summaryData.push({ 'Summary': 'Total No-Show',         'Value': allRows.filter(t => t.status === 'noshow').length });
+            summaryData.push({ 'Summary': 'Total Walk-in',         'Value': allRows.filter(t => !t.isReservation).length });
+            summaryData.push({ 'Summary': 'Total Reservation',     'Value': allRows.filter(t => t.isReservation).length });
+            summaryData.push({ 'Summary': 'Overall Avg Wait (min)','Value': avgWait });
         }
 
-        const today = new Date().toLocaleDateString('en-PH', {
-            timeZone: 'Asia/Manila',
-            year: 'numeric', month: 'long', day: 'numeric'
-        });
-        summaryLines.unshift(`Date:,${today}`);
-
-        const csvContent = [
-            headers.join(','),
-            ...csvRows,
-            ...summaryLines
-        ].join('\n');
-
-        const blob    = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url     = URL.createObjectURL(blob);
-        const a       = document.createElement('a');
         const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
         const label   = mode === 'combined' ? 'ALL' : staffDept.toUpperCase();
-        a.href        = url;
-        a.download    = `eTickette_${label}_${dateStr}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const fileName = `eTickette_${label}_${dateStr}`;
+
+        if (typeof XLSX !== 'undefined') {
+            const wb = XLSX.utils.book_new();
+
+            const ws1 = XLSX.utils.json_to_sheet(dataRows);
+
+            ws1['!cols'] = [
+                { wch: 12 },  // Ticket No.
+                { wch: 13 },  // Department
+                { wch: 15 },  // Student ID
+                { wch: 13 },  // Type
+                { wch: 40 },  // Reason
+                { wch: 12 },  // Status
+                { wch: 22 },  // Issued At
+                { wch: 22 },  // Called At
+                { wch: 22 },  // Completed At
+                { wch: 16 },  // Wait Time
+                { wch: 14 },  // Is Reservation
+            ];
+            XLSX.utils.book_append_sheet(wb, ws1, 'Tickets');
+
+            const ws2 = XLSX.utils.json_to_sheet(summaryData);
+            ws2['!cols'] = [{ wch: 28 }, { wch: 18 }];
+            XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+
+            XLSX.writeFile(wb, fileName + '.xlsx');
+
+        } else {
+            const headers = Object.keys(dataRows[0]);
+            const escape  = v => {
+                if (v === null || v === undefined || v === '') return '';
+                if (typeof v === 'number') return v;
+                return '"' + String(v).replace(/"/g, '""') + '"';
+            };
+            const csvRows = [
+                headers.join(','),
+                ...dataRows.map(row => headers.map(h => escape(row[h])).join(','))
+            ];
+
+            csvRows.push('', '--- SUMMARY ---');
+            summaryData.forEach(r => {
+                csvRows.push(`"${r['Summary']}","${r['Value']}"`);
+            });
+
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url; a.download = fileName + '.csv'; a.click();
+            URL.revokeObjectURL(url);
+        }
 
         hint.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Report downloaded — ${allRows.length} tickets exported.</span>`;
         hint.style.color = 'var(--green-600)';
